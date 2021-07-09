@@ -265,7 +265,7 @@ class Main
 			
 			answerGraphics.lineStyle(
 				2,
-				if (Math.abs(ad / pd - 1) < e) 
+				if (Math.abs(ad / pd - 1) <= e) 
 				{
 					0x00CC00;
 				}

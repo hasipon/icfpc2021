@@ -245,7 +245,7 @@ Main.drawAnswer = function() {
 		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 		var pd = Math.sqrt(px * px + py * py);
 		var tmp;
-		if(Math.abs(ad / pd - 1) < e) {
+		if(Math.abs(ad / pd - 1) <= e) {
 			tmp = 52224;
 		} else if(ad > pd) {
 			var value = (ad / pd - 1) / 3;
