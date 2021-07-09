@@ -87,10 +87,13 @@ Main.selectProblem = function(e) {
 };
 Main.onMouseUp = function() {
 	if(Main.selectedPoint >= 0) {
-		Main.answerText.innerText = JSON.stringify(Main.answer);
+		Main.outputAnswer();
 	}
 	Main.selectedPoint = -1;
 	Main.selectGraphics.clear();
+};
+Main.outputAnswer = function() {
+	Main.answerText.innerText = JSON.stringify({ vertices : Main.answer});
 };
 Main.onMouseDown = function(e) {
 	Main.selectedPoint = -1;
@@ -212,6 +215,7 @@ Main.readProblem = function(index) {
 		Main.answer.push([point[0],point[1]]);
 	}
 	Main.drawAnswer();
+	Main.outputAnswer();
 };
 Main.drawAnswer = function() {
 	var first = true;

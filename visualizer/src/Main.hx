@@ -119,11 +119,16 @@ class Main
 	{
 		if (selectedPoint >= 0)
 		{
-			answerText.innerText = Json.stringify(answer);
+			outputAnswer();
 		}
 		
 		selectedPoint = -1;
 		selectGraphics.clear();
+	}
+	
+	static function outputAnswer():Void 
+	{
+		answerText.innerText = Json.stringify({vertices:answer});
 	}
 	
 	static function onMouseDown(e:InteractionEvent):Void
@@ -228,6 +233,7 @@ class Main
 			answer.push([point[0], point[1]]);
 		}
 		drawAnswer();
+		outputAnswer();
 	}
 	
 	static function drawAnswer():Void
