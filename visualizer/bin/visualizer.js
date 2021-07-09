@@ -40,6 +40,9 @@ Main.main = function() {
 	Main.canvas = js_Boot.__cast(window.document.getElementById("pixi") , HTMLCanvasElement);
 	Main.canvas.width = 800;
 	Main.canvas.height = 700;
+	Main.problemCombo = window.document.getElementById("problem_combo");
+	Main.answerText = window.document.getElementById("answer_text");
+	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.pixi = new PIXI.Application({ view : Main.canvas, transparent : true, width : Main.canvas.width, height : Main.canvas.height, autoResize : true});
 	Main.pixi.stage.interactive = true;
 	Main.problems = [];
@@ -49,10 +52,14 @@ Main.fetchProblem = function(index) {
 	var h = new haxe_http_HttpJs("./problems/" + index);
 	h.onData = function(d) {
 		Main.problems.push(JSON.parse(d));
-		Main.fetchProblem(index + 1);
 		if(index == 1) {
 			Main.start();
 		}
+		var element = window.document.createElement("option");
+		element.setAttribute("value","" + index);
+		element.innerHTML = "" + index;
+		Main.problemCombo.appendChild(element);
+		Main.fetchProblem(index + 1);
 	};
 	h.onError = function(e) {
 	};
@@ -74,6 +81,10 @@ Main.start = function() {
 	Main.pixi.stage.on("mousedown",Main.onMouseDown);
 	Main.pixi.stage.on("mousemove",Main.onMouseMove);
 	window.document.addEventListener("mouseup",Main.onMouseUp);
+};
+Main.selectProblem = function(e) {
+	Main.readProblem(Main.problemCombo.selectedIndex);
+	haxe_Log.trace(Main.problemCombo.selectedIndex,{ fileName : "src/Main.hx", lineNumber : 116, className : "Main", methodName : "selectProblem"});
 };
 Main.onMouseUp = function() {
 	Main.selectedPoint = -1;
@@ -117,7 +128,7 @@ Main.onMouseMove = function(e) {
 		var dy = e.data.global.y - Main.startPoint.y;
 		Main.answer[Main.selectedPoint][0] = Math.round(Main.startX + dx / Main.scale);
 		Main.answer[Main.selectedPoint][1] = Math.round(Main.startY + dy / Main.scale);
-		haxe_Log.trace(Main.selectedPoint,{ fileName : "src/Main.hx", lineNumber : 141, className : "Main", methodName : "onMouseMove", customParams : [dx,dy,Main.scale]});
+		haxe_Log.trace(Main.selectedPoint,{ fileName : "src/Main.hx", lineNumber : 164, className : "Main", methodName : "onMouseMove", customParams : [dx,dy,Main.scale]});
 		Main.drawAnswer();
 	}
 };

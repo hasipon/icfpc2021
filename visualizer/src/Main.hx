@@ -4,6 +4,11 @@ import haxe.Http;
 import haxe.Json;
 import js.Browser;
 import js.html.CanvasElement;
+import js.html.Document;
+import js.html.Element;
+import js.html.Event;
+import js.html.InputElement;
+import js.html.SelectElement;
 import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
@@ -32,6 +37,8 @@ class Main
 	static var startX   :Int;
 	static var startY   :Int;
 	static var startPoint:Point;
+	static var problemCombo:SelectElement;
+	static var answerText:Element;
 	
 	static function main() 
 	{
@@ -39,6 +46,11 @@ class Main
 		
 		canvas.width  = 800;
 		canvas.height = 700;
+		
+		problemCombo = cast Browser.document.getElementById("problem_combo");
+		answerText   = cast Browser.document.getElementById("answer_text");
+		
+		problemCombo.addEventListener("change", selectProblem);
 		
 		pixi = new Application({
 			view  :canvas,
@@ -52,20 +64,25 @@ class Main
 		fetchProblem(1);
 	}
 	
-	
 	static function fetchProblem(index:Int)
 	{
 		var h = new Http("./problems/" + index);
 		
 		h.onData = function(d) {
 			problems.push(Json.parse(d));
-			fetchProblem(index + 1);
 			if (index == 1)
 			{
 				start();
 			}
+			var element = Browser.document.createElement('option');
+			element.setAttribute("value", "" + (index));
+			element.innerHTML = "" + (index);
+			problemCombo.appendChild(element);
+			
+			fetchProblem(index + 1);
 		}
-		h.onError = function(e) {}
+		h.onError = function(e) {
+		}
 		h.request();
 	}
 	
@@ -91,6 +108,12 @@ class Main
 		pixi.stage.on("mousedown", onMouseDown);
 		pixi.stage.on("mousemove", onMouseMove);
 		Browser.document.addEventListener("mouseup", onMouseUp);
+	}
+	
+	static function selectProblem(e:Event):Void
+	{
+		readProblem(problemCombo.selectedIndex);
+		trace(problemCombo.selectedIndex);
 	}
 	
 	static function onMouseUp():Void
