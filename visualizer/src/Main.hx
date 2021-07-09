@@ -241,6 +241,4 @@ class Main
 			answerGraphics.lineTo(x, y);
 		}
 	}
-	
-	
 }
