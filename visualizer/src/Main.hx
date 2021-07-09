@@ -52,12 +52,13 @@ class Main
 	static var fitDown   :Bool;
 	static var randomDown:Bool;
 	static var requestCount:Int;
+	static var center    :Point;
 	
 	static function main() 
 	{
 		canvas = cast(Browser.document.getElementById("pixi"), CanvasElement);
 		
-		canvas.width  = 1400;
+		canvas.width  = 1180;
 		canvas.height = 980;
 		
 		
@@ -67,16 +68,14 @@ class Main
 		Browser.document.getElementById("auto_button"           ).addEventListener("mousedown", () -> { autoDown = true; });
 		Browser.document.getElementById("fit_auto_button"       ).addEventListener("mousedown", () -> { fitDown = autoDown = true; });
 		
-		//Browser.document.getElementById("random_button"         ).addEventListener("mousedown", () -> { randomDown = true; });
-		//Browser.document.getElementById("random_auto_button"    ).addEventListener("mousedown", () -> { randomDown = autoDown = true; });
-		//Browser.document.getElementById("random_fit_auto_button").addEventListener("mousedown", () -> { randomDown = fitDown = autoDown = true; });
-		
+		Browser.document.getElementById("random_button"         ).addEventListener("mousedown", () -> { randomDown = true; });
+		Browser.document.getElementById("random_auto_button"    ).addEventListener("mousedown", () -> { randomDown = autoDown = true; });
+		Browser.document.getElementById("random_fit_auto_button").addEventListener("mousedown", () -> { randomDown = fitDown = autoDown = true; });
 		
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
-		canvas.addEventListener("keydown", onKeyDown);
-		
+		canvas      .addEventListener("keydown", onKeyDown);
 		
 		pixi = new Application({
 			view  :canvas,
@@ -94,24 +93,79 @@ class Main
 	
 	static function onKeyDown(e:KeyboardEvent):Void
 	{
-		if (e.ctrlKey)
-		{
-			trace(e.keyCode);
 			switch (e.keyCode)
 			{
 				case KeyboardEvent.DOM_VK_A:
-					untyped selectedPoints.length = 0;
-					selectRect = null;
-					for (i in 0...answer.length) {
-						selectedPoints.push(i);
+					if (e.ctrlKey)
+					{
+						untyped selectedPoints.length = 0;
+						selectRect = null;
+						for (i in 0...answer.length) {
+							selectedPoints.push(i);
+						}
+						e.preventDefault();
+						drawSelectedPoints();
 					}
+
+					
+				case KeyboardEvent.DOM_VK_LEFT:
+					rotate(5);
 					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_RIGHT:
+					rotate(-5);
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_UP:
+					rotate(15);
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_DOWN:
+					rotate(-15);
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_Z:
+					var cx = Math.round(canvas.width  / 2 / scale + left);
+					for (i in selectedPoints)
+					{
+						var a = answer[i];
+						a[0] = cx + cx - a[0];
+					}
+					drawAnswer();
 					drawSelectedPoints();
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_X:
+					var cy = Math.round(canvas.height / 2 / scale + top);
+					for (i in selectedPoints)
+					{
+						var a = answer[i];
+						a[1] = cy + cy - a[1];
+					}
+					drawAnswer();
+					drawSelectedPoints();
+					e.preventDefault();
+					
 				case _:
 			}
-		}
 	}
-	
+	static function rotate(degree:Float):Void
+	{
+		var cx = canvas.width  / 2 / scale + left;
+		var cy = canvas.height / 2 / scale + top ;
+		for (i in selectedPoints)
+		{
+			var a = answer[i];
+			var dx = a[0] - cx;
+			var dy = a[1] - cy;
+			var d = Math.sqrt(dx * dx + dy * dy);
+			var r = degree / 180 * Math.PI + Math.atan2(dy, dx);
+			a[0] = Math.round(cx + d * Math.cos(r));
+			a[1] = Math.round(cy + d * Math.sin(r));
+		}
+		drawAnswer();
+		drawSelectedPoints();
+	}
 	static function onChangeAnswer():Void 
 	{
 		try
@@ -195,8 +249,8 @@ class Main
 							{
 								var v = Math.sqrt(dx * dx + dy * dy);
 								var d = Math.atan2(dy, dx);
-								a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() + Math.random() - 0.5);
-								a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() + Math.random() - 0.5);
+								a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
+								a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
 							}
 						}
 					}
@@ -259,7 +313,7 @@ class Main
 								count[edge[0]] += 1; 
 								count[edge[1]] += 1; 
 								
-								var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
+								var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
 								var d = Math.atan2(ay, ax);
 								velocities[edge[0]][0] -= v * Math.cos(d);
 								velocities[edge[0]][1] -= v * Math.sin(d);
@@ -275,8 +329,9 @@ class Main
 							var c = count[i];
 							if (c != 0)
 							{
-								answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + Math.random() - 0.5);
-								answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + Math.random() - 0.5);
+								if (c == 1 && Math.random() < 0.1) continue;
+	 							answer[i][0] = Math.round(answer[i][0] + (v[0] / (c + 1)) + (Math.random() - 0.5));
+	 							answer[i][1] = Math.round(answer[i][1] + (v[1] / (c + 1)) + (Math.random() - 0.5));
 							}
 						}
 					}

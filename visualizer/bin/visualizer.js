@@ -62,7 +62,7 @@ var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
 	Main.canvas = js_Boot.__cast(window.document.getElementById("pixi") , HTMLCanvasElement);
-	Main.canvas.width = 1400;
+	Main.canvas.width = 1180;
 	Main.canvas.height = 980;
 	Main.problemCombo = window.document.getElementById("problem_combo");
 	Main.answerText = window.document.getElementById("answer_text");
@@ -75,6 +75,15 @@ Main.main = function() {
 	window.document.getElementById("fit_auto_button").addEventListener("mousedown",function() {
 		return Main.fitDown = Main.autoDown = true;
 	});
+	window.document.getElementById("random_button").addEventListener("mousedown",function() {
+		return Main.randomDown = true;
+	});
+	window.document.getElementById("random_auto_button").addEventListener("mousedown",function() {
+		return Main.randomDown = Main.autoDown = true;
+	});
+	window.document.getElementById("random_fit_auto_button").addEventListener("mousedown",function() {
+		return Main.randomDown = Main.fitDown = Main.autoDown = true;
+	});
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.answerText.addEventListener("input",Main.onChangeAnswer);
 	Main.canvas.addEventListener("keydown",Main.onKeyDown);
@@ -86,9 +95,25 @@ Main.main = function() {
 	Main.requestCount = 0;
 };
 Main.onKeyDown = function(e) {
-	if(e.ctrlKey) {
-		console.log("src/Main.hx:99:",e.keyCode);
-		if(e.keyCode == 65) {
+	switch(e.keyCode) {
+	case 37:
+		Main.rotate(5);
+		e.preventDefault();
+		break;
+	case 38:
+		Main.rotate(15);
+		e.preventDefault();
+		break;
+	case 39:
+		Main.rotate(-5);
+		e.preventDefault();
+		break;
+	case 40:
+		Main.rotate(-15);
+		e.preventDefault();
+		break;
+	case 65:
+		if(e.ctrlKey) {
 			Main.selectedPoints.length = 0;
 			Main.selectRect = null;
 			var _g = 0;
@@ -100,7 +125,56 @@ Main.onKeyDown = function(e) {
 			e.preventDefault();
 			Main.drawSelectedPoints();
 		}
+		break;
+	case 88:
+		var cy = Math.round(Main.canvas.height / 2 / Main.scale + Main.top);
+		var _g = 0;
+		var _g1 = Main.selectedPoints;
+		while(_g < _g1.length) {
+			var i = _g1[_g];
+			++_g;
+			var a = Main.answer[i];
+			a[1] = cy + cy - a[1];
+		}
+		Main.drawAnswer();
+		Main.drawSelectedPoints();
+		e.preventDefault();
+		break;
+	case 90:
+		var cx = Math.round(Main.canvas.width / 2 / Main.scale + Main.left);
+		var _g = 0;
+		var _g1 = Main.selectedPoints;
+		while(_g < _g1.length) {
+			var i = _g1[_g];
+			++_g;
+			var a = Main.answer[i];
+			a[0] = cx + cx - a[0];
+		}
+		Main.drawAnswer();
+		Main.drawSelectedPoints();
+		e.preventDefault();
+		break;
+	default:
 	}
+};
+Main.rotate = function(degree) {
+	var cx = Main.canvas.width / 2 / Main.scale + Main.left;
+	var cy = Main.canvas.height / 2 / Main.scale + Main.top;
+	var _g = 0;
+	var _g1 = Main.selectedPoints;
+	while(_g < _g1.length) {
+		var i = _g1[_g];
+		++_g;
+		var a = Main.answer[i];
+		var dx = a[0] - cx;
+		var dy = a[1] - cy;
+		var d = Math.sqrt(dx * dx + dy * dy);
+		var r = degree / 180 * Math.PI + Math.atan2(dy,dx);
+		a[0] = Math.round(cx + d * Math.cos(r));
+		a[1] = Math.round(cy + d * Math.sin(r));
+	}
+	Main.drawAnswer();
+	Main.drawSelectedPoints();
 };
 Main.onChangeAnswer = function() {
 	try {
@@ -127,7 +201,7 @@ Main.onChangeAnswer = function() {
 		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:135:",e);
+		console.log("src/Main.hx:189:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -179,8 +253,8 @@ Main.onEnterFrame = function(f) {
 					if(dx != 0 || dy != 0) {
 						var v = Math.sqrt(dx * dx + dy * dy);
 						var d = Math.atan2(dy,dx);
-						a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() + Math.random() - 0.5);
-						a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() + Math.random() - 0.5);
+						a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
+						a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
 					}
 				}
 			}
@@ -254,7 +328,7 @@ Main.onEnterFrame = function(f) {
 						if(!(Math.abs(ad / pd - 1) <= e)) {
 							count[edge[0]] += 1;
 							count[edge[1]] += 1;
-							var v2 = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
+							var v2 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
 							var d3 = Math.atan2(ay,ax);
 							velocities[edge[0]][0] -= v2 * Math.cos(d3);
 							velocities[edge[0]][1] -= v2 * Math.sin(d3);
@@ -273,8 +347,11 @@ Main.onEnterFrame = function(f) {
 						var v3 = velocities[i2];
 						var c = count[i2];
 						if(c != 0) {
-							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / c + Math.random() - 0.5);
-							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / c + Math.random() - 0.5);
+							if(c == 1 && Math.random() < 0.1) {
+								continue;
+							}
+							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / (c + 1) + (Math.random() - 0.5));
+							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / (c + 1) + (Math.random() - 0.5));
 						}
 					}
 				}
@@ -401,7 +478,7 @@ Main.onMouseDown = function(e) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
 	} else {
-		console.log("src/Main.hx:409:",selectedPoint);
+		console.log("src/Main.hx:464:",selectedPoint);
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();
