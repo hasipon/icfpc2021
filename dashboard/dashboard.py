@@ -29,7 +29,7 @@ def index():
         x[0]: (
             int(x[1]) if x[1].isdigit() else '',
             int(x[2]) if x[2].isdigit() else '',
-            int(x[1]) - int(x[2]) if x[1].isdigit() and x[2].isdigit() else ''
+            (int(x[2]) + 1) / (int(x[1]) + 1) if x[1].isdigit() and x[2].isdigit() else 0,
         ) for x in problems_json}
 
     problem_files = [os.path.relpath(x, problems_path) for x in glob.glob(str(problems_path / "*"))]
@@ -54,7 +54,7 @@ def index():
             "vertices": len(problem_detail[x]["figure"]["vertices"]),
             "dislike": dislikes[x][0],
             "mindislike": dislikes[x][1],
-            "difflike": dislikes[x][2],
+            "dislike_ratio": dislikes[x][2],
             "topscore": math.ceil(problem_detail[x]["base_score"]),
             "score": math.ceil(problem_detail[x]["base_score"] * math.sqrt(
                 (dislikes[x][1] + 1) / (dislikes[x][0] + 1)

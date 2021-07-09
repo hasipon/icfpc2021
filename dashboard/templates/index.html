@@ -17,7 +17,7 @@
     <th class="text-center">ε</th>
     <th class="text-center">E</th>
     <th class="text-center">V</th>
-    <th class="text-center">Dislike(トップとの差)</th>
+    <th class="text-center">Dislike(トップとの比)</th>
     <th class="text-center">Score(トップとの差)</th>
   </tr>
 
@@ -28,7 +28,7 @@
     <td class="text-center">{{p.eps}}</td>
     <td class="text-center">{{p.edges}}</td>
     <td class="text-center">{{p.vertices}}</td>
-    <td class="text-center">{{p.dislike}} ({{p.difflike}})</td>
+    <td class="text-center">{{p.dislike}} ({{'%.1f' % (p.dislike_ratio * 100)}} %)</td>
     <td class="text-center">{{p.score}} ({{p.topscore - p.score}})</td>
   </tr>
   {% endfor %}
