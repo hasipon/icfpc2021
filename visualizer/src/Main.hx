@@ -58,7 +58,8 @@ class Main
 		
 		problemCombo = cast Browser.document.getElementById("problem_combo");
 		answerText   = cast Browser.document.getElementById("answer_text");
-		var autoButton   = cast Browser.document.getElementById("auto_button");
+		var autoButton  = cast Browser.document.getElementById("auto_button");
+		var fitButton   = cast Browser.document.getElementById("fit_button");
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
@@ -377,10 +378,10 @@ class Main
 			if (top    > point[1]) top    = point[1];
 			if (bottom < point[1]) bottom = point[1];
 		}
-		left   -= 3;
-		right  += 3;
-		top    -= 3;
-		bottom += 3;
+		left   -= 12;
+		right  += 12;
+		top    -= 12;
+		bottom += 12;
 		
 		var w = (right - left);
 		var h = (bottom - top);
