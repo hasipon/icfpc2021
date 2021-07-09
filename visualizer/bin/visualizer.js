@@ -66,17 +66,41 @@ Main.main = function() {
 	Main.canvas.height = 980;
 	Main.problemCombo = window.document.getElementById("problem_combo");
 	Main.answerText = window.document.getElementById("answer_text");
-	var autoButton = window.document.getElementById("auto_button");
-	var fitButton = window.document.getElementById("fit_button");
+	window.document.getElementById("fit_button").addEventListener("mousedown",function() {
+		return Main.fitDown = true;
+	});
+	window.document.getElementById("auto_button").addEventListener("mousedown",function() {
+		return Main.autoDown = true;
+	});
+	window.document.getElementById("fit_auto_button").addEventListener("mousedown",function() {
+		return Main.fitDown = Main.autoDown = true;
+	});
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.answerText.addEventListener("input",Main.onChangeAnswer);
-	autoButton.addEventListener("mousedown",Main.onAutoDown);
+	Main.canvas.addEventListener("keydown",Main.onKeyDown);
 	Main.pixi = new PIXI.Application({ view : Main.canvas, transparent : true, width : Main.canvas.width, height : Main.canvas.height, autoResize : true});
 	Main.pixi.stage.interactive = true;
 	Main.problems = [];
 	Main.selectRect = null;
 	Main.fetchProblem();
 	Main.requestCount = 0;
+};
+Main.onKeyDown = function(e) {
+	if(e.ctrlKey) {
+		console.log("src/Main.hx:99:",e.keyCode);
+		if(e.keyCode == 65) {
+			Main.selectedPoints.length = 0;
+			Main.selectRect = null;
+			var _g = 0;
+			var _g1 = Main.answer.length;
+			while(_g < _g1) {
+				var i = _g++;
+				Main.selectedPoints.push(i);
+			}
+			e.preventDefault();
+			Main.drawSelectedPoints();
+		}
+	}
 };
 Main.onChangeAnswer = function() {
 	try {
@@ -103,7 +127,7 @@ Main.onChangeAnswer = function() {
 		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 102, className : "Main", methodName : "onChangeAnswer"});
+		console.log("src/Main.hx:135:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -139,65 +163,120 @@ Main.start = function() {
 	window.requestAnimationFrame(Main.onEnterFrame);
 };
 Main.onEnterFrame = function(f) {
-	if(Main.autoDown) {
+	if(Main.fitDown || Main.autoDown || Main.randomDown) {
 		var _g = 0;
-		while(_g < 1000) {
-			var i = _g++;
-			var _g1 = [];
-			var _g2 = 0;
-			var _g3 = Main.answer;
-			while(_g2 < _g3.length) {
-				var _ = _g3[_g2];
-				++_g2;
-				_g1.push(0);
-			}
-			var count = _g1;
-			var _g4 = [];
-			var _g5 = 0;
-			var _g6 = Main.answer;
-			while(_g5 < _g6.length) {
-				var _1 = _g6[_g5];
-				++_g5;
-				_g4.push([0.0,0.0]);
-			}
-			var velocities = _g4;
-			var e = Main.problem.epsilon / 1000000;
-			var matched = true;
-			var _g7 = 0;
-			var _g8 = Main.problem.figure.edges;
-			while(_g7 < _g8.length) {
-				var edge = _g8[_g7];
-				++_g7;
-				var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
-				var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
-				var ad = ax * ax + ay * ay;
-				var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
-				var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
-				var pd = px * px + py * py;
-				if(!(Math.abs(ad / pd - 1) <= e)) {
-					count[edge[0]] += 1;
-					count[edge[1]] += 1;
-					var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
-					var d = Math.atan2(ay,ax);
-					velocities[edge[0]][0] -= v * Math.cos(d);
-					velocities[edge[0]][1] -= v * Math.sin(d);
-					velocities[edge[1]][0] += v * Math.cos(d);
-					velocities[edge[1]][1] += v * Math.sin(d);
-					matched = false;
+		while(_g < 20) {
+			var _ = _g++;
+			if(Main.randomDown) {
+				var _g1 = 0;
+				var _g2 = Main.problem.hole;
+				while(_g1 < _g2.length) {
+					var hole = _g2[_g1];
+					++_g1;
+					var a = Main.answer[Std.random(Main.answer.length)];
+					var dx = a[0] - hole[0];
+					var dy = a[1] - hole[1];
+					if(dx != 0 || dy != 0) {
+						var v = Math.sqrt(dx * dx + dy * dy);
+						var d = Math.atan2(dy,dx);
+						a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() + Math.random() - 0.5);
+						a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() + Math.random() - 0.5);
+					}
 				}
 			}
-			if(matched) {
-				break;
+			if(Main.fitDown) {
+				var _g3 = 0;
+				var _g4 = Main.problem.hole;
+				while(_g3 < _g4.length) {
+					var hole1 = _g4[_g3];
+					++_g3;
+					var min = Infinity;
+					var target = 0;
+					var _g5 = 0;
+					var _g6 = Main.answer.length;
+					while(_g5 < _g6) {
+						var i = _g5++;
+						var a1 = Main.answer[i];
+						var dx1 = a1[0] - hole1[0];
+						var dy1 = a1[1] - hole1[1];
+						var d1 = dx1 * dx1 + dy1 * dy1;
+						if(d1 < min) {
+							min = d1;
+							target = i;
+						}
+					}
+					if(min > 0) {
+						var v1 = Math.sqrt(min);
+						var a2 = Main.answer[target];
+						var dx2 = a2[0] - hole1[0];
+						var dy2 = a2[1] - hole1[1];
+						var d2 = Math.atan2(dy2,dx2);
+						a2[0] = Math.round(a2[0] - v1 * Math.cos(d2) + Math.random() - 0.5);
+						a2[1] = Math.round(a2[1] - v1 * Math.sin(d2) + Math.random() - 0.5);
+					}
+				}
 			}
-			var _g9 = 0;
-			var _g10 = Main.answer.length;
-			while(_g9 < _g10) {
-				var i1 = _g9++;
-				var v1 = velocities[i1];
-				var c = count[i1];
-				if(c != 0) {
-					Main.answer[i1][0] = Math.round(Main.answer[i1][0] + v1[0] / c + Math.random() - 0.5);
-					Main.answer[i1][1] = Math.round(Main.answer[i1][1] + v1[1] / c + Math.random() - 0.5);
+			if(Main.autoDown) {
+				var _g7 = 0;
+				while(_g7 < 50) {
+					var i1 = _g7++;
+					var _g8 = [];
+					var _g9 = 0;
+					var _g10 = Main.answer;
+					while(_g9 < _g10.length) {
+						var _1 = _g10[_g9];
+						++_g9;
+						_g8.push(0);
+					}
+					var count = _g8;
+					var _g11 = [];
+					var _g12 = 0;
+					var _g13 = Main.answer;
+					while(_g12 < _g13.length) {
+						var _2 = _g13[_g12];
+						++_g12;
+						_g11.push([0.0,0.0]);
+					}
+					var velocities = _g11;
+					var e = Main.problem.epsilon / 1000000;
+					var matched = true;
+					var _g14 = 0;
+					var _g15 = Main.problem.figure.edges;
+					while(_g14 < _g15.length) {
+						var edge = _g15[_g14];
+						++_g14;
+						var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
+						var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
+						var ad = ax * ax + ay * ay;
+						var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
+						var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
+						var pd = px * px + py * py;
+						if(!(Math.abs(ad / pd - 1) <= e)) {
+							count[edge[0]] += 1;
+							count[edge[1]] += 1;
+							var v2 = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
+							var d3 = Math.atan2(ay,ax);
+							velocities[edge[0]][0] -= v2 * Math.cos(d3);
+							velocities[edge[0]][1] -= v2 * Math.sin(d3);
+							velocities[edge[1]][0] += v2 * Math.cos(d3);
+							velocities[edge[1]][1] += v2 * Math.sin(d3);
+							matched = false;
+						}
+					}
+					if(matched) {
+						break;
+					}
+					var _g16 = 0;
+					var _g17 = Main.answer.length;
+					while(_g16 < _g17) {
+						var i2 = _g16++;
+						var v3 = velocities[i2];
+						var c = count[i2];
+						if(c != 0) {
+							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / c + Math.random() - 0.5);
+							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / c + Math.random() - 0.5);
+						}
+					}
 				}
 			}
 		}
@@ -208,9 +287,6 @@ Main.onEnterFrame = function(f) {
 };
 Main.selectProblem = function(e) {
 	Main.readProblem(Main.problemCombo.selectedIndex);
-};
-Main.onAutoDown = function() {
-	Main.autoDown = true;
 };
 Main.onMouseUp = function() {
 	if(Main.selectedPoints.length >= 0) {
@@ -238,6 +314,22 @@ Main.onMouseUp = function() {
 		Main.selectRect = null;
 	}
 	Main.autoDown = false;
+	Main.fitDown = false;
+	Main.randomDown = false;
+};
+Main.drawSelectedPoints = function() {
+	Main.selectGraphics.clear();
+	Main.selectGraphics.beginFill(13369344);
+	var _g = 0;
+	var _g1 = Main.selectedPoints;
+	while(_g < _g1.length) {
+		var selectedPoint = _g1[_g];
+		++_g;
+		var point = Main.answer[selectedPoint];
+		var x = (point[0] - Main.left) * Main.scale;
+		var y = (point[1] - Main.top) * Main.scale;
+		Main.selectGraphics.drawCircle(x,y,3);
+	}
 };
 Main.outputAnswer = function() {
 	Main.updateScore();
@@ -303,14 +395,13 @@ Main.onMouseDown = function(e) {
 		}
 		++i;
 	}
-	haxe_Log.trace(Main.selectedPoints,{ fileName : "src/Main.hx", lineNumber : 296, className : "Main", methodName : "onMouseDown", customParams : [selectedPoint]});
 	if(selectedPoint == -1) {
 		Main.selectedPoints.length = 0;
 	} else if(Main.selectedPoints.indexOf(selectedPoint) == -1) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
 	} else {
-		haxe_Log.trace(selectedPoint,{ fileName : "src/Main.hx", lineNumber : 308, className : "Main", methodName : "onMouseDown"});
+		console.log("src/Main.hx:409:",selectedPoint);
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();
@@ -556,6 +647,13 @@ Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
 };
+Std.random = function(x) {
+	if(x <= 0) {
+		return 0;
+	} else {
+		return Math.floor(Math.random() * x);
+	}
+};
 var StringTools = function() { };
 StringTools.__name__ = true;
 StringTools.hex = function(n,digits) {
@@ -609,31 +707,6 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
-var haxe_Log = function() { };
-haxe_Log.__name__ = true;
-haxe_Log.formatOutput = function(v,infos) {
-	var str = Std.string(v);
-	if(infos == null) {
-		return str;
-	}
-	var pstr = infos.fileName + ":" + infos.lineNumber;
-	if(infos.customParams != null) {
-		var _g = 0;
-		var _g1 = infos.customParams;
-		while(_g < _g1.length) {
-			var v = _g1[_g];
-			++_g;
-			str += ", " + Std.string(v);
-		}
-	}
-	return pstr + ": " + str;
-};
-haxe_Log.trace = function(v,infos) {
-	var str = haxe_Log.formatOutput(v,infos);
-	if(typeof(console) != "undefined" && console.log != null) {
-		console.log(str);
-	}
-};
 var haxe_Resource = function() { };
 haxe_Resource.__name__ = true;
 haxe_Resource.getString = function(name) {
