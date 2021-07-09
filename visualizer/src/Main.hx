@@ -52,6 +52,7 @@ class Main
 	static var fitDown   :Bool;
 	static var randomDown:Bool;
 	static var requestCount:Int;
+	static var center    :Point;
 	
 	static function main() 
 	{
@@ -72,11 +73,9 @@ class Main
 		//Browser.document.getElementById("random_fit_auto_button").addEventListener("mousedown", () -> { randomDown = fitDown = autoDown = true; });
 		
 		
-		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
-		canvas.addEventListener("keydown", onKeyDown);
-		
+		canvas      .addEventListener("keydown", onKeyDown);
 		
 		pixi = new Application({
 			view  :canvas,
@@ -94,24 +93,58 @@ class Main
 	
 	static function onKeyDown(e:KeyboardEvent):Void
 	{
-		if (e.ctrlKey)
-		{
-			trace(e.keyCode);
 			switch (e.keyCode)
 			{
 				case KeyboardEvent.DOM_VK_A:
-					untyped selectedPoints.length = 0;
-					selectRect = null;
-					for (i in 0...answer.length) {
-						selectedPoints.push(i);
+					if (e.ctrlKey)
+					{
+						untyped selectedPoints.length = 0;
+						selectRect = null;
+						for (i in 0...answer.length) {
+							selectedPoints.push(i);
+						}
+						e.preventDefault();
+						drawSelectedPoints();
 					}
+
+					
+				case KeyboardEvent.DOM_VK_LEFT:
+					rotate(5);
 					e.preventDefault();
-					drawSelectedPoints();
+					
+				case KeyboardEvent.DOM_VK_RIGHT:
+					rotate(-5);
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_UP:
+					rotate(15);
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_DOWN:
+					rotate(-15);
+					e.preventDefault();
+					
 				case _:
 			}
-		}
 	}
-	
+	static function rotate(degree:Float):Void
+	{
+		for (i in selectedPoints)
+		{
+			var a = answer[i];
+			var cx = canvas.width  / 2 / scale + left;
+			var cy = canvas.height / 2 / scale + top ;
+			var dx = a[0] - cx;
+			var dy = a[1] - cy;
+			var d = Math.sqrt(dx * dx + dy * dy);
+			var r = degree / 180 * Math.PI + Math.atan2(dy, dx);
+			a[0] = Math.round(cx + d * Math.cos(r));
+			a[1] = Math.round(cy + d * Math.sin(r));
+			trace(a);
+		}
+		drawAnswer();
+		drawSelectedPoints();
+	}
 	static function onChangeAnswer():Void 
 	{
 		try
@@ -259,7 +292,7 @@ class Main
 								count[edge[0]] += 1; 
 								count[edge[1]] += 1; 
 								
-								var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
+								var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
 								var d = Math.atan2(ay, ax);
 								velocities[edge[0]][0] -= v * Math.cos(d);
 								velocities[edge[0]][1] -= v * Math.sin(d);
