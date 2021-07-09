@@ -29,6 +29,7 @@ class Main
 	static var problemGraphics:Graphics;
 	static var answerGraphics:Graphics;
 	static var selectGraphics:Graphics;
+	static var gridGraphics:Graphics;
 	
 	static var problemIndex:Int;
 	static var answer:Array<Array<Int>>;
@@ -157,7 +158,7 @@ class Main
 			var point = answer[selectedPoint];
 			var x = (point[0] - left) * scale;
 			var y = (point[1] - top ) * scale;
-			selectGraphics.drawCircle(x, y, 2);
+			selectGraphics.drawCircle(x, y, 3);
 			startPoint.x = e.data.global.x;
 			startPoint.y = e.data.global.y;
 			startX = point[0];
@@ -247,7 +248,7 @@ class Main
 		{
 			var x = (point[0] - left) * scale;
 			var y = (point[1] - top ) * scale;
-			answerGraphics.drawCircle(x, y, 2);
+			answerGraphics.drawCircle(x, y, 3);
 			
 			first = false;
 		}
@@ -263,8 +264,8 @@ class Main
 			var pd = Math.sqrt(px * px + py * py);
 			
 			answerGraphics.lineStyle(
-				1,
-				if (Math.abs(ad - pd) < e) 
+				2,
+				if (Math.abs(ad / pd - 1) < e) 
 				{
 					0x00CC00;
 				}

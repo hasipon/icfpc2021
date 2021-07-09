@@ -120,7 +120,7 @@ Main.onMouseDown = function(e) {
 		var point = Main.answer[Main.selectedPoint];
 		var x = (point[0] - Main.left) * Main.scale;
 		var y = (point[1] - Main.top) * Main.scale;
-		Main.selectGraphics.drawCircle(x,y,2);
+		Main.selectGraphics.drawCircle(x,y,3);
 		Main.startPoint.x = e.data.global.x;
 		Main.startPoint.y = e.data.global.y;
 		Main.startX = point[0];
@@ -228,7 +228,7 @@ Main.drawAnswer = function() {
 		++_g;
 		var x = (point[0] - Main.left) * Main.scale;
 		var y = (point[1] - Main.top) * Main.scale;
-		Main.answerGraphics.drawCircle(x,y,2);
+		Main.answerGraphics.drawCircle(x,y,3);
 		first = false;
 	}
 	Main.answerGraphics.endFill();
@@ -245,7 +245,7 @@ Main.drawAnswer = function() {
 		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 		var pd = Math.sqrt(px * px + py * py);
 		var tmp;
-		if(Math.abs(ad - pd) < e) {
+		if(Math.abs(ad / pd - 1) < e) {
 			tmp = 52224;
 		} else if(ad > pd) {
 			var value = (ad / pd - 1) / 3;
@@ -298,7 +298,7 @@ Main.drawAnswer = function() {
 			}
 			tmp = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
 		}
-		Main.answerGraphics.lineStyle(1,tmp);
+		Main.answerGraphics.lineStyle(2,tmp);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
 		var y = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.moveTo(x,y);
