@@ -50,8 +50,8 @@ class Main
 	{
 		canvas = cast(Browser.document.getElementById("pixi"), CanvasElement);
 		
-		canvas.width  = 800;
-		canvas.height = 700;
+		canvas.width  = 1400;
+		canvas.height = 980;
 		
 		problemCombo = cast Browser.document.getElementById("problem_combo");
 		answerText   = cast Browser.document.getElementById("answer_text");
@@ -147,7 +147,7 @@ class Main
 	{
 		if (autoDown)
 		{
-			for (i in 0...5000)
+			for (i in 0...1000)
 			{
 				var count      = [for (_ in answer) 0];
 				var velocities = [for (_ in answer)[0.0, 0.0]];
@@ -218,6 +218,23 @@ class Main
 	
 	static function outputAnswer():Void 
 	{
+		var dislike = 0.0;
+		for (hole in problem.hole)
+		{
+			var min = Math.POSITIVE_INFINITY;
+			var hx = hole[0];
+			var hy = hole[1];
+			for (a in answer)
+			{
+				var dx = a[0] - hx;
+				var dy = a[1] - hy;
+				var value = dx * dx + dy * dy;
+				if (value < min) { min = value; }
+			}
+			dislike += min;
+		}
+		
+		Browser.document.getElementById("dislike").textContent = "" + dislike;
 		answerText.value = Json.stringify({vertices:answer});
 	}
 	
