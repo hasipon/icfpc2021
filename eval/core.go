@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/big"
 )
 
@@ -98,13 +97,20 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 	for _, e := range problem.Figure.Edges {
 		i := e[0]
 		j := e[1]
-		origD, _ := new(big.Float).SetInt(distance(origV[i], origV[j])).Float64()
-		nowD, _ := new(big.Float).SetInt(distance(nowV[i], nowV[j])).Float64()
-		eps, _ := new(big.Float).SetInt(&problem.Epsilon).Float64()
-		result := (math.Abs(nowD / origD - 1) * 1000000 <= eps)
-		if !result {
+		origD := distance(origV[i], origV[j])
+		nowD := distance(nowV[i], nowV[j])
+		var diff *Int
+		if nowD.Cmp(origD) >= 0 {
+			diff = new(Int).Sub(nowD, origD)
+		} else {
+			diff = new(Int).Sub(origD, nowD)
+		}
+		diff = diff.Mul(diff, new(Int).SetInt64(1000000))
+		eps := new(Int).Mul(&problem.Epsilon, origD)
+		result := diff.Cmp(eps)
+		if result > 0 {
 			return false, fmt.Sprintf("Edge between (%d, " +
-				"%d) has an invalid length: original: %.0f pose: %.0f", i, j, origD, nowD)
+				"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
 		}
 		for ii, _ := range problem.Hole {
 			h := problem.Hole

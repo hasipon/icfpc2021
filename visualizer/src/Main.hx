@@ -42,9 +42,8 @@ class Main
 	
 	static var selectRect:Rectangle;
 	static var selectedPoints:Array<Int>;
-	static var startPoints:Array<Point>;
-	static var startX   :Int;
-	static var startY   :Int;
+	static var startPoint:Point;
+	static var startAnswers:Array<Point>;
 	static var problemCombo:SelectElement;
 	static var answerText:TextAreaElement;
 	static var autoDown  :Bool;
@@ -59,7 +58,8 @@ class Main
 		
 		problemCombo = cast Browser.document.getElementById("problem_combo");
 		answerText   = cast Browser.document.getElementById("answer_text");
-		var autoButton   = cast Browser.document.getElementById("auto_button");
+		var autoButton  = cast Browser.document.getElementById("auto_button");
+		var fitButton   = cast Browser.document.getElementById("fit_button");
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
@@ -134,9 +134,8 @@ class Main
 		pixi.stage.addChild(selectGraphics);
 		
 		
-		startPoints = [];
 		selectedPoints = [];
-		
+		startAnswers = [];
 		readProblem(0);
 		
 		pixi.stage.on("mousedown", onMouseDown);
@@ -211,14 +210,28 @@ class Main
 		{
 			outputAnswer();
 		}
+		untyped selectedPoints.length = 0;
+		startPoint = null;
+		selectGraphics.clear();
+		selectGraphics.beginFill(0xCC0000);
 		if (selectRect != null)
 		{
+			var i = 0;
+			for (point in answer)
+			{
+				var x = (point[0] - left) * scale;
+				var y = (point[1] - top ) * scale;
+				if (selectRect.contains(x, y)) 
+				{
+					selectGraphics.drawCircle(x, y, 3);
+					selectedPoints.push(i);
+				}
+				i += 1;
+			}
 			selectRect = null;
 		}
 		
 		autoDown = false;
-		untyped selectedPoints.length = 0;
-		selectGraphics.clear();
 	}
 	
 	static function outputAnswer():Void 
@@ -263,10 +276,9 @@ class Main
 	}	
 	static function onMouseDown(e:InteractionEvent):Void
 	{
-		untyped selectedPoints.length = 0;
-		
-		var nearest = 500;
+		var nearest = 500.0;
 		var i = 0;
+		var selectedPoint = -1;
 		for (point in answer)
 		{
 			var x = (point[0] - left) * scale;
@@ -276,25 +288,39 @@ class Main
 			var d = dx * dx + dy * dy;
 			if (nearest > d) 
 			{
-				untyped selectedPoints.length = 0;
-				selectedPoints.push(i);
+				selectedPoint = i;
+				nearest = d;
 			}
 			i += 1;
 		}
+		trace(selectedPoints, selectedPoint);
+		if (selectedPoint == -1)
+		{
+			untyped selectedPoints.length = 0;
+		}
+		else if (selectedPoints.indexOf(selectedPoint) == -1)
+		{
+			untyped selectedPoints.length = 0;
+			selectedPoints.push(selectedPoint);
+		}
+		else
+		{
+			trace(selectedPoint);
+		}
+
 		if (selectedPoints.length >= 1)
 		{
 			selectGraphics.clear();
 			selectGraphics.beginFill(0xCC0000);
-			untyped startPoints.length = 0;
+			startPoint = new Point(e.data.global.x, e.data.global.y);
+			untyped startAnswers.length = 0;
 			for (selectedPoint in selectedPoints)
 			{
 				var point = answer[selectedPoint];
 				var x = (point[0] - left) * scale;
 				var y = (point[1] - top ) * scale;
 				selectGraphics.drawCircle(x, y, 3);
-				startPoints.push(new Point(e.data.global.x, e.data.global.y));
-				startX = point[0];
-				startY = point[1];
+				startAnswers.push(new Point(point[0], point[1]));
 			}
 		}
 		else
@@ -308,15 +334,14 @@ class Main
 	}
 	static function onMouseMove(e:InteractionEvent):Void
 	{
-		if (selectedPoints.length > 0)
+		if (startPoint != null)
 		{
 			for (i in 0...selectedPoints.length)
 			{
-				
-				var dx = e.data.global.x - startPoints[i].x;
-				var dy = e.data.global.y - startPoints[i].y;
-				answer[selectedPoints[i]][0] = Math.round(startX + dx / scale);
-				answer[selectedPoints[i]][1] = Math.round(startY + dy / scale);
+				var dx = e.data.global.x - startPoint.x;
+				var dy = e.data.global.y - startPoint.y;
+				answer[selectedPoints[i]][0] = Math.round(startAnswers[i].x + dx / scale);
+				answer[selectedPoints[i]][1] = Math.round(startAnswers[i].y + dy / scale);
 				drawAnswer();
 			}
 		}
@@ -326,7 +351,7 @@ class Main
 			selectRect.height = e.data.global.y - selectRect.y;
 		
 			selectGraphics.clear();
-			selectGraphics.beginFill(0xCC0000);
+			selectGraphics.lineStyle(2, 0xCC0000);
 			selectGraphics.drawRect(selectRect.x, selectRect.y, selectRect.width, selectRect.height);
 		}
 	}
@@ -353,10 +378,10 @@ class Main
 			if (top    > point[1]) top    = point[1];
 			if (bottom < point[1]) bottom = point[1];
 		}
-		left   -= 3;
-		right  += 3;
-		top    -= 3;
-		bottom += 3;
+		left   -= 12;
+		right  += 12;
+		top    -= 12;
+		bottom += 12;
 		
 		var w = (right - left);
 		var h = (bottom - top);
@@ -395,18 +420,7 @@ class Main
 	
 	static function drawAnswer():Void
 	{
-		var first = true;
 		answerGraphics.clear();
-		answerGraphics.beginFill(0x00CC00);
-		for (point in answer)
-		{
-			var x = (point[0] - left) * scale;
-			var y = (point[1] - top ) * scale;
-			answerGraphics.drawCircle(x, y, 3);
-			
-			first = false;
-		}
-		answerGraphics.endFill();
 		var e = problem.epsilon / 1000000;
 		for (edge in problem.figure.edges)
 		{
@@ -435,7 +449,6 @@ class Main
 				}
 				else 
 				{
-					trace(ad, pd);
 					var rate = (pd / ad).inverseLerp(1, 4).clamp();
 					var color = new RgbColor(
 						0,
@@ -453,5 +466,17 @@ class Main
 			var y = (answer[edge[1]][1] - top ) * scale;
 			answerGraphics.lineTo(x, y);
 		}
+		
+		var first = true;
+		answerGraphics.beginFill(0x00CC00);
+		for (point in answer)
+		{
+			var x = (point[0] - left) * scale;
+			var y = (point[1] - top ) * scale;
+			answerGraphics.drawCircle(x, y, 3);
+			
+			first = false;
+		}
+		answerGraphics.endFill();
 	}
 }
