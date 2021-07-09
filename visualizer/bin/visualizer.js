@@ -84,9 +84,11 @@ Main.start = function() {
 };
 Main.selectProblem = function(e) {
 	Main.readProblem(Main.problemCombo.selectedIndex);
-	haxe_Log.trace(Main.problemCombo.selectedIndex,{ fileName : "src/Main.hx", lineNumber : 116, className : "Main", methodName : "selectProblem"});
 };
 Main.onMouseUp = function() {
+	if(Main.selectedPoint >= 0) {
+		Main.answerText.innerText = JSON.stringify(Main.answer);
+	}
 	Main.selectedPoint = -1;
 	Main.selectGraphics.clear();
 };
@@ -128,7 +130,6 @@ Main.onMouseMove = function(e) {
 		var dy = e.data.global.y - Main.startPoint.y;
 		Main.answer[Main.selectedPoint][0] = Math.round(Main.startX + dx / Main.scale);
 		Main.answer[Main.selectedPoint][1] = Math.round(Main.startY + dy / Main.scale);
-		haxe_Log.trace(Main.selectedPoint,{ fileName : "src/Main.hx", lineNumber : 164, className : "Main", methodName : "onMouseMove", customParams : [dx,dy,Main.scale]});
 		Main.drawAnswer();
 	}
 };
@@ -312,31 +313,6 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
-var haxe_Log = function() { };
-haxe_Log.__name__ = true;
-haxe_Log.formatOutput = function(v,infos) {
-	var str = Std.string(v);
-	if(infos == null) {
-		return str;
-	}
-	var pstr = infos.fileName + ":" + infos.lineNumber;
-	if(infos.customParams != null) {
-		var _g = 0;
-		var _g1 = infos.customParams;
-		while(_g < _g1.length) {
-			var v = _g1[_g];
-			++_g;
-			str += ", " + Std.string(v);
-		}
-	}
-	return pstr + ": " + str;
-};
-haxe_Log.trace = function(v,infos) {
-	var str = haxe_Log.formatOutput(v,infos);
-	if(typeof(console) != "undefined" && console.log != null) {
-		console.log(str);
-	}
-};
 var haxe_ValueException = function(value,previous,native) {
 	haxe_Exception.call(this,String(value),previous,native);
 	this.value = value;

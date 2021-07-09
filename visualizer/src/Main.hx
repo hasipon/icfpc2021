@@ -113,11 +113,15 @@ class Main
 	static function selectProblem(e:Event):Void
 	{
 		readProblem(problemCombo.selectedIndex);
-		trace(problemCombo.selectedIndex);
 	}
 	
 	static function onMouseUp():Void
 	{
+		if (selectedPoint >= 0)
+		{
+			answerText.innerText = Json.stringify(answer);
+		}
+		
 		selectedPoint = -1;
 		selectGraphics.clear();
 	}
@@ -161,7 +165,6 @@ class Main
 			var dy = e.data.global.y - startPoint.y;
 			answer[selectedPoint][0] = Math.round(startX + dx / scale);
 			answer[selectedPoint][1] = Math.round(startY + dy / scale);
-			trace(selectedPoint, dx, dy, scale);
 			drawAnswer();
 		}
 	}
