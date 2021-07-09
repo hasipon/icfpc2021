@@ -73,9 +73,10 @@ Main.onChangeAnswer = function() {
 			Main.answer[i][1] = Math.round(a[i][1]);
 		}
 		Main.drawAnswer();
+		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 96, className : "Main", methodName : "onChangeAnswer"});
+		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 97, className : "Main", methodName : "onChangeAnswer"});
 	}
 };
 Main.fetchProblem = function(index) {
@@ -196,6 +197,10 @@ Main.onMouseUp = function() {
 	Main.selectGraphics.clear();
 };
 Main.outputAnswer = function() {
+	Main.updateScore();
+	Main.answerText.value = JSON.stringify({ vertices : Main.answer});
+};
+Main.updateScore = function() {
 	var dislike = 0.0;
 	var _g = 0;
 	var _g1 = Main.problem.hole;
@@ -210,8 +215,8 @@ Main.outputAnswer = function() {
 		while(_g2 < _g3.length) {
 			var a = _g3[_g2];
 			++_g2;
-			var dx = a[0] - hx;
-			var dy = a[1] - hy;
+			var dx = hx - a[0];
+			var dy = hy - a[1];
 			var value = dx * dx + dy * dy;
 			if(value < min) {
 				min = value;
@@ -220,7 +225,6 @@ Main.outputAnswer = function() {
 		dislike += min;
 	}
 	window.document.getElementById("dislike").textContent = "" + dislike;
-	Main.answerText.value = JSON.stringify({ vertices : Main.answer});
 };
 Main.onMouseDown = function(e) {
 	Main.selectedPoint = -1;
@@ -401,7 +405,7 @@ Main.drawAnswer = function() {
 			}
 			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
-			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 388, className : "Main", methodName : "drawAnswer", customParams : [pd]});
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 392, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
 			var color_r1 = 0;
