@@ -2,7 +2,7 @@ const dotenv = require('dotenv');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
-function main() {
+async function main() {
     console.log(process.cwd());
     // load .env file into process.env
     dotenv.config();
@@ -12,6 +12,7 @@ function main() {
 
     puppeteer.launch({
         headless: true,
+	args: ['--no-sandbox', '--disable-setuid-sandbox'],
     }).then(async browser => {
         const page = await browser.newPage();
         await login(page, email, password);
