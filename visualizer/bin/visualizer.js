@@ -281,6 +281,7 @@ Main.onMouseDown = function(e) {
 		var dy = y - e.data.global.y;
 		var d = dx * dx + dy * dy;
 		if(nearest > d) {
+			Main.selectedPoints.length = 0;
 			Main.selectedPoints.push(i);
 		}
 		++i;
@@ -469,7 +470,7 @@ Main.drawAnswer = function() {
 			}
 			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
-			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 437, className : "Main", methodName : "drawAnswer", customParams : [pd]});
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 438, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
 			var color_r1 = 0;

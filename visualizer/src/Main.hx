@@ -276,6 +276,7 @@ class Main
 			var d = dx * dx + dy * dy;
 			if (nearest > d) 
 			{
+				untyped selectedPoints.length = 0;
 				selectedPoints.push(i);
 			}
 			i += 1;
