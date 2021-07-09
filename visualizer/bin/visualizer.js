@@ -240,14 +240,16 @@ Main.drawAnswer = function() {
 		++_g;
 		var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
 		var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
-		var ad = Math.sqrt(ax * ax + ay * ay);
+		var ad = ax * ax + ay * ay;
 		var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
 		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
-		var pd = Math.sqrt(px * px + py * py);
-		var tmp;
+		var pd = px * px + py * py;
+		var tmp = Main.answerGraphics;
+		var tmp1;
 		if(Math.abs(ad / pd - 1) <= e) {
-			tmp = 52224;
+			tmp1 = 52224;
 		} else if(ad > pd) {
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 274, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value = (ad / pd - 1) / 3;
 			var rate = value <= 0.0 ? 0.0 : 1.0 <= value ? 1.0 : value;
 			var color_r = 0.6 * (1 - rate) + 0.9 * rate;
@@ -271,8 +273,9 @@ Main.drawAnswer = function() {
 			} else if(1.0 <= b) {
 				b = 1.0;
 			}
-			tmp = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 285, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
 			var color_r1 = 0;
@@ -296,9 +299,9 @@ Main.drawAnswer = function() {
 			} else if(1.0 <= b1) {
 				b1 = 1.0;
 			}
-			tmp = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
+			tmp1 = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
 		}
-		Main.answerGraphics.lineStyle(2,tmp);
+		tmp.lineStyle(2,tmp1);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
 		var y = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.moveTo(x,y);
@@ -388,6 +391,31 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
+var haxe_Log = function() { };
+haxe_Log.__name__ = true;
+haxe_Log.formatOutput = function(v,infos) {
+	var str = Std.string(v);
+	if(infos == null) {
+		return str;
+	}
+	var pstr = infos.fileName + ":" + infos.lineNumber;
+	if(infos.customParams != null) {
+		var _g = 0;
+		var _g1 = infos.customParams;
+		while(_g < _g1.length) {
+			var v = _g1[_g];
+			++_g;
+			str += ", " + Std.string(v);
+		}
+	}
+	return pstr + ": " + str;
+};
+haxe_Log.trace = function(v,infos) {
+	var str = haxe_Log.formatOutput(v,infos);
+	if(typeof(console) != "undefined" && console.log != null) {
+		console.log(str);
+	}
+};
 var haxe_ValueException = function(value,previous,native) {
 	haxe_Exception.call(this,String(value),previous,native);
 	this.value = value;

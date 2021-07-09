@@ -258,10 +258,10 @@ class Main
 		{
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
-			var ad = Math.sqrt(ax * ax + ay * ay);
+			var ad = ax * ax + ay * ay;
 			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
 			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = Math.sqrt(px * px + py * py);
+			var pd = px * px + py * py;
 			
 			answerGraphics.lineStyle(
 				2,
@@ -271,6 +271,7 @@ class Main
 				}
 				else if (ad > pd) 
 				{
+					trace(ad, pd);
 					var rate = (ad / pd).inverseLerp(1, 4).clamp();
 					var color = new RgbColor(
 						rate.lerp(0.6, 0.9),
@@ -281,6 +282,7 @@ class Main
 				}
 				else 
 				{
+					trace(ad, pd);
 					var rate = (pd / ad).inverseLerp(1, 4).clamp();
 					var color = new RgbColor(
 						0,
