@@ -90,6 +90,7 @@ class Main
 				answer[i][1] = Math.round(a[i][1]);
 			}
 			drawAnswer();
+			updateScore();
 		}
 		catch(e)
 		{
@@ -218,6 +219,11 @@ class Main
 	
 	static function outputAnswer():Void 
 	{
+		updateScore();
+		answerText.value = Json.stringify({vertices:answer});
+	}
+	static function updateScore():Void
+	{
 		var dislike = 0.0;
 		for (hole in problem.hole)
 		{
@@ -226,16 +232,14 @@ class Main
 			var hy = hole[1];
 			for (a in answer)
 			{
-				var dx = a[0] - hx;
-				var dy = a[1] - hy;
+				var dx = hx - a[0];
+				var dy = hy - a[1];
 				var value = dx * dx + dy * dy;
 				if (value < min) { min = value; }
 			}
 			dislike += min;
 		}
-		
 		Browser.document.getElementById("dislike").textContent = "" + dislike;
-		answerText.value = Json.stringify({vertices:answer});
 	}
 	
 	static function onMouseDown(e:InteractionEvent):Void
