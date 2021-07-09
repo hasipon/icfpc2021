@@ -13,6 +13,8 @@ import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
 import pixi.interaction.InteractionEvent;
+import tweenxcore.color.RgbColor;
+using tweenxcore.Tools;
 
 class Main 
 {
@@ -262,7 +264,30 @@ class Main
 			
 			answerGraphics.lineStyle(
 				1,
-				if (Math.abs(ad - pd) < e) 0x00CC00 else if (ad > pd) 0xCC0000 else 0x0000CC
+				if (Math.abs(ad - pd) < e) 
+				{
+					0x00CC00;
+				}
+				else if (ad > pd) 
+				{
+					var rate = (ad / pd).inverseLerp(1, 4).clamp();
+					var color = new RgbColor(
+						rate.lerp(0.6, 0.9),
+						rate.lerp(0.4, 0.0),
+						0
+					);
+					color.toRgbInt();
+				}
+				else 
+				{
+					var rate = (pd / ad).inverseLerp(1, 4).clamp();
+					var color = new RgbColor(
+						0,
+						rate.lerp(0.4, 0.0),
+						rate.lerp(0.6, 0.9)
+					);
+					color.toRgbInt();
+				}
 			);
 			var x = (answer[edge[0]][0] - left) * scale;
 			var y = (answer[edge[0]][1] - top ) * scale;

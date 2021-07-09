@@ -244,7 +244,61 @@ Main.drawAnswer = function() {
 		var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
 		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 		var pd = Math.sqrt(px * px + py * py);
-		Main.answerGraphics.lineStyle(1,Math.abs(ad - pd) < e ? 52224 : ad > pd ? 13369344 : 204);
+		var tmp;
+		if(Math.abs(ad - pd) < e) {
+			tmp = 52224;
+		} else if(ad > pd) {
+			var value = (ad / pd - 1) / 3;
+			var rate = value <= 0.0 ? 0.0 : 1.0 <= value ? 1.0 : value;
+			var color_r = 0.6 * (1 - rate) + 0.9 * rate;
+			var color_g = 0.4 * (1 - rate) + 0.0 * rate;
+			var color_b = 0;
+			var r = color_r;
+			var g = color_g;
+			var b = color_b;
+			if(r <= 0.0) {
+				r = 0.0;
+			} else if(1.0 <= r) {
+				r = 1.0;
+			}
+			if(g <= 0.0) {
+				g = 0.0;
+			} else if(1.0 <= g) {
+				g = 1.0;
+			}
+			if(b <= 0.0) {
+				b = 0.0;
+			} else if(1.0 <= b) {
+				b = 1.0;
+			}
+			tmp = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+		} else {
+			var value1 = (pd / ad - 1) / 3;
+			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
+			var color_r1 = 0;
+			var color_g1 = 0.4 * (1 - rate1) + 0.0 * rate1;
+			var color_b1 = 0.6 * (1 - rate1) + 0.9 * rate1;
+			var r1 = color_r1;
+			var g1 = color_g1;
+			var b1 = color_b1;
+			if(r1 <= 0.0) {
+				r1 = 0.0;
+			} else if(1.0 <= r1) {
+				r1 = 1.0;
+			}
+			if(g1 <= 0.0) {
+				g1 = 0.0;
+			} else if(1.0 <= g1) {
+				g1 = 1.0;
+			}
+			if(b1 <= 0.0) {
+				b1 = 0.0;
+			} else if(1.0 <= b1) {
+				b1 = 1.0;
+			}
+			tmp = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
+		}
+		Main.answerGraphics.lineStyle(1,tmp);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
 		var y = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.moveTo(x,y);
@@ -280,6 +334,23 @@ var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
+};
+var StringTools = function() { };
+StringTools.__name__ = true;
+StringTools.hex = function(n,digits) {
+	var s = "";
+	var hexChars = "0123456789ABCDEF";
+	while(true) {
+		s = hexChars.charAt(n & 15) + s;
+		n >>>= 4;
+		if(!(n > 0)) {
+			break;
+		}
+	}
+	if(digits != null) {
+		while(s.length < digits) s = "0" + s;
+	}
+	return s;
 };
 var haxe_Exception = function(message,previous,native) {
 	Error.call(this,message);
@@ -811,6 +882,1297 @@ js_Browser.createXMLHttpRequest = function() {
 	}
 	throw haxe_Exception.thrown("Unable to create XMLHttpRequest object.");
 };
+var tweenxcore_Easing = function() { };
+tweenxcore_Easing.__name__ = true;
+tweenxcore_Easing.linear = function(t) {
+	return t;
+};
+tweenxcore_Easing.sineIn = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		return 1 - Math.cos(t * 1.5707963267948966);
+	}
+};
+tweenxcore_Easing.sineOut = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		return Math.sin(t * 1.5707963267948966);
+	}
+};
+tweenxcore_Easing.sineInOut = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		return -0.5 * (Math.cos(3.1415926535897932384626433832795 * t) - 1);
+	}
+};
+tweenxcore_Easing.sineOutIn = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else if(t < 0.5) {
+		return 0.5 * Math.sin(t * 2 * 1.5707963267948966);
+	} else {
+		return -0.5 * Math.cos((t * 2 - 1) * 1.5707963267948966) + 1;
+	}
+};
+tweenxcore_Easing.quadIn = function(t) {
+	return t * t;
+};
+tweenxcore_Easing.quadOut = function(t) {
+	return -t * (t - 2);
+};
+tweenxcore_Easing.quadInOut = function(t) {
+	if(t < 0.5) {
+		return 2 * t * t;
+	} else {
+		return -2 * (--t * t) + 1;
+	}
+};
+tweenxcore_Easing.quadOutIn = function(t) {
+	if(t < 0.5) {
+		return -0.5 * (t *= 2) * (t - 2);
+	} else {
+		t = t * 2 - 1;
+		return 0.5 * t * t + 0.5;
+	}
+};
+tweenxcore_Easing.cubicIn = function(t) {
+	return t * t * t;
+};
+tweenxcore_Easing.cubicOut = function(t) {
+	return --t * t * t + 1;
+};
+tweenxcore_Easing.cubicInOut = function(t) {
+	if((t *= 2) < 1) {
+		return 0.5 * t * t * t;
+	} else {
+		return 0.5 * ((t -= 2) * t * t + 2);
+	}
+};
+tweenxcore_Easing.cubicOutIn = function(t) {
+	t = t * 2 - 1;
+	return 0.5 * (t * t * t + 1);
+};
+tweenxcore_Easing.quartIn = function(t) {
+	return (t *= t) * t;
+};
+tweenxcore_Easing.quartOut = function(t) {
+	t = --t * t;
+	return 1 - t * t;
+};
+tweenxcore_Easing.quartInOut = function(t) {
+	if((t *= 2) < 1) {
+		return 0.5 * (t *= t) * t;
+	} else {
+		t = (t -= 2) * t;
+		return -0.5 * (t * t - 2);
+	}
+};
+tweenxcore_Easing.quartOutIn = function(t) {
+	if(t < 0.5) {
+		t = t * 2 - 1;
+		return -0.5 * (t *= t) * t + 0.5;
+	} else {
+		t = t * 2 - 1;
+		return 0.5 * (t *= t) * t + 0.5;
+	}
+};
+tweenxcore_Easing.quintIn = function(t) {
+	return t * (t *= t) * t;
+};
+tweenxcore_Easing.quintOut = function(t) {
+	return --t * (t *= t) * t + 1;
+};
+tweenxcore_Easing.quintInOut = function(t) {
+	if((t *= 2) < 1) {
+		return 0.5 * t * (t *= t) * t;
+	} else {
+		return 0.5 * (t -= 2) * (t *= t) * t + 1;
+	}
+};
+tweenxcore_Easing.quintOutIn = function(t) {
+	t = t * 2 - 1;
+	return 0.5 * (t * (t *= t) * t + 1);
+};
+tweenxcore_Easing.expoIn = function(t) {
+	if(t == 0) {
+		return 0;
+	} else {
+		return Math.exp(6.931471805599453 * (t - 1));
+	}
+};
+tweenxcore_Easing.expoOut = function(t) {
+	if(t == 1) {
+		return 1;
+	} else {
+		return 1 - Math.exp(-6.9314718055994531 * t);
+	}
+};
+tweenxcore_Easing.expoInOut = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else if((t *= 2) < 1) {
+		return 0.5 * Math.exp(6.931471805599453 * (t - 1));
+	} else {
+		return 0.5 * (2 - Math.exp(-6.9314718055994531 * (t - 1)));
+	}
+};
+tweenxcore_Easing.expoOutIn = function(t) {
+	if(t < 0.5) {
+		return 0.5 * (1 - Math.exp(-13.862943611198906 * t));
+	} else if(t == 0.5) {
+		return 0.5;
+	} else {
+		return 0.5 * (Math.exp(13.862943611198906 * (t - 1)) + 1);
+	}
+};
+tweenxcore_Easing.circIn = function(t) {
+	if(t < -1 || 1 < t) {
+		return 0;
+	} else {
+		return 1 - Math.sqrt(1 - t * t);
+	}
+};
+tweenxcore_Easing.circOut = function(t) {
+	if(t < 0 || 2 < t) {
+		return 0;
+	} else {
+		return Math.sqrt(t * (2 - t));
+	}
+};
+tweenxcore_Easing.circInOut = function(t) {
+	if(t < -0.5 || 1.5 < t) {
+		return 0.5;
+	} else if((t *= 2) < 1) {
+		return -0.5 * (Math.sqrt(1 - t * t) - 1);
+	} else {
+		return 0.5 * (Math.sqrt(1 - (t -= 2) * t) + 1);
+	}
+};
+tweenxcore_Easing.circOutIn = function(t) {
+	if(t < 0) {
+		return 0;
+	} else if(1 < t) {
+		return 1;
+	} else if(t < 0.5) {
+		t = t * 2 - 1;
+		return 0.5 * Math.sqrt(1 - t * t);
+	} else {
+		t = t * 2 - 1;
+		return -0.5 * (Math.sqrt(1 - t * t) - 1 - 1);
+	}
+};
+tweenxcore_Easing.bounceIn = function(t) {
+	t = 1 - t;
+	if(t < 0.36363636363636365) {
+		return 1 - 7.5625 * t * t;
+	} else if(t < 0.72727272727272729) {
+		return 1 - (7.5625 * (t -= 0.54545454545454541) * t + 0.75);
+	} else if(t < 0.90909090909090906) {
+		return 1 - (7.5625 * (t -= 0.81818181818181823) * t + 0.9375);
+	} else {
+		return 1 - (7.5625 * (t -= 0.95454545454545459) * t + 0.984375);
+	}
+};
+tweenxcore_Easing.bounceOut = function(t) {
+	if(t < 0.36363636363636365) {
+		return 7.5625 * t * t;
+	} else if(t < 0.72727272727272729) {
+		return 7.5625 * (t -= 0.54545454545454541) * t + 0.75;
+	} else if(t < 0.90909090909090906) {
+		return 7.5625 * (t -= 0.81818181818181823) * t + 0.9375;
+	} else {
+		return 7.5625 * (t -= 0.95454545454545459) * t + 0.984375;
+	}
+};
+tweenxcore_Easing.bounceInOut = function(t) {
+	if(t < 0.5) {
+		t = 1 - t * 2;
+		if(t < 0.36363636363636365) {
+			return (1 - 7.5625 * t * t) * 0.5;
+		} else if(t < 0.72727272727272729) {
+			return (1 - (7.5625 * (t -= 0.54545454545454541) * t + 0.75)) * 0.5;
+		} else if(t < 0.90909090909090906) {
+			return (1 - (7.5625 * (t -= 0.81818181818181823) * t + 0.9375)) * 0.5;
+		} else {
+			return (1 - (7.5625 * (t -= 0.95454545454545459) * t + 0.984375)) * 0.5;
+		}
+	} else {
+		t = t * 2 - 1;
+		if(t < 0.36363636363636365) {
+			return 7.5625 * t * t * 0.5 + 0.5;
+		} else if(t < 0.72727272727272729) {
+			return (7.5625 * (t -= 0.54545454545454541) * t + 0.75) * 0.5 + 0.5;
+		} else if(t < 0.90909090909090906) {
+			return (7.5625 * (t -= 0.81818181818181823) * t + 0.9375) * 0.5 + 0.5;
+		} else {
+			return (7.5625 * (t -= 0.95454545454545459) * t + 0.984375) * 0.5 + 0.5;
+		}
+	}
+};
+tweenxcore_Easing.bounceOutIn = function(t) {
+	if(t < 0.5) {
+		if((t *= 2) < 0.36363636363636365) {
+			return 0.5 * (7.5625 * t * t);
+		} else if(t < 0.72727272727272729) {
+			return 0.5 * (7.5625 * (t -= 0.54545454545454541) * t + 0.75);
+		} else if(t < 0.90909090909090906) {
+			return 0.5 * (7.5625 * (t -= 0.81818181818181823) * t + 0.9375);
+		} else {
+			return 0.5 * (7.5625 * (t -= 0.95454545454545459) * t + 0.984375);
+		}
+	} else {
+		t = 1 - (t * 2 - 1);
+		if(t < 0.36363636363636365) {
+			return 0.5 - 0.5 * (7.5625 * t * t) + 0.5;
+		} else if(t < 0.72727272727272729) {
+			return 0.5 - 0.5 * (7.5625 * (t -= 0.54545454545454541) * t + 0.75) + 0.5;
+		} else if(t < 0.90909090909090906) {
+			return 0.5 - 0.5 * (7.5625 * (t -= 0.81818181818181823) * t + 0.9375) + 0.5;
+		} else {
+			return 0.5 - 0.5 * (7.5625 * (t -= 0.95454545454545459) * t + 0.984375) + 0.5;
+		}
+	}
+};
+tweenxcore_Easing.backIn = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		return t * t * (2.70158 * t - 1.70158);
+	}
+};
+tweenxcore_Easing.backOut = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		return --t * t * (2.70158 * t + 1.70158) + 1;
+	}
+};
+tweenxcore_Easing.backInOut = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else if((t *= 2) < 1) {
+		return 0.5 * (t * t * (3.5949095 * t - 2.5949095));
+	} else {
+		return 0.5 * ((t -= 2) * t * (3.5949095 * t + 2.5949095) + 2);
+	}
+};
+tweenxcore_Easing.backOutIn = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else if(t < 0.5) {
+		t = t * 2 - 1;
+		return 0.5 * (t * t * (2.70158 * t + 1.70158) + 1);
+	} else {
+		t = t * 2 - 1;
+		return 0.5 * t * t * (2.70158 * t - 1.70158) + 0.5;
+	}
+};
+tweenxcore_Easing.elasticIn = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		var s = 7.5e-005;
+		return -(Math.exp(6.931471805599453 * --t) * Math.sin((t * 0.001 - s) * 6.2831853071795862 / 0.0003));
+	}
+};
+tweenxcore_Easing.elasticOut = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		var s = 7.5e-005;
+		return Math.exp(-6.9314718055994531 * t) * Math.sin((t * 0.001 - s) * 6.2831853071795862 / 0.0003) + 1;
+	}
+};
+tweenxcore_Easing.elasticInOut = function(t) {
+	if(t == 0) {
+		return 0;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		var s = 7.5e-005;
+		if((t *= 2) < 1) {
+			return -0.5 * (Math.exp(6.931471805599453 * --t) * Math.sin((t * 0.001 - s) * 6.2831853071795862 / 0.0003));
+		} else {
+			return Math.exp(-6.9314718055994531 * --t) * Math.sin((t * 0.001 - s) * 6.2831853071795862 / 0.0003) * 0.5 + 1;
+		}
+	}
+};
+tweenxcore_Easing.elasticOutIn = function(t) {
+	if(t < 0.5) {
+		if((t *= 2) == 0) {
+			return 0;
+		} else {
+			var s = 7.5e-005;
+			return 0.5 * Math.exp(-6.9314718055994531 * t) * Math.sin((t * 0.001 - s) * 6.2831853071795862 / 0.0003) + 0.5;
+		}
+	} else if(t == 0.5) {
+		return 0.5;
+	} else if(t == 1) {
+		return 1;
+	} else {
+		t = t * 2 - 1;
+		var s = 7.5e-005;
+		return -(0.5 * Math.exp(6.931471805599453 * --t) * Math.sin((t * 0.001 - s) * 6.2831853071795862 / 0.0003)) + 0.5;
+	}
+};
+tweenxcore_Easing.warpOut = function(t) {
+	if(t <= 0) {
+		return 0;
+	} else {
+		return 1;
+	}
+};
+tweenxcore_Easing.warpIn = function(t) {
+	if(t < 1) {
+		return 0;
+	} else {
+		return 1;
+	}
+};
+tweenxcore_Easing.warpInOut = function(t) {
+	if(t < 0.5) {
+		return 0;
+	} else {
+		return 1;
+	}
+};
+tweenxcore_Easing.warpOutIn = function(t) {
+	if(t <= 0) {
+		return 0;
+	} else if(t < 1) {
+		return 0.5;
+	} else {
+		return 1;
+	}
+};
+var tweenxcore_FloatTools = function() { };
+tweenxcore_FloatTools.__name__ = true;
+tweenxcore_FloatTools.revert = function(rate) {
+	return 1 - rate;
+};
+tweenxcore_FloatTools.clamp = function(value,min,max) {
+	if(max == null) {
+		max = 1.0;
+	}
+	if(min == null) {
+		min = 0.0;
+	}
+	if(value <= min) {
+		return min;
+	} else if(max <= value) {
+		return max;
+	} else {
+		return value;
+	}
+};
+tweenxcore_FloatTools.lerp = function(rate,from,to) {
+	return from * (1 - rate) + to * rate;
+};
+tweenxcore_FloatTools.inverseLerp = function(value,from,to) {
+	return (value - from) / (to - from);
+};
+tweenxcore_FloatTools.repeat = function(value,from,to) {
+	if(to == null) {
+		to = 1.0;
+	}
+	if(from == null) {
+		from = 0.0;
+	}
+	var p = (value - from) / (to - from);
+	return p - Math.floor(p);
+};
+tweenxcore_FloatTools.shake = function(rate,center,randomFunc) {
+	if(center == null) {
+		center = 0.0;
+	}
+	if(randomFunc == null) {
+		randomFunc = Math.random;
+	}
+	var rate1 = randomFunc();
+	return center + (-rate * (1 - rate1) + rate * rate1);
+};
+tweenxcore_FloatTools.spread = function(rate,scale) {
+	return -scale * (1 - rate) + scale * rate;
+};
+tweenxcore_FloatTools.sinByRate = function(rate) {
+	return Math.sin(rate * 2 * Math.PI);
+};
+tweenxcore_FloatTools.cosByRate = function(rate) {
+	return Math.cos(rate * 2 * Math.PI);
+};
+tweenxcore_FloatTools.yoyo = function(rate,easing) {
+	return easing((rate < 0.5 ? rate : 1 - rate) * 2);
+};
+tweenxcore_FloatTools.zigzag = function(rate,easing) {
+	if(rate < 0.5) {
+		return easing(rate * 2);
+	} else {
+		return 1 - easing((rate - 0.5) * 2);
+	}
+};
+tweenxcore_FloatTools.mixEasing = function(rate,easing1,easing2,easing2Strength) {
+	if(easing2Strength == null) {
+		easing2Strength = 0.5;
+	}
+	return easing1(rate) * (1 - easing2Strength) + easing2(rate) * easing2Strength;
+};
+tweenxcore_FloatTools.crossfadeEasing = function(rate,easing1,easing2,easing2StrengthEasing,easing2StrengthStart,easing2StrengthEnd) {
+	if(easing2StrengthEnd == null) {
+		easing2StrengthEnd = 1;
+	}
+	if(easing2StrengthStart == null) {
+		easing2StrengthStart = 0;
+	}
+	var rate1 = easing2StrengthEasing(rate);
+	var rate2 = easing2StrengthStart * (1 - rate1) + easing2StrengthEnd * rate1;
+	return easing1(rate) * (1 - rate2) + easing2(rate) * rate2;
+};
+tweenxcore_FloatTools.connectEasing = function(time,easing1,easing2,switchTime,switchValue) {
+	if(switchValue == null) {
+		switchValue = 0.5;
+	}
+	if(switchTime == null) {
+		switchTime = 0.5;
+	}
+	if(time < switchTime) {
+		var rate = easing1(time / switchTime);
+		return 0 * (1 - rate) + switchValue * rate;
+	} else {
+		var rate = easing2((time - switchTime) / (1 - switchTime));
+		return switchValue * (1 - rate) + rate;
+	}
+};
+tweenxcore_FloatTools.oneTwoEasing = function(time,easingOne,easingTwo,switchTime) {
+	if(switchTime == null) {
+		switchTime = 0.5;
+	}
+	if(time < switchTime) {
+		return easingOne(time / switchTime);
+	} else {
+		return easingTwo((time - switchTime) / (1 - switchTime));
+	}
+};
+tweenxcore_FloatTools.binarySearch = function(sortedValues,value,boundaryMode) {
+	if(boundaryMode == null) {
+		boundaryMode = 0;
+	}
+	var min = 0;
+	var max = sortedValues.length;
+	if(boundaryMode == 0) {
+		while(true) {
+			var next = ((max - min) / 2 | 0) + min;
+			var dv = sortedValues[next];
+			if(dv <= value) {
+				min = next + 1;
+			} else {
+				max = next;
+			}
+			if(min == max) {
+				break;
+			}
+		}
+	} else {
+		while(true) {
+			var next = ((max - min) / 2 | 0) + min;
+			var dv = sortedValues[next];
+			if(dv < value) {
+				min = next + 1;
+			} else {
+				max = next;
+			}
+			if(min == max) {
+				break;
+			}
+		}
+	}
+	return min;
+};
+tweenxcore_FloatTools.polyline = function(rate,values) {
+	if(values.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else {
+		var max = values.length - 1;
+		var scaledRate = rate * max;
+		var min = 0;
+		var max1 = max - 1;
+		if(max1 == null) {
+			max1 = 1.0;
+		}
+		if(min == null) {
+			min = 0.0;
+		}
+		var index = Math.floor(scaledRate <= min ? min : max1 <= scaledRate ? max1 : scaledRate);
+		var innerRate = scaledRate - index;
+		return values[index] * (1 - innerRate) + values[index + 1] * innerRate;
+	}
+};
+tweenxcore_FloatTools.bezier2 = function(rate,from,control,to) {
+	return (from * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + to * rate) * rate;
+};
+tweenxcore_FloatTools.bezier3 = function(rate,from,control1,control2,to) {
+	var control = control1 * (1 - rate) + control2 * rate;
+	return ((from * (1 - rate) + control1 * rate) * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + (control2 * (1 - rate) + to * rate) * rate) * rate;
+};
+tweenxcore_FloatTools.bezier = function(rate,values) {
+	if(values.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else if(values.length == 2) {
+		return values[0] * (1 - rate) + values[1] * rate;
+	} else if(values.length == 3) {
+		var control = values[1];
+		return (values[0] * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + values[2] * rate) * rate;
+	} else {
+		return tweenxcore_FloatTools._bezier(rate,values);
+	}
+};
+tweenxcore_FloatTools._bezier = function(rate,values) {
+	if(values.length == 4) {
+		var control1 = values[1];
+		var control2 = values[2];
+		var control = control1 * (1 - rate) + control2 * rate;
+		return ((values[0] * (1 - rate) + control1 * rate) * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + (control2 * (1 - rate) + values[3] * rate) * rate) * rate;
+	}
+	var _g = [];
+	var _g1 = 0;
+	var _g2 = values.length - 1;
+	while(_g1 < _g2) {
+		var i = _g1++;
+		_g.push(values[i] * (1 - rate) + values[i + 1] * rate);
+	}
+	return tweenxcore_FloatTools._bezier(rate,_g);
+};
+tweenxcore_FloatTools.uniformQuadraticBSpline = function(rate,values) {
+	if(values.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else if(values.length == 2) {
+		return values[0] * (1 - rate) + values[1] * rate;
+	} else {
+		var max = values.length - 2;
+		var scaledRate = rate * max;
+		var min = 0;
+		var max1 = max - 1;
+		if(max1 == null) {
+			max1 = 1.0;
+		}
+		if(min == null) {
+			min = 0.0;
+		}
+		var index = Math.floor(scaledRate <= min ? min : max1 <= scaledRate ? max1 : scaledRate);
+		var innerRate = scaledRate - index;
+		var p0 = values[index];
+		var p1 = values[index + 1];
+		var p2 = values[index + 2];
+		return innerRate * innerRate * (p0 / 2 - p1 + p2 / 2) + innerRate * (-p0 + p1) + p0 / 2 + p1 / 2;
+	}
+};
+tweenxcore_FloatTools.frameToSecond = function(frame,fps) {
+	return frame / fps;
+};
+tweenxcore_FloatTools.secondToFrame = function(second,fps) {
+	return second * fps;
+};
+tweenxcore_FloatTools.degreeToRate = function(degree) {
+	return degree / 360;
+};
+tweenxcore_FloatTools.rateToDegree = function(rate) {
+	return rate * 360;
+};
+tweenxcore_FloatTools.radianToRate = function(radian) {
+	return radian / (2 * Math.PI);
+};
+tweenxcore_FloatTools.rateToRadian = function(rate) {
+	return rate * 2 * Math.PI;
+};
+tweenxcore_FloatTools.millisecondToBeat = function(millisecond,bpm) {
+	return millisecond * bpm / 60000;
+};
+tweenxcore_FloatTools.beatToMillisecond = function(beat,bpm) {
+	return beat * 60000 / bpm;
+};
+var tweenxcore_PointTools = function() { };
+tweenxcore_PointTools.__name__ = true;
+tweenxcore_PointTools.polyline = function(outputPoint,rate,points) {
+	var xs = [];
+	var ys = [];
+	var p = $getIterator(points);
+	while(p.hasNext()) {
+		var p1 = p.next();
+		xs.push(p1.x);
+		ys.push(p1.y);
+	}
+	var tmp;
+	if(xs.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else {
+		var max = xs.length - 1;
+		var scaledRate = rate * max;
+		var min = 0;
+		var max1 = max - 1;
+		if(max1 == null) {
+			max1 = 1.0;
+		}
+		if(min == null) {
+			min = 0.0;
+		}
+		var index = Math.floor(scaledRate <= min ? min : max1 <= scaledRate ? max1 : scaledRate);
+		var innerRate = scaledRate - index;
+		tmp = xs[index] * (1 - innerRate) + xs[index + 1] * innerRate;
+	}
+	outputPoint.x = tmp;
+	var tmp;
+	if(ys.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else {
+		var max = ys.length - 1;
+		var scaledRate = rate * max;
+		var min = 0;
+		var max1 = max - 1;
+		if(max1 == null) {
+			max1 = 1.0;
+		}
+		if(min == null) {
+			min = 0.0;
+		}
+		var index = Math.floor(scaledRate <= min ? min : max1 <= scaledRate ? max1 : scaledRate);
+		var innerRate = scaledRate - index;
+		tmp = ys[index] * (1 - innerRate) + ys[index + 1] * innerRate;
+	}
+	outputPoint.y = tmp;
+};
+tweenxcore_PointTools.bezier2 = function(outputPoint,rate,from,control,to) {
+	var control1 = control.x;
+	outputPoint.x = (from.x * (1 - rate) + control1 * rate) * (1 - rate) + (control1 * (1 - rate) + from.x * rate) * rate;
+	var control1 = control.y;
+	outputPoint.y = (from.y * (1 - rate) + control1 * rate) * (1 - rate) + (control1 * (1 - rate) + from.y * rate) * rate;
+};
+tweenxcore_PointTools.bezier3 = function(outputPoint,rate,from,control1,control2,to) {
+	var control11 = control1.x;
+	var control21 = control2.x;
+	var control = control11 * (1 - rate) + control21 * rate;
+	outputPoint.x = ((from.x * (1 - rate) + control11 * rate) * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + (control21 * (1 - rate) + from.x * rate) * rate) * rate;
+	var control11 = control1.y;
+	var control21 = control2.y;
+	var control = control11 * (1 - rate) + control21 * rate;
+	outputPoint.y = ((from.y * (1 - rate) + control11 * rate) * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + (control21 * (1 - rate) + from.y * rate) * rate) * rate;
+};
+tweenxcore_PointTools.bezier = function(outputPoint,rate,points) {
+	var xs = [];
+	var ys = [];
+	var p = $getIterator(points);
+	while(p.hasNext()) {
+		var p1 = p.next();
+		xs.push(p1.x);
+		ys.push(p1.y);
+	}
+	var tmp;
+	if(xs.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else if(xs.length == 2) {
+		tmp = xs[0] * (1 - rate) + xs[1] * rate;
+	} else if(xs.length == 3) {
+		var control = xs[1];
+		tmp = (xs[0] * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + xs[2] * rate) * rate;
+	} else {
+		tmp = tweenxcore_FloatTools._bezier(rate,xs);
+	}
+	outputPoint.x = tmp;
+	var tmp;
+	if(ys.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else if(ys.length == 2) {
+		tmp = ys[0] * (1 - rate) + ys[1] * rate;
+	} else if(ys.length == 3) {
+		var control = ys[1];
+		tmp = (ys[0] * (1 - rate) + control * rate) * (1 - rate) + (control * (1 - rate) + ys[2] * rate) * rate;
+	} else {
+		tmp = tweenxcore_FloatTools._bezier(rate,ys);
+	}
+	outputPoint.y = tmp;
+};
+tweenxcore_PointTools.uniformQuadraticBSpline = function(outputPoint,rate,points) {
+	var xs = [];
+	var ys = [];
+	var p = $getIterator(points);
+	while(p.hasNext()) {
+		var p1 = p.next();
+		xs.push(p1.x);
+		ys.push(p1.y);
+	}
+	var tmp;
+	if(xs.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else if(xs.length == 2) {
+		tmp = xs[0] * (1 - rate) + xs[1] * rate;
+	} else {
+		var max = xs.length - 2;
+		var scaledRate = rate * max;
+		var min = 0;
+		var max1 = max - 1;
+		if(max1 == null) {
+			max1 = 1.0;
+		}
+		if(min == null) {
+			min = 0.0;
+		}
+		var index = Math.floor(scaledRate <= min ? min : max1 <= scaledRate ? max1 : scaledRate);
+		var innerRate = scaledRate - index;
+		var p0 = xs[index];
+		var p1 = xs[index + 1];
+		var p2 = xs[index + 2];
+		tmp = innerRate * innerRate * (p0 / 2 - p1 + p2 / 2) + innerRate * (-p0 + p1) + p0 / 2 + p1 / 2;
+	}
+	outputPoint.x = tmp;
+	var tmp;
+	if(ys.length < 2) {
+		throw haxe_Exception.thrown("points length must be more than 2");
+	} else if(ys.length == 2) {
+		tmp = ys[0] * (1 - rate) + ys[1] * rate;
+	} else {
+		var max = ys.length - 2;
+		var scaledRate = rate * max;
+		var min = 0;
+		var max1 = max - 1;
+		if(max1 == null) {
+			max1 = 1.0;
+		}
+		if(min == null) {
+			min = 0.0;
+		}
+		var index = Math.floor(scaledRate <= min ? min : max1 <= scaledRate ? max1 : scaledRate);
+		var innerRate = scaledRate - index;
+		var p0 = ys[index];
+		var p1 = ys[index + 1];
+		var p2 = ys[index + 2];
+		tmp = innerRate * innerRate * (p0 / 2 - p1 + p2 / 2) + innerRate * (-p0 + p1) + p0 / 2 + p1 / 2;
+	}
+	outputPoint.y = tmp;
+};
+var tweenxcore_MatrixTools = function() { };
+tweenxcore_MatrixTools.__name__ = true;
+tweenxcore_MatrixTools.createSimilarityTransform = function(outputMatrix,fromX,fromY,toX,toY) {
+	var dx = toX - fromX;
+	var dy = toY - fromY;
+	var rot = Math.atan2(dy,dx);
+	var d = Math.sqrt(dx * dx + dy * dy);
+	outputMatrix.a = d * Math.cos(rot);
+	outputMatrix.b = d * Math.sin(rot);
+	outputMatrix.c = -d * Math.sin(rot);
+	outputMatrix.d = d * Math.cos(rot);
+	outputMatrix.tx = fromX;
+	outputMatrix.ty = fromY;
+};
+var tweenxcore_color_IColor = function() { };
+tweenxcore_color_IColor.__name__ = true;
+tweenxcore_color_IColor.__isInterface__ = true;
+tweenxcore_color_IColor.prototype = {
+	__class__: tweenxcore_color_IColor
+};
+var tweenxcore_color_HsvColor = function(hue,saturation,value) {
+	this.h = hue;
+	this.s = saturation;
+	this.v = value;
+};
+tweenxcore_color_HsvColor.__name__ = true;
+tweenxcore_color_HsvColor.__interfaces__ = [tweenxcore_color_IColor];
+tweenxcore_color_HsvColor.hsvToRgbInt = function(h,s,v) {
+	h = (h - Math.floor(h)) * 6;
+	var hi = Math.floor(h);
+	if(s <= 0.0) {
+		s = 0.0;
+	} else if(1.0 <= s) {
+		s = 1.0;
+	}
+	if(v <= 0.0) {
+		v = 0.0;
+	} else if(1.0 <= v) {
+		v = 1.0;
+	}
+	var m = v * (1 - s);
+	var f = h - hi;
+	var r = 0.0;
+	var g = 0.0;
+	var b = 0.0;
+	switch(hi) {
+	case 0:
+		r = v;
+		g = v * (1 - s * (1 - f));
+		b = m;
+		break;
+	case 1:
+		r = v * (1 - s * f);
+		g = v;
+		b = m;
+		break;
+	case 2:
+		r = m;
+		g = v;
+		b = v * (1 - s * (1 - f));
+		break;
+	case 3:
+		r = m;
+		g = v * (1 - s * f);
+		b = v;
+		break;
+	case 4:
+		r = v * (1 - s * (1 - f));
+		g = m;
+		b = v;
+		break;
+	case 5:
+		r = v;
+		g = m;
+		b = v * (1 - s * f);
+		break;
+	}
+	return (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+};
+tweenxcore_color_HsvColor.of = function(color,hueIndex) {
+	if(hueIndex == null) {
+		hueIndex = 0;
+	}
+	var r = (color >> 16 & 255) / 255;
+	var g = (color >> 8 & 255) / 255;
+	var b = (color & 255) / 255;
+	return tweenxcore_color_HsvColor.fromRgb(r,g,b,hueIndex);
+};
+tweenxcore_color_HsvColor.fromRgb = function(r,g,b,hueIndex) {
+	if(hueIndex == null) {
+		hueIndex = 0;
+	}
+	var max;
+	var min;
+	var diff;
+	var h;
+	if(r < g) {
+		if(g < b) {
+			max = b;
+			min = r;
+			diff = max - min;
+			h = (4 + (r - g) / diff) / 6;
+		} else {
+			max = g;
+			min = r < b ? r : b;
+			diff = max - min;
+			h = (2 + (b - r) / diff) / 6;
+		}
+	} else if(r < b) {
+		max = b;
+		min = g;
+		diff = max - min;
+		h = (4 + (r - g) / diff) / 6;
+	} else {
+		max = r;
+		min = g < b ? g : b;
+		diff = max - min;
+		h = (g - b) / diff / 6;
+	}
+	if(h < 0) {
+		++h;
+	}
+	var s = diff / max;
+	if(isNaN(h)) {
+		h = 0;
+	}
+	if(isNaN(s)) {
+		s = 0;
+	}
+	return new tweenxcore_color_HsvColor(h + hueIndex,s,max);
+};
+tweenxcore_color_HsvColor.prototype = {
+	getRed: function() {
+		return tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v).r;
+	}
+	,getGreen: function() {
+		return tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v).g;
+	}
+	,getBlue: function() {
+		return tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v).b;
+	}
+	,getHue: function() {
+		return this.h;
+	}
+	,getSaturation: function() {
+		return this.s;
+	}
+	,getBrightness: function() {
+		return this.v;
+	}
+	,toRgb: function() {
+		return tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v);
+	}
+	,toHsv: function() {
+		return new tweenxcore_color_HsvColor(this.h,this.s,this.v);
+	}
+	,toHsvWithAlpha: function(alpha) {
+		return new tweenxcore_color_AhsvColor(alpha,this.h,this.s,this.v);
+	}
+	,toRgbWithAlpha: function(alpha) {
+		var _this = tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v);
+		return new tweenxcore_color_ArgbColor(alpha,_this.r,_this.g,_this.b);
+	}
+	,toRgbInt: function() {
+		return tweenxcore_color_HsvColor.hsvToRgbInt(this.h,this.s,this.v);
+	}
+	,toRgbHexString: function() {
+		return StringTools.hex(tweenxcore_color_HsvColor.hsvToRgbInt(this.h,this.s,this.v),6);
+	}
+	,toRgbCssString: function() {
+		var _this = tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v);
+		return "rgb(" + (_this.r * 255 | 0) + "," + (_this.g * 255 | 0) + "," + (_this.b * 255 | 0) + ")";
+	}
+	,__class__: tweenxcore_color_HsvColor
+};
+var tweenxcore_color_ITransparentColor = function() { };
+tweenxcore_color_ITransparentColor.__name__ = true;
+tweenxcore_color_ITransparentColor.__isInterface__ = true;
+tweenxcore_color_ITransparentColor.__interfaces__ = [tweenxcore_color_IColor];
+tweenxcore_color_ITransparentColor.prototype = {
+	__class__: tweenxcore_color_ITransparentColor
+};
+var tweenxcore_color_AhsvColor = function(alpha,hue,saturation,value) {
+	this.a = alpha;
+	tweenxcore_color_HsvColor.call(this,hue,saturation,value);
+};
+tweenxcore_color_AhsvColor.__name__ = true;
+tweenxcore_color_AhsvColor.__interfaces__ = [tweenxcore_color_ITransparentColor];
+tweenxcore_color_AhsvColor.ahsvToArgbInt = function(a,h,s,v) {
+	return ((a <= 0.0 ? 0.0 : 1.0 <= a ? 1.0 : a) * 255 | 0) << 24 | tweenxcore_color_HsvColor.hsvToRgbInt(h,s,v);
+};
+tweenxcore_color_AhsvColor.of = function(color,hueIndex) {
+	if(hueIndex == null) {
+		hueIndex = 0;
+	}
+	var a = (color >>> 24 & 255) / 255;
+	var color1 = color & 16777215;
+	var hueIndex1 = hueIndex;
+	if(hueIndex1 == null) {
+		hueIndex1 = 0;
+	}
+	var r = (color1 >> 16 & 255) / 255;
+	var g = (color1 >> 8 & 255) / 255;
+	var b = (color1 & 255) / 255;
+	var _this = tweenxcore_color_HsvColor.fromRgb(r,g,b,hueIndex1);
+	return new tweenxcore_color_AhsvColor(a,_this.h,_this.s,_this.v);
+};
+tweenxcore_color_AhsvColor.fromArgb = function(a,r,g,b,hueIndex) {
+	if(hueIndex == null) {
+		hueIndex = 0;
+	}
+	var _this = tweenxcore_color_HsvColor.fromRgb(r,g,b,hueIndex);
+	return new tweenxcore_color_AhsvColor(a,_this.h,_this.s,_this.v);
+};
+tweenxcore_color_AhsvColor.__super__ = tweenxcore_color_HsvColor;
+tweenxcore_color_AhsvColor.prototype = $extend(tweenxcore_color_HsvColor.prototype,{
+	getAlpha: function() {
+		return this.a;
+	}
+	,toArgb: function() {
+		var a = this.a;
+		var _this = tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v);
+		return new tweenxcore_color_ArgbColor(a,_this.r,_this.g,_this.b);
+	}
+	,toAhsv: function() {
+		return new tweenxcore_color_AhsvColor(this.a,this.h,this.s,this.v);
+	}
+	,toArgbInt: function() {
+		var a = this.a;
+		return ((a <= 0.0 ? 0.0 : 1.0 <= a ? 1.0 : a) * 255 | 0) << 24 | tweenxcore_color_HsvColor.hsvToRgbInt(this.h,this.s,this.v);
+	}
+	,toArgbHexString: function() {
+		var a = this.a;
+		return StringTools.hex(((a <= 0.0 ? 0.0 : 1.0 <= a ? 1.0 : a) * 255 | 0) << 24 | tweenxcore_color_HsvColor.hsvToRgbInt(this.h,this.s,this.v),8);
+	}
+	,toRgbaCssString: function() {
+		var a = this.a;
+		var _this = tweenxcore_color_RgbColor.fromHsv(this.h,this.s,this.v);
+		var _this1 = new tweenxcore_color_ArgbColor(a,_this.r,_this.g,_this.b);
+		return "rgba(" + (_this1.r * 255 | 0) + "," + (_this1.g * 255 | 0) + "," + (_this1.b * 255 | 0) + "," + _this1.a + ")";
+	}
+	,__class__: tweenxcore_color_AhsvColor
+});
+var tweenxcore_color_RgbColor = function(red,green,blue) {
+	this.r = red;
+	this.g = green;
+	this.b = blue;
+};
+tweenxcore_color_RgbColor.__name__ = true;
+tweenxcore_color_RgbColor.__interfaces__ = [tweenxcore_color_IColor];
+tweenxcore_color_RgbColor.rgbToInt = function(r,g,b) {
+	if(r <= 0.0) {
+		r = 0.0;
+	} else if(1.0 <= r) {
+		r = 1.0;
+	}
+	if(g <= 0.0) {
+		g = 0.0;
+	} else if(1.0 <= g) {
+		g = 1.0;
+	}
+	if(b <= 0.0) {
+		b = 0.0;
+	} else if(1.0 <= b) {
+		b = 1.0;
+	}
+	return (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+};
+tweenxcore_color_RgbColor.of = function(color) {
+	return new tweenxcore_color_RgbColor((color >> 16 & 255) / 255,(color >> 8 & 255) / 255,(color & 255) / 255);
+};
+tweenxcore_color_RgbColor.fromHsv = function(h,s,v) {
+	h = (h - Math.floor(h)) * 6;
+	var hi = Math.floor(h);
+	if(s <= 0.0) {
+		s = 0.0;
+	} else if(1.0 <= s) {
+		s = 1.0;
+	}
+	if(v <= 0.0) {
+		v = 0.0;
+	} else if(1.0 <= v) {
+		v = 1.0;
+	}
+	var m = v * (1 - s);
+	var f = h - hi;
+	var r = 0.0;
+	var g = 0.0;
+	var b = 0.0;
+	switch(hi) {
+	case 0:
+		r = v;
+		g = v * (1 - s * (1 - f));
+		b = m;
+		break;
+	case 1:
+		r = v * (1 - s * f);
+		g = v;
+		b = m;
+		break;
+	case 2:
+		r = m;
+		g = v;
+		b = v * (1 - s * (1 - f));
+		break;
+	case 3:
+		r = m;
+		g = v * (1 - s * f);
+		b = v;
+		break;
+	case 4:
+		r = v * (1 - s * (1 - f));
+		g = m;
+		b = v;
+		break;
+	case 5:
+		r = v;
+		g = m;
+		b = v * (1 - s * f);
+		break;
+	}
+	return new tweenxcore_color_RgbColor(r,g,b);
+};
+tweenxcore_color_RgbColor.prototype = {
+	getRed: function() {
+		return this.r;
+	}
+	,getGreen: function() {
+		return this.g;
+	}
+	,getBlue: function() {
+		return this.b;
+	}
+	,getHue: function() {
+		return tweenxcore_color_HsvColor.fromRgb(this.r,this.g,this.b).h;
+	}
+	,getSaturation: function() {
+		return tweenxcore_color_HsvColor.fromRgb(this.r,this.g,this.b).s;
+	}
+	,getBrightness: function() {
+		return tweenxcore_color_HsvColor.fromRgb(this.r,this.g,this.b).v;
+	}
+	,toRgb: function() {
+		return new tweenxcore_color_RgbColor(this.r,this.g,this.b);
+	}
+	,toHsv: function() {
+		return tweenxcore_color_HsvColor.fromRgb(this.r,this.g,this.b);
+	}
+	,toRgbWithAlpha: function(alpha) {
+		return new tweenxcore_color_ArgbColor(alpha,this.r,this.g,this.b);
+	}
+	,toHsvWithAlpha: function(alpha) {
+		var _this = tweenxcore_color_HsvColor.fromRgb(this.r,this.g,this.b,0);
+		return new tweenxcore_color_AhsvColor(alpha,_this.h,_this.s,_this.v);
+	}
+	,toRgbInt: function() {
+		var r = this.r;
+		var g = this.g;
+		var b = this.b;
+		if(r <= 0.0) {
+			r = 0.0;
+		} else if(1.0 <= r) {
+			r = 1.0;
+		}
+		if(g <= 0.0) {
+			g = 0.0;
+		} else if(1.0 <= g) {
+			g = 1.0;
+		}
+		if(b <= 0.0) {
+			b = 0.0;
+		} else if(1.0 <= b) {
+			b = 1.0;
+		}
+		return (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+	}
+	,toRgbHexString: function() {
+		var r = this.r;
+		var g = this.g;
+		var b = this.b;
+		if(r <= 0.0) {
+			r = 0.0;
+		} else if(1.0 <= r) {
+			r = 1.0;
+		}
+		if(g <= 0.0) {
+			g = 0.0;
+		} else if(1.0 <= g) {
+			g = 1.0;
+		}
+		if(b <= 0.0) {
+			b = 0.0;
+		} else if(1.0 <= b) {
+			b = 1.0;
+		}
+		return StringTools.hex((r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0),6);
+	}
+	,toRgbCssString: function() {
+		return "rgb(" + (this.r * 255 | 0) + "," + (this.g * 255 | 0) + "," + (this.b * 255 | 0) + ")";
+	}
+	,__class__: tweenxcore_color_RgbColor
+};
+var tweenxcore_color_ArgbColor = function(alpha,red,green,blue) {
+	this.a = alpha;
+	tweenxcore_color_RgbColor.call(this,red,green,blue);
+};
+tweenxcore_color_ArgbColor.__name__ = true;
+tweenxcore_color_ArgbColor.__interfaces__ = [tweenxcore_color_ITransparentColor];
+tweenxcore_color_ArgbColor.argbToInt = function(a,r,g,b) {
+	var r1 = r;
+	var g1 = g;
+	var b1 = b;
+	if(r1 <= 0.0) {
+		r1 = 0.0;
+	} else if(1.0 <= r1) {
+		r1 = 1.0;
+	}
+	if(g1 <= 0.0) {
+		g1 = 0.0;
+	} else if(1.0 <= g1) {
+		g1 = 1.0;
+	}
+	if(b1 <= 0.0) {
+		b1 = 0.0;
+	} else if(1.0 <= b1) {
+		b1 = 1.0;
+	}
+	return ((a <= 0.0 ? 0.0 : 1.0 <= a ? 1.0 : a) * 255 | 0) << 24 | ((r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0));
+};
+tweenxcore_color_ArgbColor.of = function(color) {
+	return new tweenxcore_color_ArgbColor((color >>> 24 & 255) / 255,(color >> 16 & 255) / 255,(color >> 8 & 255) / 255,(color & 255) / 255);
+};
+tweenxcore_color_ArgbColor.fromAhsv = function(a,h,s,v,hueIndex) {
+	if(hueIndex == null) {
+		hueIndex = 0;
+	}
+	var _this = tweenxcore_color_RgbColor.fromHsv(h,s,v);
+	return new tweenxcore_color_ArgbColor(a,_this.r,_this.g,_this.b);
+};
+tweenxcore_color_ArgbColor.__super__ = tweenxcore_color_RgbColor;
+tweenxcore_color_ArgbColor.prototype = $extend(tweenxcore_color_RgbColor.prototype,{
+	getAlpha: function() {
+		return this.a;
+	}
+	,toArgb: function() {
+		return new tweenxcore_color_ArgbColor(this.a,this.r,this.g,this.b);
+	}
+	,toAhsv: function() {
+		var a = this.a;
+		var _this = tweenxcore_color_HsvColor.fromRgb(this.r,this.g,this.b,0);
+		return new tweenxcore_color_AhsvColor(a,_this.h,_this.s,_this.v);
+	}
+	,toArgbInt: function() {
+		var a = this.a;
+		var r = this.r;
+		var g = this.g;
+		var b = this.b;
+		if(r <= 0.0) {
+			r = 0.0;
+		} else if(1.0 <= r) {
+			r = 1.0;
+		}
+		if(g <= 0.0) {
+			g = 0.0;
+		} else if(1.0 <= g) {
+			g = 1.0;
+		}
+		if(b <= 0.0) {
+			b = 0.0;
+		} else if(1.0 <= b) {
+			b = 1.0;
+		}
+		return ((a <= 0.0 ? 0.0 : 1.0 <= a ? 1.0 : a) * 255 | 0) << 24 | ((r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0));
+	}
+	,toArgbHexString: function() {
+		var a = this.a;
+		var r = this.r;
+		var g = this.g;
+		var b = this.b;
+		if(r <= 0.0) {
+			r = 0.0;
+		} else if(1.0 <= r) {
+			r = 1.0;
+		}
+		if(g <= 0.0) {
+			g = 0.0;
+		} else if(1.0 <= g) {
+			g = 1.0;
+		}
+		if(b <= 0.0) {
+			b = 0.0;
+		} else if(1.0 <= b) {
+			b = 1.0;
+		}
+		return StringTools.hex(((a <= 0.0 ? 0.0 : 1.0 <= a ? 1.0 : a) * 255 | 0) << 24 | ((r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0)),8);
+	}
+	,toRgbaCssString: function() {
+		return "rgba(" + (this.r * 255 | 0) + "," + (this.g * 255 | 0) + "," + (this.b * 255 | 0) + "," + this.a + ")";
+	}
+	,__class__: tweenxcore_color_ArgbColor
+});
 function $getIterator(o) { if( o instanceof Array ) return new haxe_iterators_ArrayIterator(o); else return o.iterator(); }
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $global.$haxeUID++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = m.bind(o); o.hx__closures__[m.__id__] = f; } return f; }
 $global.$haxeUID |= 0;
@@ -825,5 +2187,12 @@ var Bool = Boolean;
 var Class = { };
 var Enum = { };
 js_Boot.__toStr = ({ }).toString;
+tweenxcore_Easing.PI = 3.1415926535897932384626433832795;
+tweenxcore_Easing.PI_H = 1.5707963267948966;
+tweenxcore_Easing.LN_2 = 0.6931471805599453;
+tweenxcore_Easing.LN_2_10 = 6.931471805599453;
+tweenxcore_Easing.overshoot = 1.70158;
+tweenxcore_Easing.amplitude = 1;
+tweenxcore_Easing.period = 0.0003;
 Main.main();
 })(typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
