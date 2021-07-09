@@ -338,8 +338,8 @@ Main.onEnterFrame = function(f) {
 						var v3 = velocities[i2];
 						var c = count[i2];
 						if(c != 0) {
-							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / c + (Math.random() - 0.5) * 0.5);
-							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / c + (Math.random() - 0.5) * 0.5);
+							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / c + (Math.random() - 0.5));
+							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / c + (Math.random() - 0.5));
 						}
 					}
 				}

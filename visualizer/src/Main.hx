@@ -329,8 +329,8 @@ class Main
 							var c = count[i];
 							if (c != 0)
 							{
-	 							answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + (Math.random() - 0.5) * 0.5);
-	 							answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + (Math.random() - 0.5) * 0.5);
+	 							answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + (Math.random() - 0.5));
+	 							answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + (Math.random() - 0.5));
 							}
 						}
 					}
