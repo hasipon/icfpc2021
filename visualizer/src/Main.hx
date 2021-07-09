@@ -9,6 +9,7 @@ import js.html.Element;
 import js.html.Event;
 import js.html.InputElement;
 import js.html.SelectElement;
+import js.html.TextAreaElement;
 import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
@@ -41,7 +42,7 @@ class Main
 	static var startY   :Int;
 	static var startPoint:Point;
 	static var problemCombo:SelectElement;
-	static var answerText:Element;
+	static var answerText:TextAreaElement;
 	
 	static function main() 
 	{
@@ -54,6 +55,7 @@ class Main
 		answerText   = cast Browser.document.getElementById("answer_text");
 		
 		problemCombo.addEventListener("change", selectProblem);
+		answerText  .addEventListener("input", onChangeAnswer);
 		
 		pixi = new Application({
 			view  :canvas,
@@ -65,6 +67,30 @@ class Main
 		pixi.stage.interactive = true;
 		problems = [];
 		fetchProblem(1);
+	}
+	
+	static function onChangeAnswer():Void 
+	{
+		try
+		{
+			var a:Array<Array<Int>> = Json.parse(answerText.value).vertices;
+			if (a.length != answer.length) throw "invalid point length";
+			for (point in a)
+			{
+				if (point.length != 2) throw "invalid point length";
+			}
+			for (i in 0...a.length)
+			{
+				answer[i][0] = Math.round(a[i][0]);
+				answer[i][1] = Math.round(a[i][1]);
+			}
+			trace(a.length, answer, a);
+			drawAnswer();
+		}
+		catch(e)
+		{
+			trace(e);
+		}
 	}
 	
 	static function fetchProblem(index:Int)
@@ -131,7 +157,7 @@ class Main
 	
 	static function outputAnswer():Void 
 	{
-		answerText.innerText = Json.stringify({vertices:answer});
+		answerText.value = Json.stringify({vertices:answer});
 	}
 	
 	static function onMouseDown(e:InteractionEvent):Void
@@ -258,10 +284,10 @@ class Main
 		{
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
-			var ad = Math.sqrt(ax * ax + ay * ay);
+			var ad = ax * ax + ay * ay;
 			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
 			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = Math.sqrt(px * px + py * py);
+			var pd = px * px + py * py;
 			
 			answerGraphics.lineStyle(
 				2,
@@ -271,6 +297,7 @@ class Main
 				}
 				else if (ad > pd) 
 				{
+					trace(ad, pd);
 					var rate = (ad / pd).inverseLerp(1, 4).clamp();
 					var color = new RgbColor(
 						rate.lerp(0.6, 0.9),
@@ -281,6 +308,7 @@ class Main
 				}
 				else 
 				{
+					trace(ad, pd);
 					var rate = (pd / ad).inverseLerp(1, 4).clamp();
 					var color = new RgbColor(
 						0,

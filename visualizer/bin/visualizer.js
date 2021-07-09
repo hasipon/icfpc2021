@@ -43,10 +43,39 @@ Main.main = function() {
 	Main.problemCombo = window.document.getElementById("problem_combo");
 	Main.answerText = window.document.getElementById("answer_text");
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
+	Main.answerText.addEventListener("input",Main.onChangeAnswer);
 	Main.pixi = new PIXI.Application({ view : Main.canvas, transparent : true, width : Main.canvas.width, height : Main.canvas.height, autoResize : true});
 	Main.pixi.stage.interactive = true;
 	Main.problems = [];
 	Main.fetchProblem(1);
+};
+Main.onChangeAnswer = function() {
+	try {
+		var a = JSON.parse(Main.answerText.value).vertices;
+		if(a.length != Main.answer.length) {
+			throw haxe_Exception.thrown("invalid point length");
+		}
+		var _g = 0;
+		while(_g < a.length) {
+			var point = a[_g];
+			++_g;
+			if(point.length != 2) {
+				throw haxe_Exception.thrown("invalid point length");
+			}
+		}
+		var _g = 0;
+		var _g1 = a.length;
+		while(_g < _g1) {
+			var i = _g++;
+			Main.answer[i][0] = Math.round(a[i][0]);
+			Main.answer[i][1] = Math.round(a[i][1]);
+		}
+		haxe_Log.trace(a.length,{ fileName : "src/Main.hx", lineNumber : 87, className : "Main", methodName : "onChangeAnswer", customParams : [Main.answer,a]});
+		Main.drawAnswer();
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g);
+		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 92, className : "Main", methodName : "onChangeAnswer"});
+	}
 };
 Main.fetchProblem = function(index) {
 	var h = new haxe_http_HttpJs("./problems/" + index);
@@ -93,7 +122,7 @@ Main.onMouseUp = function() {
 	Main.selectGraphics.clear();
 };
 Main.outputAnswer = function() {
-	Main.answerText.innerText = JSON.stringify({ vertices : Main.answer});
+	Main.answerText.value = JSON.stringify({ vertices : Main.answer});
 };
 Main.onMouseDown = function(e) {
 	Main.selectedPoint = -1;
@@ -240,14 +269,16 @@ Main.drawAnswer = function() {
 		++_g;
 		var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
 		var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
-		var ad = Math.sqrt(ax * ax + ay * ay);
+		var ad = ax * ax + ay * ay;
 		var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
 		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
-		var pd = Math.sqrt(px * px + py * py);
-		var tmp;
+		var pd = px * px + py * py;
+		var tmp = Main.answerGraphics;
+		var tmp1;
 		if(Math.abs(ad / pd - 1) <= e) {
-			tmp = 52224;
+			tmp1 = 52224;
 		} else if(ad > pd) {
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 300, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value = (ad / pd - 1) / 3;
 			var rate = value <= 0.0 ? 0.0 : 1.0 <= value ? 1.0 : value;
 			var color_r = 0.6 * (1 - rate) + 0.9 * rate;
@@ -271,8 +302,9 @@ Main.drawAnswer = function() {
 			} else if(1.0 <= b) {
 				b = 1.0;
 			}
-			tmp = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 311, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
 			var color_r1 = 0;
@@ -296,9 +328,9 @@ Main.drawAnswer = function() {
 			} else if(1.0 <= b1) {
 				b1 = 1.0;
 			}
-			tmp = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
+			tmp1 = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
 		}
-		Main.answerGraphics.lineStyle(2,tmp);
+		tmp.lineStyle(2,tmp1);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
 		var y = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.moveTo(x,y);
@@ -388,6 +420,31 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
+var haxe_Log = function() { };
+haxe_Log.__name__ = true;
+haxe_Log.formatOutput = function(v,infos) {
+	var str = Std.string(v);
+	if(infos == null) {
+		return str;
+	}
+	var pstr = infos.fileName + ":" + infos.lineNumber;
+	if(infos.customParams != null) {
+		var _g = 0;
+		var _g1 = infos.customParams;
+		while(_g < _g1.length) {
+			var v = _g1[_g];
+			++_g;
+			str += ", " + Std.string(v);
+		}
+	}
+	return pstr + ": " + str;
+};
+haxe_Log.trace = function(v,infos) {
+	var str = haxe_Log.formatOutput(v,infos);
+	if(typeof(console) != "undefined" && console.log != null) {
+		console.log(str);
+	}
+};
 var haxe_ValueException = function(value,previous,native) {
 	haxe_Exception.call(this,String(value),previous,native);
 	this.value = value;
