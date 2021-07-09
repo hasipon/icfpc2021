@@ -29,12 +29,9 @@ func eval(problemBytes, poseBytes []byte) (string, bool, string) {
 	return result.String(), valid, msg
 
 }
-func getProblem(id string) []byte {
+func getProblem(id string) ([]byte, error) {
 	p, err := problems.ReadFile("problems/" + id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return p
+	return p, err
 }
 
 func cli(problemFile, problemId, poseFile string){
@@ -46,7 +43,10 @@ func cli(problemFile, problemId, poseFile string){
 			log.Fatal(err)
 		}
 	} else if problemId != "" {
-		problemBytes = getProblem(problemId)
+		problemBytes, err  = getProblem(problemId)
+		if err != nil {
+			log.Fatal(err)
+		}
 	} else {
 		log.Fatal("./eval --problem-file <filename> --pose-file <poseFile>\n" +
 			"./eval --problem-id <id> --pose-file <poseFile>\n")
@@ -92,7 +92,14 @@ func main(){
 				_, _ = w.Write([]byte(err.Error()))
 				return
 			}
-			result, valid, msg := eval(getProblem(id), body)
+			problem, err := getProblem(id)
+			if err != nil {
+				log.Print(err)
+				w.WriteHeader(500)
+				_, _ = w.Write([]byte(err.Error()))
+				return
+			}
+			result, valid, msg := eval(problem, body)
 			if !valid {
 				result = "-1"
 			}
