@@ -2,6 +2,7 @@ package;
 
 import haxe.Http;
 import haxe.Json;
+import haxe.Resource;
 import js.Browser;
 import js.html.CanvasElement;
 import js.html.Document;
@@ -14,6 +15,7 @@ import js.lib.Math;
 import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
+import pixi.core.math.shapes.Rectangle;
 import pixi.interaction.InteractionEvent;
 import tweenxcore.color.RgbColor;
 using tweenxcore.Tools;
@@ -38,13 +40,15 @@ class Main
 	static var problem:Problem;
 	static var scale:Float;
 	
-	static var selectedPoint:Int;
+	static var selectRect:Rectangle;
+	static var selectedPoints:Array<Int>;
+	static var startPoints:Array<Point>;
 	static var startX   :Int;
 	static var startY   :Int;
-	static var startPoint:Point;
 	static var problemCombo:SelectElement;
 	static var answerText:TextAreaElement;
 	static var autoDown  :Bool;
+	static var requestCount:Int;
 	
 	static function main() 
 	{
@@ -70,8 +74,9 @@ class Main
 		});
 		pixi.stage.interactive = true;
 		problems = [];
-		fetchProblem(1);
-		
+		selectRect = null;
+		fetchProblem();
+		requestCount = 0;
 	}
 	
 	static function onChangeAnswer():Void 
@@ -98,26 +103,18 @@ class Main
 		}
 	}
 	
-	static function fetchProblem(index:Int)
+	static function fetchProblem()
 	{
-		var h = new Http("./problems/" + index);
+		problems = Json.parse(Resource.getString("problems"));
+		start();
 		
-		h.onData = function(d) {
-			problems.push(Json.parse(d));
-			if (index == 1)
-			{
-				start();
-			}
+		for (index in 0...problems.length)
+		{
 			var element = Browser.document.createElement('option');
-			element.setAttribute("value", "" + (index));
-			element.innerHTML = "" + (index);
+			element.setAttribute("value", "" + (index + 1));
+			element.innerHTML = "" + (index + 1);
 			problemCombo.appendChild(element);
-			
-			fetchProblem(index + 1);
 		}
-		h.onError = function(e) {
-		}
-		h.request();
 	}
 	
 	static function start():Void
@@ -136,9 +133,12 @@ class Main
 		selectGraphics = new Graphics();
 		pixi.stage.addChild(selectGraphics);
 		
+		
+		startPoints = [];
+		selectedPoints = [];
+		
 		readProblem(0);
 		
-		startPoint = new Point();
 		pixi.stage.on("mousedown", onMouseDown);
 		pixi.stage.on("mousemove", onMouseMove);
 		Browser.document.addEventListener("mouseup", onMouseUp);
@@ -207,13 +207,17 @@ class Main
 	}
 	static function onMouseUp():Void
 	{
-		if (selectedPoint >= 0)
+		if (selectedPoints.length >= 0)
 		{
 			outputAnswer();
 		}
+		if (selectRect != null)
+		{
+			selectRect = null;
+		}
 		
 		autoDown = false;
-		selectedPoint = -1;
+		untyped selectedPoints.length = 0;
 		selectGraphics.clear();
 	}
 	
@@ -239,12 +243,27 @@ class Main
 			}
 			dislike += min;
 		}
-		Browser.document.getElementById("dislike").textContent = "" + dislike;
+		Browser.document.getElementById("dislike").textContent = "" + dislike; 
+		requestValidate();
 	}
-	
+	static function requestValidate():Void
+	{
+		requestCount += 1;
+		var r = requestCount;
+		var h = new Http("../eval/" + (problemIndex + 1));
+		h.onData = function(d) {
+			if (requestCount == r)
+			{
+				Browser.document.getElementById("response").textContent = d;
+			}
+		}
+		h.onError = function(e) {}
+		h.setPostData(Json.stringify({vertices:answer}));
+		h.request(true);
+	}	
 	static function onMouseDown(e:InteractionEvent):Void
 	{
-		selectedPoint = -1;
+		untyped selectedPoints.length = 0;
 		
 		var nearest = 500;
 		var i = 0;
@@ -255,39 +274,65 @@ class Main
 			var dx = x - e.data.global.x;
 			var dy = y - e.data.global.y;
 			var d = dx * dx + dy * dy;
-			if (nearest > d) selectedPoint = i;
+			if (nearest > d) 
+			{
+				selectedPoints.push(i);
+			}
 			i += 1;
 		}
-		if (selectedPoint >= 0)
+		if (selectedPoints.length >= 1)
 		{
 			selectGraphics.clear();
 			selectGraphics.beginFill(0xCC0000);
-			
-			var point = answer[selectedPoint];
-			var x = (point[0] - left) * scale;
-			var y = (point[1] - top ) * scale;
-			selectGraphics.drawCircle(x, y, 3);
-			startPoint.x = e.data.global.x;
-			startPoint.y = e.data.global.y;
-			startX = point[0];
-			startY = point[1];
+			untyped startPoints.length = 0;
+			for (selectedPoint in selectedPoints)
+			{
+				var point = answer[selectedPoint];
+				var x = (point[0] - left) * scale;
+				var y = (point[1] - top ) * scale;
+				selectGraphics.drawCircle(x, y, 3);
+				startPoints.push(new Point(e.data.global.x, e.data.global.y));
+				startX = point[0];
+				startY = point[1];
+			}
+		}
+		else
+		{
+			selectRect = new Rectangle();
+			selectRect.x = e.data.global.x;
+			selectRect.y = e.data.global.y;
+			selectRect.width  = 0;
+			selectRect.height = 0;
 		}
 	}
 	static function onMouseMove(e:InteractionEvent):Void
 	{
-		if (selectedPoint >= 0)
+		if (selectedPoints.length > 0)
 		{
-			var dx = e.data.global.x - startPoint.x;
-			var dy = e.data.global.y - startPoint.y;
-			answer[selectedPoint][0] = Math.round(startX + dx / scale);
-			answer[selectedPoint][1] = Math.round(startY + dy / scale);
-			drawAnswer();
+			for (i in 0...selectedPoints.length)
+			{
+				
+				var dx = e.data.global.x - startPoints[i].x;
+				var dy = e.data.global.y - startPoints[i].y;
+				answer[selectedPoints[i]][0] = Math.round(startX + dx / scale);
+				answer[selectedPoints[i]][1] = Math.round(startY + dy / scale);
+				drawAnswer();
+			}
+		}
+		if (selectRect != null)
+		{
+			selectRect.width  = e.data.global.x - selectRect.x;
+			selectRect.height = e.data.global.y - selectRect.y;
+		
+			selectGraphics.clear();
+			selectGraphics.beginFill(0xCC0000);
+			selectGraphics.drawRect(selectRect.x, selectRect.y, selectRect.width, selectRect.height);
 		}
 	}
 	
 	static function readProblem(index:Int):Void
 	{
-		selectedPoint = -1;
+		untyped selectedPoints.length = 0;
 		problem = problems[index];
 		left = right = problem.hole[0][0];
 		top = bottom = problem.hole[0][1];
