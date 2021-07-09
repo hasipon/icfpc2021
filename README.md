@@ -30,16 +30,16 @@ pose-fileが評価したい回答
 
 ファイル指定
 ```
-shiota@DESKTOP-5NQR1JN ~/ICFPC2021/icfpc2021/eval
- % ./eval --problem-file ../problems/1 --pose-file ../solutions/sample/1
+ ./eval --problem-file ../problems/1 --pose-file ../solutions/sample/1
 3704
+valid
 ```
 
 id指定
 ```
-shiota@DESKTOP-5NQR1JN ~/ICFPC2021/icfpc2021/eval
  % ./eval --problem-id 1 --pose-file ../solutions/sample/1
 3704
+valid
 ```
 
 ### server mode
@@ -51,6 +51,10 @@ server
 
 client
 ```
-> curl -X POST --data "@../solutions/sample/1" localhost:8080/eval/1
-{"dislike": 3704}
+ % curl -X POST --data "@../solutions/sample/1" localhost:8080/eval/1
+{"dislike": 3704, "valid": true, "msg": "OK"}
+```
+```
+url -X POST --data "@invalidPose" localhost:8080/eval/1
+{"dislike": -1, "valid": false, "msg": "Edge between (4, 1) has an invalid length: original: 425 pose: 313"}
 ```

@@ -14,7 +14,7 @@ import (
 //go:embed problems/*
 var problems embed.FS
 
-func eval(problemBytes, poseBytes []byte) string {
+func eval(problemBytes, poseBytes []byte) (string, bool, string) {
 	var problem Problem
 	if err := json.Unmarshal(problemBytes, &problem); err != nil {
 		log.Fatal(err)
@@ -25,9 +25,10 @@ func eval(problemBytes, poseBytes []byte) string {
 		log.Fatal(err)
 	}
 	result := dislike(&problem, &pose)
-	return result.String()
-}
+	valid, msg := validate(&problem, &pose)
+	return result.String(), valid, msg
 
+}
 func getProblem(id string) []byte {
 	p, err := problems.ReadFile("problems/" + id)
 	if err != nil {
@@ -54,7 +55,14 @@ func cli(problemFile, problemId, poseFile string){
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(eval(problemBytes, poseBytes))
+	dislike, valid, msg:= eval(problemBytes, poseBytes)
+	if valid {
+		fmt.Println(dislike)
+		fmt.Println("valid")
+	} else {
+		fmt.Println(-1)
+		fmt.Println(msg)
+	}
 }
 
 func main(){
@@ -84,8 +92,12 @@ func main(){
 				_, _ = w.Write([]byte(err.Error()))
 				return
 			}
-			result := eval(getProblem(id), body)
-			_, _ = w.Write([]byte(fmt.Sprintf("{\"dislike\": %s}", result)))
+			result, valid, msg := eval(getProblem(id), body)
+			if !valid {
+				result = "-1"
+			}
+			_, _ = w.Write([]byte(fmt.Sprintf("{\"dislike\": %s, \"valid\": %t, \"msg\": \"%s\"}",
+				result, valid, msg)))
 			w.WriteHeader(200)
 		})
 		http.ListenAndServe(*server, nil)
