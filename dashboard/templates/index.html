@@ -12,7 +12,8 @@
   <h2>問題一覧</h2>
   <table class="table table-condensed table-striped">
   <tr>
-    <th class="text-center">File</th>
+    <th class="text-center">Name</th>
+    <th class="text-center">Thumb</th>
     <th class="text-center">H</th>
     <th class="text-center">ε</th>
     <th class="text-center">E</th>
@@ -24,6 +25,7 @@
   {% for p in problems %}
   <tr>
     <td class="text-center"><a href="https://poses.live/problems/{{p.name}}">{{p.name}}</a></td>
+    <td class="text-center"><img src="/{{p.name}}.svg"></td>
     <td class="text-center">{{p.hole}}</td>
     <td class="text-center">{{p.eps}}</td>
     <td class="text-center">{{p.edges}}</td>

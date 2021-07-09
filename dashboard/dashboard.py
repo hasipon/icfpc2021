@@ -5,6 +5,7 @@ import os
 import subprocess
 import pathlib
 import shutil
+from typing import *
 from flask import Flask, request, render_template, abort
 
 static_path = pathlib.Path(__file__).resolve().parent / 'static'
@@ -25,6 +26,16 @@ def add_header(response):
     return response
 
 
+def gen_problem_svg(name: str, problem_detail: Dict):
+    return render_template(
+        'thumbnail.jinja2',
+        name=name,
+        maxx=max(max(h[0] for h in problem_detail["hole"]), max(f[0] for f in problem_detail["figure"]["vertices"])),
+        maxy=max(max(h[1] for h in problem_detail["hole"]), max(f[1] for f in problem_detail["figure"]["vertices"])),
+        hole=problem_detail["hole"],
+        figure=problem_detail["figure"])
+
+
 def load_problem_details(problem_files):
     details = {}
     for prob in problem_files:
@@ -34,6 +45,10 @@ def load_problem_details(problem_files):
             len(details[prob]["hole"]) *
             len(details[prob]["figure"]["vertices"]) *
             len(details[prob]["figure"]["edges"]) / 6.0)
+
+        svg_path = static_path / (prob + ".svg")
+        if not svg_path.exists():
+            svg_path.write_text(gen_problem_svg(prob, details[prob]), encoding="utf-8")
     return details
 
 
