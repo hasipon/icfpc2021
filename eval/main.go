@@ -100,7 +100,10 @@ func main(){
 				result, valid, msg)))
 			w.WriteHeader(200)
 		})
-		http.ListenAndServe(*server, nil)
+		for {
+			err := http.ListenAndServe(*server, nil)
+			log.Print(err)
+		}
 	} else {
 		cli(*problemFile, *problemId, *poseFile)
 	}
