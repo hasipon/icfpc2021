@@ -62,7 +62,7 @@ var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
 	Main.canvas = js_Boot.__cast(window.document.getElementById("pixi") , HTMLCanvasElement);
-	Main.canvas.width = 1400;
+	Main.canvas.width = 1180;
 	Main.canvas.height = 980;
 	Main.problemCombo = window.document.getElementById("problem_combo");
 	Main.answerText = window.document.getElementById("answer_text");
@@ -117,25 +117,52 @@ Main.onKeyDown = function(e) {
 			Main.drawSelectedPoints();
 		}
 		break;
+	case 88:
+		var cy = Math.round(Main.canvas.height / 2 / Main.scale + Main.top);
+		var _g = 0;
+		var _g1 = Main.selectedPoints;
+		while(_g < _g1.length) {
+			var i = _g1[_g];
+			++_g;
+			var a = Main.answer[i];
+			a[1] = cy + cy - a[1];
+		}
+		Main.drawAnswer();
+		Main.drawSelectedPoints();
+		e.preventDefault();
+		break;
+	case 90:
+		var cx = Math.round(Main.canvas.width / 2 / Main.scale + Main.left);
+		var _g = 0;
+		var _g1 = Main.selectedPoints;
+		while(_g < _g1.length) {
+			var i = _g1[_g];
+			++_g;
+			var a = Main.answer[i];
+			a[0] = cx + cx - a[0];
+		}
+		Main.drawAnswer();
+		Main.drawSelectedPoints();
+		e.preventDefault();
+		break;
 	default:
 	}
 };
 Main.rotate = function(degree) {
+	var cx = Main.canvas.width / 2 / Main.scale + Main.left;
+	var cy = Main.canvas.height / 2 / Main.scale + Main.top;
 	var _g = 0;
 	var _g1 = Main.selectedPoints;
 	while(_g < _g1.length) {
 		var i = _g1[_g];
 		++_g;
 		var a = Main.answer[i];
-		var cx = Main.canvas.width / 2 / Main.scale + Main.left;
-		var cy = Main.canvas.height / 2 / Main.scale + Main.top;
 		var dx = a[0] - cx;
 		var dy = a[1] - cy;
 		var d = Math.sqrt(dx * dx + dy * dy);
 		var r = degree / 180 * Math.PI + Math.atan2(dy,dx);
 		a[0] = Math.round(cx + d * Math.cos(r));
 		a[1] = Math.round(cy + d * Math.sin(r));
-		console.log("src/Main.hx:143:",a);
 	}
 	Main.drawAnswer();
 	Main.drawSelectedPoints();
@@ -165,7 +192,7 @@ Main.onChangeAnswer = function() {
 		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:168:",e);
+		console.log("src/Main.hx:189:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -311,8 +338,8 @@ Main.onEnterFrame = function(f) {
 						var v3 = velocities[i2];
 						var c = count[i2];
 						if(c != 0) {
-							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / c + Math.random() - 0.5);
-							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / c + Math.random() - 0.5);
+							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / c + (Math.random() - 0.5) * 0.5);
+							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / c + (Math.random() - 0.5) * 0.5);
 						}
 					}
 				}
@@ -439,7 +466,7 @@ Main.onMouseDown = function(e) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
 	} else {
-		console.log("src/Main.hx:442:",selectedPoint);
+		console.log("src/Main.hx:463:",selectedPoint);
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();

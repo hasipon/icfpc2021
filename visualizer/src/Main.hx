@@ -58,7 +58,7 @@ class Main
 	{
 		canvas = cast(Browser.document.getElementById("pixi"), CanvasElement);
 		
-		canvas.width  = 1400;
+		canvas.width  = 1180;
 		canvas.height = 980;
 		
 		
@@ -124,23 +124,44 @@ class Main
 					rotate(-15);
 					e.preventDefault();
 					
+				case KeyboardEvent.DOM_VK_Z:
+					var cx = Math.round(canvas.width  / 2 / scale + left);
+					for (i in selectedPoints)
+					{
+						var a = answer[i];
+						a[0] = cx + cx - a[0];
+					}
+					drawAnswer();
+					drawSelectedPoints();
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_X:
+					var cy = Math.round(canvas.height / 2 / scale + top);
+					for (i in selectedPoints)
+					{
+						var a = answer[i];
+						a[1] = cy + cy - a[1];
+					}
+					drawAnswer();
+					drawSelectedPoints();
+					e.preventDefault();
+					
 				case _:
 			}
 	}
 	static function rotate(degree:Float):Void
 	{
+		var cx = canvas.width  / 2 / scale + left;
+		var cy = canvas.height / 2 / scale + top ;
 		for (i in selectedPoints)
 		{
 			var a = answer[i];
-			var cx = canvas.width  / 2 / scale + left;
-			var cy = canvas.height / 2 / scale + top ;
 			var dx = a[0] - cx;
 			var dy = a[1] - cy;
 			var d = Math.sqrt(dx * dx + dy * dy);
 			var r = degree / 180 * Math.PI + Math.atan2(dy, dx);
 			a[0] = Math.round(cx + d * Math.cos(r));
 			a[1] = Math.round(cy + d * Math.sin(r));
-			trace(a);
 		}
 		drawAnswer();
 		drawSelectedPoints();
@@ -308,8 +329,8 @@ class Main
 							var c = count[i];
 							if (c != 0)
 							{
-								answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + Math.random() - 0.5);
-								answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + Math.random() - 0.5);
+	 							answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + (Math.random() - 0.5) * 0.5);
+	 							answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + (Math.random() - 0.5) * 0.5);
 							}
 						}
 					}
