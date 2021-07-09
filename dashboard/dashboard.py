@@ -33,12 +33,23 @@ def index():
 
     problem_files = [os.path.relpath(x, problems_path) for x in glob.glob(str(problems_path / "*"))]
     problem_files.sort(key=lambda x: int(x))
+
+    # TODO cache
+    problem_detail = {}
+    for prob in problem_files:
+        with open(problems_path / prob) as fp:
+            problem_detail.update({prob: json.load(fp)})
+
     problems = [
         {
             "name": x,
+            "hole": len(problem_detail[x]["hole"]),
+            "eps": problem_detail[x]["epsilon"],
+            "edges": len(problem_detail[x]["figure"]["edges"]),
+            "vertices": len(problem_detail[x]["figure"]["vertices"]),
             "dislike": dislikes[x][0],
             "mindislike": dislikes[x][1],
-            "difflike": dislikes[x][2]
+            "difflike": dislikes[x][2],
         }
         for x in problem_files
     ]
