@@ -17,9 +17,8 @@
     <th class="text-center">ε</th>
     <th class="text-center">E</th>
     <th class="text-center">V</th>
-    <th class="text-center">OurDislike</th>
-    <th class="text-center">MinDislike</th>
-    <th class="text-center">Difflike</th>
+    <th class="text-center">Dislike(トップとの差)</th>
+    <th class="text-center">Score(トップとの差)</th>
   </tr>
 
   {% for p in problems %}
@@ -29,9 +28,8 @@
     <td class="text-center">{{p.eps}}</td>
     <td class="text-center">{{p.edges}}</td>
     <td class="text-center">{{p.vertices}}</td>
-    <td class="text-center">{{p.dislike}}</td>
-    <td class="text-center">{{p.mindislike}}</td>
-    <td class="text-center">{{p.difflike}}</td>
+    <td class="text-center">{{p.dislike}} ({{p.difflike}})</td>
+    <td class="text-center">{{p.score}} ({{p.topscore - p.score}})</td>
   </tr>
   {% endfor %}
 </div>

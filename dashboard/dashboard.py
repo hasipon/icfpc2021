@@ -1,5 +1,6 @@
 import json
 import glob
+import math
 import os
 import subprocess
 import pathlib
@@ -39,6 +40,10 @@ def index():
     for prob in problem_files:
         with open(problems_path / prob) as fp:
             problem_detail.update({prob: json.load(fp)})
+        problem_detail[prob]["base_score"] = 1000 * math.log2(
+            len(problem_detail[prob]["hole"]) *
+            len(problem_detail[prob]["figure"]["vertices"]) *
+            len(problem_detail[prob]["figure"]["edges"]) / 6.0)
 
     problems = [
         {
@@ -50,6 +55,10 @@ def index():
             "dislike": dislikes[x][0],
             "mindislike": dislikes[x][1],
             "difflike": dislikes[x][2],
+            "topscore": math.ceil(problem_detail[x]["base_score"]),
+            "score": math.ceil(problem_detail[x]["base_score"] * math.sqrt(
+                (dislikes[x][1] + 1) / (dislikes[x][0] + 1)
+            ) if dislikes[x][0] != '' else 0),
         }
         for x in problem_files
     ]
