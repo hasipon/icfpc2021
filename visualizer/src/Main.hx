@@ -147,46 +147,52 @@ class Main
 	{
 		if (autoDown)
 		{
-			var count      = [for (_ in answer) 0];
-			var velocities = [for (_ in answer)[0.0, 0.0]];
-			var e = problem.epsilon / 1000000;
-			for (edge in problem.figure.edges)
+			for (i in 0...5000)
 			{
-				var ax = answer[edge[0]][0] - answer[edge[1]][0];
-				var ay = answer[edge[0]][1] - answer[edge[1]][1];
-				var ad = ax * ax + ay * ay;
-				var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-				var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-				var pd = px * px + py * py;
-				
-				if (Math.abs(ad / pd - 1) <= e) 
+				var count      = [for (_ in answer) 0];
+				var velocities = [for (_ in answer)[0.0, 0.0]];
+				var e = problem.epsilon / 1000000;
+				var matched = true;
+				for (edge in problem.figure.edges)
 				{
-				}
-				else 
-				{
-					count[edge[0]] += 1; 
-					count[edge[1]] += 1; 
+					var ax = answer[edge[0]][0] - answer[edge[1]][0];
+					var ay = answer[edge[0]][1] - answer[edge[1]][1];
+					var ad = ax * ax + ay * ay;
+					var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+					var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+					var pd = px * px + py * py;
 					
-					var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
-					var d = Math.atan2(ay, ax);
-					trace(v);
-					velocities[edge[0]][0] -= v * Math.cos(d);
-					velocities[edge[0]][1] -= v * Math.sin(d);
-					velocities[edge[1]][0] += v * Math.cos(d);
-					velocities[edge[1]][1] += v * Math.sin(d);
+					if (Math.abs(ad / pd - 1) <= e) 
+					{
+					}
+					else 
+					{
+						count[edge[0]] += 1; 
+						count[edge[1]] += 1; 
+						
+						var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
+						var d = Math.atan2(ay, ax);
+						velocities[edge[0]][0] -= v * Math.cos(d);
+						velocities[edge[0]][1] -= v * Math.sin(d);
+						velocities[edge[1]][0] += v * Math.cos(d);
+						velocities[edge[1]][1] += v * Math.sin(d);
+						matched = false;
+					}
 				}
-			}
-			for (i in 0...answer.length)
-			{
-				var v = velocities[i];
-				var c = count[i];
-				if (c != 0)
+				if (matched) { break; }
+				for (i in 0...answer.length)
 				{
-					answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + Math.random() - 0.5);
-					answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + Math.random() - 0.5);
+					var v = velocities[i];
+					var c = count[i];
+					if (c != 0)
+					{
+						answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + Math.random() - 0.5);
+						answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + Math.random() - 0.5);
+					}
 				}
 			}
 			drawAnswer();
+			outputAnswer();
 		}
 		Browser.window.requestAnimationFrame(onEnterFrame);
 	}
