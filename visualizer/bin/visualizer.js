@@ -255,7 +255,7 @@ Main.updateScore = function() {
 };
 Main.requestValidate = function() {
 	var r = Main.requestCount += 1;
-	var h = new haxe_http_HttpJs("http://13.114.46.162:8800/eval/" + (Main.problemIndex + 1));
+	var h = new haxe_http_HttpJs("../eval/" + (Main.problemIndex + 1));
 	h.onData = function(d) {
 		if(Main.requestCount == r) {
 			window.document.getElementById("response").textContent = d;
