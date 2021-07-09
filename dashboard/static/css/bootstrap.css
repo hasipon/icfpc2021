@@ -2700,12 +2700,12 @@ a.bg-warning:focus {
 }
 
 .bg-danger {
-  background-color: #fff8f7;
+  background-color: #ffa8c7;
 }
 
 a.bg-danger:hover,
 a.bg-danger:focus {
-  background-color: #fccbc7;
+  background-color: #ffa8c7;
 }
 
 .page-header {

@@ -68,6 +68,7 @@ def index():
         }
         for x in problem_files
     ]
+
     return render_template('index.html', problems=problems)
 
 
