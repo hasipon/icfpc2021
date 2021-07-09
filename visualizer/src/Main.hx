@@ -68,9 +68,9 @@ class Main
 		Browser.document.getElementById("auto_button"           ).addEventListener("mousedown", () -> { autoDown = true; });
 		Browser.document.getElementById("fit_auto_button"       ).addEventListener("mousedown", () -> { fitDown = autoDown = true; });
 		
-		//Browser.document.getElementById("random_button"         ).addEventListener("mousedown", () -> { randomDown = true; });
-		//Browser.document.getElementById("random_auto_button"    ).addEventListener("mousedown", () -> { randomDown = autoDown = true; });
-		//Browser.document.getElementById("random_fit_auto_button").addEventListener("mousedown", () -> { randomDown = fitDown = autoDown = true; });
+		Browser.document.getElementById("random_button"         ).addEventListener("mousedown", () -> { randomDown = true; });
+		Browser.document.getElementById("random_auto_button"    ).addEventListener("mousedown", () -> { randomDown = autoDown = true; });
+		Browser.document.getElementById("random_fit_auto_button").addEventListener("mousedown", () -> { randomDown = fitDown = autoDown = true; });
 		
 		
 		problemCombo.addEventListener("change", selectProblem);
@@ -249,8 +249,8 @@ class Main
 							{
 								var v = Math.sqrt(dx * dx + dy * dy);
 								var d = Math.atan2(dy, dx);
-								a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() + Math.random() - 0.5);
-								a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() + Math.random() - 0.5);
+								a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
+								a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
 							}
 						}
 					}
@@ -329,8 +329,9 @@ class Main
 							var c = count[i];
 							if (c != 0)
 							{
-	 							answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + (Math.random() - 0.5));
-	 							answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + (Math.random() - 0.5));
+								if (c == 1 && Math.random() < 0.1) continue;
+	 							answer[i][0] = Math.round(answer[i][0] + (v[0] / (c + 1)) + (Math.random() - 0.5));
+	 							answer[i][1] = Math.round(answer[i][1] + (v[1] / (c + 1)) + (Math.random() - 0.5));
 							}
 						}
 					}

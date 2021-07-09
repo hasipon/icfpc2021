@@ -75,6 +75,15 @@ Main.main = function() {
 	window.document.getElementById("fit_auto_button").addEventListener("mousedown",function() {
 		return Main.fitDown = Main.autoDown = true;
 	});
+	window.document.getElementById("random_button").addEventListener("mousedown",function() {
+		return Main.randomDown = true;
+	});
+	window.document.getElementById("random_auto_button").addEventListener("mousedown",function() {
+		return Main.randomDown = Main.autoDown = true;
+	});
+	window.document.getElementById("random_fit_auto_button").addEventListener("mousedown",function() {
+		return Main.randomDown = Main.fitDown = Main.autoDown = true;
+	});
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.answerText.addEventListener("input",Main.onChangeAnswer);
 	Main.canvas.addEventListener("keydown",Main.onKeyDown);
@@ -244,8 +253,8 @@ Main.onEnterFrame = function(f) {
 					if(dx != 0 || dy != 0) {
 						var v = Math.sqrt(dx * dx + dy * dy);
 						var d = Math.atan2(dy,dx);
-						a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() + Math.random() - 0.5);
-						a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() + Math.random() - 0.5);
+						a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
+						a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
 					}
 				}
 			}
@@ -338,8 +347,11 @@ Main.onEnterFrame = function(f) {
 						var v3 = velocities[i2];
 						var c = count[i2];
 						if(c != 0) {
-							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / c + (Math.random() - 0.5));
-							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / c + (Math.random() - 0.5));
+							if(c == 1 && Math.random() < 0.1) {
+								continue;
+							}
+							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / (c + 1) + (Math.random() - 0.5));
+							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / (c + 1) + (Math.random() - 0.5));
 						}
 					}
 				}
@@ -466,7 +478,7 @@ Main.onMouseDown = function(e) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
 	} else {
-		console.log("src/Main.hx:463:",selectedPoint);
+		console.log("src/Main.hx:464:",selectedPoint);
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();
