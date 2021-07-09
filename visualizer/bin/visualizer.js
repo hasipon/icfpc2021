@@ -38,8 +38,8 @@ var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
 	Main.canvas = js_Boot.__cast(window.document.getElementById("pixi") , HTMLCanvasElement);
-	Main.canvas.width = 800;
-	Main.canvas.height = 700;
+	Main.canvas.width = 1400;
+	Main.canvas.height = 980;
 	Main.problemCombo = window.document.getElementById("problem_combo");
 	Main.answerText = window.document.getElementById("answer_text");
 	var autoButton = window.document.getElementById("auto_button");
@@ -116,7 +116,7 @@ Main.start = function() {
 Main.onEnterFrame = function(f) {
 	if(Main.autoDown) {
 		var _g = 0;
-		while(_g < 5000) {
+		while(_g < 1000) {
 			var i = _g++;
 			var _g1 = [];
 			var _g2 = 0;
@@ -196,6 +196,30 @@ Main.onMouseUp = function() {
 	Main.selectGraphics.clear();
 };
 Main.outputAnswer = function() {
+	var dislike = 0.0;
+	var _g = 0;
+	var _g1 = Main.problem.hole;
+	while(_g < _g1.length) {
+		var hole = _g1[_g];
+		++_g;
+		var min = Infinity;
+		var hx = hole[0];
+		var hy = hole[1];
+		var _g2 = 0;
+		var _g3 = Main.answer;
+		while(_g2 < _g3.length) {
+			var a = _g3[_g2];
+			++_g2;
+			var dx = a[0] - hx;
+			var dy = a[1] - hy;
+			var value = dx * dx + dy * dy;
+			if(value < min) {
+				min = value;
+			}
+		}
+		dislike += min;
+	}
+	window.document.getElementById("dislike").textContent = "" + dislike;
 	Main.answerText.value = JSON.stringify({ vertices : Main.answer});
 };
 Main.onMouseDown = function(e) {
@@ -377,7 +401,7 @@ Main.drawAnswer = function() {
 			}
 			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
-			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 371, className : "Main", methodName : "drawAnswer", customParams : [pd]});
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 388, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
 			var color_r1 = 0;
