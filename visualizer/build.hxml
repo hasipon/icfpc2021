@@ -1,0 +1,5 @@
+-js bin/visualizer.js
+-cp src
+-main Main
+-lib pixijs:4.8.4
+--macro MacroMain.build()
