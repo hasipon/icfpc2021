@@ -47,7 +47,7 @@
   <options>
     <option showHiddenPaths="False" />
     <option testMovie="Webserver" />
-    <option testMovieCommand="../visualizer.html" />
+    <option testMovieCommand="index.html" />
   </options>
   <!-- Plugin storage -->
   <storage />
