@@ -67,6 +67,7 @@ Main.main = function() {
 	Main.problemCombo = window.document.getElementById("problem_combo");
 	Main.answerText = window.document.getElementById("answer_text");
 	var autoButton = window.document.getElementById("auto_button");
+	var fitButton = window.document.getElementById("fit_button");
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.answerText.addEventListener("input",Main.onChangeAnswer);
 	autoButton.addEventListener("mousedown",Main.onAutoDown);
@@ -102,7 +103,7 @@ Main.onChangeAnswer = function() {
 		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 101, className : "Main", methodName : "onChangeAnswer"});
+		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 102, className : "Main", methodName : "onChangeAnswer"});
 	}
 };
 Main.fetchProblem = function() {
@@ -302,14 +303,14 @@ Main.onMouseDown = function(e) {
 		}
 		++i;
 	}
-	haxe_Log.trace(Main.selectedPoints,{ fileName : "src/Main.hx", lineNumber : 295, className : "Main", methodName : "onMouseDown", customParams : [selectedPoint]});
+	haxe_Log.trace(Main.selectedPoints,{ fileName : "src/Main.hx", lineNumber : 296, className : "Main", methodName : "onMouseDown", customParams : [selectedPoint]});
 	if(selectedPoint == -1) {
 		Main.selectedPoints.length = 0;
 	} else if(Main.selectedPoints.indexOf(selectedPoint) == -1) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
 	} else {
-		haxe_Log.trace(selectedPoint,{ fileName : "src/Main.hx", lineNumber : 307, className : "Main", methodName : "onMouseDown"});
+		haxe_Log.trace(selectedPoint,{ fileName : "src/Main.hx", lineNumber : 308, className : "Main", methodName : "onMouseDown"});
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();
@@ -398,10 +399,10 @@ Main.readProblem = function(index) {
 			Main.bottom = point[1];
 		}
 	}
-	Main.left -= 3;
-	Main.right += 3;
-	Main.top -= 3;
-	Main.bottom += 3;
+	Main.left -= 12;
+	Main.right += 12;
+	Main.top -= 12;
+	Main.bottom += 12;
 	var w = Main.right - Main.left;
 	var h = Main.bottom - Main.top;
 	var sw = Main.canvas.width / w;
