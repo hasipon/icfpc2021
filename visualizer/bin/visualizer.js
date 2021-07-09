@@ -115,60 +115,69 @@ Main.start = function() {
 };
 Main.onEnterFrame = function(f) {
 	if(Main.autoDown) {
-		var _g = [];
-		var _g1 = 0;
-		var _g2 = Main.answer;
-		while(_g1 < _g2.length) {
-			var _ = _g2[_g1];
-			++_g1;
-			_g.push(0);
-		}
-		var count = _g;
-		var _g = [];
-		var _g1 = 0;
-		var _g2 = Main.answer;
-		while(_g1 < _g2.length) {
-			var _ = _g2[_g1];
-			++_g1;
-			_g.push([0.0,0.0]);
-		}
-		var velocities = _g;
-		var e = Main.problem.epsilon / 1000000;
 		var _g = 0;
-		var _g1 = Main.problem.figure.edges;
-		while(_g < _g1.length) {
-			var edge = _g1[_g];
-			++_g;
-			var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
-			var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
-			var ad = ax * ax + ay * ay;
-			var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
-			var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
-			if(!(Math.abs(ad / pd - 1) <= e)) {
-				count[edge[0]] += 1;
-				count[edge[1]] += 1;
-				var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
-				var d = Math.atan2(ay,ax);
-				haxe_Log.trace(v,{ fileName : "src/Main.hx", lineNumber : 172, className : "Main", methodName : "onEnterFrame"});
-				velocities[edge[0]][0] -= v * Math.cos(d);
-				velocities[edge[0]][1] -= v * Math.sin(d);
-				velocities[edge[1]][0] += v * Math.cos(d);
-				velocities[edge[1]][1] += v * Math.sin(d);
-			}
-		}
-		var _g = 0;
-		var _g1 = Main.answer.length;
-		while(_g < _g1) {
+		while(_g < 5000) {
 			var i = _g++;
-			var v = velocities[i];
-			var c = count[i];
-			if(c != 0) {
-				Main.answer[i][0] = Math.round(Main.answer[i][0] + v[0] / c + Math.random() - 0.5);
-				Main.answer[i][1] = Math.round(Main.answer[i][1] + v[1] / c + Math.random() - 0.5);
+			var _g1 = [];
+			var _g2 = 0;
+			var _g3 = Main.answer;
+			while(_g2 < _g3.length) {
+				var _ = _g3[_g2];
+				++_g2;
+				_g1.push(0);
+			}
+			var count = _g1;
+			var _g4 = [];
+			var _g5 = 0;
+			var _g6 = Main.answer;
+			while(_g5 < _g6.length) {
+				var _1 = _g6[_g5];
+				++_g5;
+				_g4.push([0.0,0.0]);
+			}
+			var velocities = _g4;
+			var e = Main.problem.epsilon / 1000000;
+			var matched = true;
+			var _g7 = 0;
+			var _g8 = Main.problem.figure.edges;
+			while(_g7 < _g8.length) {
+				var edge = _g8[_g7];
+				++_g7;
+				var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
+				var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
+				var ad = ax * ax + ay * ay;
+				var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
+				var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
+				var pd = px * px + py * py;
+				if(!(Math.abs(ad / pd - 1) <= e)) {
+					count[edge[0]] += 1;
+					count[edge[1]] += 1;
+					var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
+					var d = Math.atan2(ay,ax);
+					velocities[edge[0]][0] -= v * Math.cos(d);
+					velocities[edge[0]][1] -= v * Math.sin(d);
+					velocities[edge[1]][0] += v * Math.cos(d);
+					velocities[edge[1]][1] += v * Math.sin(d);
+					matched = false;
+				}
+			}
+			if(matched) {
+				break;
+			}
+			var _g9 = 0;
+			var _g10 = Main.answer.length;
+			while(_g9 < _g10) {
+				var i1 = _g9++;
+				var v1 = velocities[i1];
+				var c = count[i1];
+				if(c != 0) {
+					Main.answer[i1][0] = Math.round(Main.answer[i1][0] + v1[0] / c + Math.random() - 0.5);
+					Main.answer[i1][1] = Math.round(Main.answer[i1][1] + v1[1] / c + Math.random() - 0.5);
+				}
 			}
 		}
 		Main.drawAnswer();
+		Main.outputAnswer();
 	}
 	window.requestAnimationFrame(Main.onEnterFrame);
 };
@@ -368,7 +377,7 @@ Main.drawAnswer = function() {
 			}
 			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
-			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 365, className : "Main", methodName : "drawAnswer", customParams : [pd]});
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 371, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
 			var color_r1 = 0;
