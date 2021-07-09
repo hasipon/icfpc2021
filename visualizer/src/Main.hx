@@ -10,6 +10,7 @@ import js.html.Event;
 import js.html.InputElement;
 import js.html.SelectElement;
 import js.html.TextAreaElement;
+import js.lib.Math;
 import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
@@ -43,6 +44,7 @@ class Main
 	static var startPoint:Point;
 	static var problemCombo:SelectElement;
 	static var answerText:TextAreaElement;
+	static var autoDown  :Bool;
 	
 	static function main() 
 	{
@@ -53,9 +55,11 @@ class Main
 		
 		problemCombo = cast Browser.document.getElementById("problem_combo");
 		answerText   = cast Browser.document.getElementById("answer_text");
+		var autoButton   = cast Browser.document.getElementById("auto_button");
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
+		autoButton  .addEventListener("mousedown", onAutoDown);
 		
 		pixi = new Application({
 			view  :canvas,
@@ -67,6 +71,7 @@ class Main
 		pixi.stage.interactive = true;
 		problems = [];
 		fetchProblem(1);
+		
 	}
 	
 	static function onChangeAnswer():Void 
@@ -84,7 +89,6 @@ class Main
 				answer[i][0] = Math.round(a[i][0]);
 				answer[i][1] = Math.round(a[i][1]);
 			}
-			trace(a.length, answer, a);
 			drawAnswer();
 		}
 		catch(e)
@@ -137,13 +141,63 @@ class Main
 		pixi.stage.on("mousedown", onMouseDown);
 		pixi.stage.on("mousemove", onMouseMove);
 		Browser.document.addEventListener("mouseup", onMouseUp);
+		Browser.window.requestAnimationFrame(onEnterFrame);
 	}
-	
+	static function onEnterFrame(f:Float):Void
+	{
+		if (autoDown)
+		{
+			var count      = [for (_ in answer) 0];
+			var velocities = [for (_ in answer)[0.0, 0.0]];
+			var e = problem.epsilon / 1000000;
+			for (edge in problem.figure.edges)
+			{
+				var ax = answer[edge[0]][0] - answer[edge[1]][0];
+				var ay = answer[edge[0]][1] - answer[edge[1]][1];
+				var ad = ax * ax + ay * ay;
+				var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+				var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+				var pd = px * px + py * py;
+				
+				if (Math.abs(ad / pd - 1) <= e) 
+				{
+				}
+				else 
+				{
+					count[edge[0]] += 1; 
+					count[edge[1]] += 1; 
+					
+					var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 3;
+					var d = Math.atan2(ay, ax);
+					trace(v);
+					velocities[edge[0]][0] -= v * Math.cos(d);
+					velocities[edge[0]][1] -= v * Math.sin(d);
+					velocities[edge[1]][0] += v * Math.cos(d);
+					velocities[edge[1]][1] += v * Math.sin(d);
+				}
+			}
+			for (i in 0...answer.length)
+			{
+				var v = velocities[i];
+				var c = count[i];
+				if (c != 0)
+				{
+					answer[i][0] = Math.round(answer[i][0] + (v[0] / c) + Math.random() - 0.5);
+					answer[i][1] = Math.round(answer[i][1] + (v[1] / c) + Math.random() - 0.5);
+				}
+			}
+			drawAnswer();
+		}
+		Browser.window.requestAnimationFrame(onEnterFrame);
+	}
 	static function selectProblem(e:Event):Void
 	{
 		readProblem(problemCombo.selectedIndex);
 	}
-	
+	static function onAutoDown():Void
+	{
+		autoDown = true;
+	}
 	static function onMouseUp():Void
 	{
 		if (selectedPoint >= 0)
@@ -151,6 +205,7 @@ class Main
 			outputAnswer();
 		}
 		
+		autoDown = false;
 		selectedPoint = -1;
 		selectGraphics.clear();
 	}
@@ -297,7 +352,6 @@ class Main
 				}
 				else if (ad > pd) 
 				{
-					trace(ad, pd);
 					var rate = (ad / pd).inverseLerp(1, 4).clamp();
 					var color = new RgbColor(
 						rate.lerp(0.6, 0.9),
