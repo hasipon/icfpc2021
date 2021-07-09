@@ -8,8 +8,17 @@
 </head>
 <body>
 	<canvas id="pixi"></canvas></br>
-	<select id="problem_combo" /></br>
-	<code id="answer_text" style="margin:5px; background:#222222;"></code></br>
+	問:<select id="problem_combo" /></select><button id="auto_button" />Auto</button></br>
+	答:<br/>
+	<textarea 
+		id="answer_text"
+		style="
+		margin:5px; 
+		width:800px;
+		height:500px;
+		padding: 10px;
+		readonly;
+	"></textarea></br>
 	<script src="../visualizer/bin/visualizer.js"></script>
 </body>
 </html>

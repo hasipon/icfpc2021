@@ -13,6 +13,8 @@ import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
 import pixi.interaction.InteractionEvent;
+import tweenxcore.color.RgbColor;
+using tweenxcore.Tools;
 
 class Main 
 {
@@ -27,6 +29,7 @@ class Main
 	static var problemGraphics:Graphics;
 	static var answerGraphics:Graphics;
 	static var selectGraphics:Graphics;
+	static var gridGraphics:Graphics;
 	
 	static var problemIndex:Int;
 	static var answer:Array<Array<Int>>;
@@ -113,13 +116,22 @@ class Main
 	static function selectProblem(e:Event):Void
 	{
 		readProblem(problemCombo.selectedIndex);
-		trace(problemCombo.selectedIndex);
 	}
 	
 	static function onMouseUp():Void
 	{
+		if (selectedPoint >= 0)
+		{
+			outputAnswer();
+		}
+		
 		selectedPoint = -1;
 		selectGraphics.clear();
+	}
+	
+	static function outputAnswer():Void 
+	{
+		answerText.innerText = Json.stringify({vertices:answer});
 	}
 	
 	static function onMouseDown(e:InteractionEvent):Void
@@ -146,7 +158,7 @@ class Main
 			var point = answer[selectedPoint];
 			var x = (point[0] - left) * scale;
 			var y = (point[1] - top ) * scale;
-			selectGraphics.drawCircle(x, y, 2);
+			selectGraphics.drawCircle(x, y, 3);
 			startPoint.x = e.data.global.x;
 			startPoint.y = e.data.global.y;
 			startX = point[0];
@@ -161,7 +173,6 @@ class Main
 			var dy = e.data.global.y - startPoint.y;
 			answer[selectedPoint][0] = Math.round(startX + dx / scale);
 			answer[selectedPoint][1] = Math.round(startY + dy / scale);
-			trace(selectedPoint, dx, dy, scale);
 			drawAnswer();
 		}
 	}
@@ -225,6 +236,7 @@ class Main
 			answer.push([point[0], point[1]]);
 		}
 		drawAnswer();
+		outputAnswer();
 	}
 	
 	static function drawAnswer():Void
@@ -236,7 +248,7 @@ class Main
 		{
 			var x = (point[0] - left) * scale;
 			var y = (point[1] - top ) * scale;
-			answerGraphics.drawCircle(x, y, 2);
+			answerGraphics.drawCircle(x, y, 3);
 			
 			first = false;
 		}
@@ -246,14 +258,39 @@ class Main
 		{
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
-			var ad = Math.sqrt(ax * ax + ay * ay);
+			var ad = ax * ax + ay * ay;
 			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
 			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = Math.sqrt(px * px + py * py);
+			var pd = px * px + py * py;
 			
 			answerGraphics.lineStyle(
-				1,
-				if (Math.abs(ad - pd) < e) 0x00CC00 else if (ad > pd) 0xCC0000 else 0x0000CC
+				2,
+				if (Math.abs(ad / pd - 1) <= e) 
+				{
+					0x00CC00;
+				}
+				else if (ad > pd) 
+				{
+					trace(ad, pd);
+					var rate = (ad / pd).inverseLerp(1, 4).clamp();
+					var color = new RgbColor(
+						rate.lerp(0.6, 0.9),
+						rate.lerp(0.4, 0.0),
+						0
+					);
+					color.toRgbInt();
+				}
+				else 
+				{
+					trace(ad, pd);
+					var rate = (pd / ad).inverseLerp(1, 4).clamp();
+					var color = new RgbColor(
+						0,
+						rate.lerp(0.4, 0.0),
+						rate.lerp(0.6, 0.9)
+					);
+					color.toRgbInt();
+				}
 			);
 			var x = (answer[edge[0]][0] - left) * scale;
 			var y = (answer[edge[0]][1] - top ) * scale;
