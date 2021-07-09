@@ -108,6 +108,15 @@ Main.onChangeAnswer = function() {
 Main.fetchProblem = function() {
 	Main.problems = JSON.parse(haxe_Resource.getString("problems"));
 	Main.start();
+	var _g = 0;
+	var _g1 = Main.problems.length;
+	while(_g < _g1) {
+		var index = _g++;
+		var element = window.document.createElement("option");
+		element.setAttribute("value","" + (index + 1));
+		element.innerHTML = "" + (index + 1);
+		Main.problemCombo.appendChild(element);
+	}
 };
 Main.start = function() {
 	var background = new PIXI.Graphics();
@@ -460,7 +469,7 @@ Main.drawAnswer = function() {
 			}
 			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
-			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 429, className : "Main", methodName : "drawAnswer", customParams : [pd]});
+			haxe_Log.trace(ad,{ fileName : "src/Main.hx", lineNumber : 437, className : "Main", methodName : "drawAnswer", customParams : [pd]});
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
 			var color_r1 = 0;

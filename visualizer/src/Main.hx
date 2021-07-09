@@ -107,6 +107,14 @@ class Main
 	{
 		problems = Json.parse(Resource.getString("problems"));
 		start();
+		
+		for (index in 0...problems.length)
+		{
+			var element = Browser.document.createElement('option');
+			element.setAttribute("value", "" + (index + 1));
+			element.innerHTML = "" + (index + 1);
+			problemCombo.appendChild(element);
+		}
 	}
 	
 	static function start():Void
