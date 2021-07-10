@@ -14,8 +14,16 @@ import (
 )
 
 const contestUrl = "https://poses.live"
-const problemsUrl = "http://13.114.46.162:8800/problems.json"
-const problemsFetchUrl = "http://13.114.46.162:8800/fetch_problems"
+var problemsUrl = "http://13.114.46.162:8800/problems.json"
+var problemsFetchUrl = "http://13.114.46.162:8800/fetch_problems"
+
+func init() {
+	host, _ := os.Hostname()
+	if host == "ip-172-30-1-195" {
+		problemsUrl = "http://localhost:8800/problems.json"
+		problemsFetchUrl = "http://localhost:8800/fetch_problems"
+	}
+}
 
 var lastFetchTime = time.Time{}
 var latestDislike = map[string]*Int{}
