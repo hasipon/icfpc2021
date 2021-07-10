@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"flag"
@@ -32,6 +33,64 @@ func eval(problemBytes, poseBytes []byte) (string, bool, string) {
 func getProblem(id string) ([]byte, error) {
 	p, err := problems.ReadFile("problems/" + id)
 	return p, err
+}
+
+func convertAll(){
+	var err error
+	for i := 1; ; i++ {
+		id := fmt.Sprintf("%d", i)
+		_, err  = getProblem(id)
+		if err != nil {
+			break
+		}
+		result := convert("", id)
+		err = ioutil.WriteFile("./converted_problems/" + id, result, 0700)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func convert(problemFile, problemId string) []byte {
+	var problemBytes []byte
+	var err error
+	if problemFile != "" {
+		problemBytes, err  = ioutil.ReadFile(problemFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if problemId != "" {
+		problemBytes, err  = getProblem(problemId)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Fatal("./eval --convert --problem-file <filename>\n" +
+			"./eval --convert --problem-id <id>\n")
+	}
+
+	var problem Problem
+	if err := json.Unmarshal(problemBytes, &problem); err != nil {
+		log.Fatal(err)
+	}
+
+	n := len(problem.Hole)
+	en := len(problem.Figure.Edges)
+	vn := len(problem.Figure.Vertices)
+
+	var ret bytes.Buffer
+	ret.WriteString(fmt.Sprintf("%d %d %d %s\n", n, en, vn, problem.Epsilon.String()))
+
+	for _, h := range problem.Hole {
+		ret.WriteString(fmt.Sprintf("%s %s\n", h[0].String(), h[1].String()))
+	}
+	for _, e := range problem.Figure.Edges {
+		ret.WriteString(fmt.Sprintf("%d %d\n", e[0], e[1]))
+	}
+	for _, v := range problem.Figure.Vertices {
+		ret.WriteString(fmt.Sprintf("%s %s\n", v[0].String(), v[1].String()))
+	}
+	return ret.Bytes()
 }
 
 func cli(problemFile, problemId, poseFile string){
@@ -75,6 +134,8 @@ func main(){
 	var problemId = flag.String("problem-id", "", "problem id")
 	var problemFile = flag.String("problem-file", "", "problem file")
 	var poseFile = flag.String("pose-file", "", "pose file")
+	var convertFlag = flag.Bool("convert", false, "input convert")
+	var allFlag = flag.Bool("all", false, "convert all")
 	flag.Parse()
 	if *server != "" {
 		fmt.Println("server mode")
@@ -111,6 +172,10 @@ func main(){
 			err := http.ListenAndServe(*server, nil)
 			log.Print(err)
 		}
+	} else if *allFlag {
+		convertAll()
+	} else if *convertFlag {
+		fmt.Print(string(convert(*problemFile, *problemId)))
 	} else {
 		cli(*problemFile, *problemId, *poseFile)
 	}
