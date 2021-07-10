@@ -261,90 +261,90 @@ Main.start = function() {
 };
 Main.onEnterFrame = function(f) {
 	if(Main.fitDown || Main.autoDown || Main.randomDown) {
+		if(Main.randomDown) {
+			var _g = 0;
+			var _g1 = Main.problem.hole;
+			while(_g < _g1.length) {
+				var hole = _g1[_g];
+				++_g;
+				var a = Main.answer[Std.random(Main.answer.length)];
+				var dx = a[0] - hole[0];
+				var dy = a[1] - hole[1];
+				if(dx != 0 || dy != 0) {
+					var v = Math.sqrt(dx * dx + dy * dy);
+					var d = Math.atan2(dy,dx);
+					a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
+					a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
+				}
+			}
+		}
 		var _g = 0;
-		while(_g < 3) {
+		while(_g < 5) {
 			var _ = _g++;
-			if(Main.randomDown) {
+			if(Main.fitDown) {
 				var _g1 = 0;
 				var _g2 = Main.problem.hole;
 				while(_g1 < _g2.length) {
 					var hole = _g2[_g1];
 					++_g1;
-					var a = Main.answer[Std.random(Main.answer.length)];
-					var dx = a[0] - hole[0];
-					var dy = a[1] - hole[1];
-					if(dx != 0 || dy != 0) {
-						var v = Math.sqrt(dx * dx + dy * dy);
-						var d = Math.atan2(dy,dx);
-						a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
-						a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
-					}
-				}
-			}
-			if(Main.fitDown) {
-				var _g3 = 0;
-				var _g4 = Main.problem.hole;
-				while(_g3 < _g4.length) {
-					var hole1 = _g4[_g3];
-					++_g3;
 					var min = Infinity;
 					var target = 0;
-					var _g5 = 0;
-					var _g6 = Main.answer.length;
-					while(_g5 < _g6) {
-						var i = _g5++;
-						var a1 = Main.answer[i];
-						var dx1 = a1[0] - hole1[0];
-						var dy1 = a1[1] - hole1[1];
-						var d1 = dx1 * dx1 + dy1 * dy1;
-						if(d1 < min) {
-							min = d1;
+					var _g3 = 0;
+					var _g4 = Main.answer.length;
+					while(_g3 < _g4) {
+						var i = _g3++;
+						var a = Main.answer[i];
+						var dx = a[0] - hole[0];
+						var dy = a[1] - hole[1];
+						var d = dx * dx + dy * dy;
+						if(d < min && (d == 0 || d + 20 < min || Math.random() < 0.5)) {
+							min = d;
 							target = i;
 						}
 					}
 					if(min > 0) {
-						var v1 = Math.sqrt(min);
-						var a2 = Main.answer[target];
-						var dx2 = a2[0] - hole1[0];
-						var dy2 = a2[1] - hole1[1];
-						var d2 = Math.atan2(dy2,dx2);
-						a2[0] = Math.round(a2[0] - v1 * Math.cos(d2) + Math.random() - 0.5);
-						a2[1] = Math.round(a2[1] - v1 * Math.sin(d2) + Math.random() - 0.5);
+						var v = Math.sqrt(min);
+						var a1 = Main.answer[target];
+						var dx1 = a1[0] - hole[0];
+						var dy1 = a1[1] - hole[1];
+						var d1 = Math.atan2(dy1,dx1);
+						a1[0] = Math.round(a1[0] - v * Math.cos(d1) + Math.random() - 0.5);
+						a1[1] = Math.round(a1[1] - v * Math.sin(d1) + Math.random() - 0.5);
 					}
 				}
 			}
 			if(Main.autoDown) {
-				var _g7 = 0;
-				while(_g7 < 50000) {
-					var i1 = _g7++;
+				var _g5 = 0;
+				while(_g5 < 50000) {
+					var i1 = _g5++;
 					if(i1 % 10 == 0) {
 						Main.updateBest();
 					}
-					var _g8 = [];
-					var _g9 = 0;
-					var _g10 = Main.answer;
-					while(_g9 < _g10.length) {
-						var _1 = _g10[_g9];
-						++_g9;
-						_g8.push(0);
+					var _g6 = [];
+					var _g7 = 0;
+					var _g8 = Main.answer;
+					while(_g7 < _g8.length) {
+						var _1 = _g8[_g7];
+						++_g7;
+						_g6.push(0);
 					}
-					var count = _g8;
-					var _g11 = [];
-					var _g12 = 0;
-					var _g13 = Main.answer;
-					while(_g12 < _g13.length) {
-						var _2 = _g13[_g12];
-						++_g12;
-						_g11.push([0.0,0.0]);
+					var count = _g6;
+					var _g9 = [];
+					var _g10 = 0;
+					var _g11 = Main.answer;
+					while(_g10 < _g11.length) {
+						var _2 = _g11[_g10];
+						++_g10;
+						_g9.push([0.0,0.0]);
 					}
-					var velocities = _g11;
+					var velocities = _g9;
 					var e = Main.problem.epsilon;
 					var matched = true;
-					var _g14 = 0;
-					var _g15 = Main.problem.figure.edges;
-					while(_g14 < _g15.length) {
-						var edge = _g15[_g14];
-						++_g14;
+					var _g12 = 0;
+					var _g13 = Main.problem.figure.edges;
+					while(_g12 < _g13.length) {
+						var edge = _g13[_g12];
+						++_g12;
 						var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
 						var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
 						var ad = ax * ax + ay * ay;
@@ -354,30 +354,30 @@ Main.onEnterFrame = function(f) {
 						if(!ProblemTools.checkEpsilonValue(Main.problem,ad,pd)) {
 							count[edge[0]] += 1;
 							count[edge[1]] += 1;
-							var v2 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
-							var d3 = Math.atan2(ay,ax);
-							velocities[edge[0]][0] -= v2 * Math.cos(d3);
-							velocities[edge[0]][1] -= v2 * Math.sin(d3);
-							velocities[edge[1]][0] += v2 * Math.cos(d3);
-							velocities[edge[1]][1] += v2 * Math.sin(d3);
+							var v1 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
+							var d2 = Math.atan2(ay,ax);
+							velocities[edge[0]][0] -= v1 * Math.cos(d2);
+							velocities[edge[0]][1] -= v1 * Math.sin(d2);
+							velocities[edge[1]][0] += v1 * Math.cos(d2);
+							velocities[edge[1]][1] += v1 * Math.sin(d2);
 							matched = false;
 						}
 					}
 					if(matched) {
 						break;
 					}
-					var _g16 = 0;
-					var _g17 = Main.answer.length;
-					while(_g16 < _g17) {
-						var i2 = _g16++;
-						var v3 = velocities[i2];
+					var _g14 = 0;
+					var _g15 = Main.answer.length;
+					while(_g14 < _g15) {
+						var i2 = _g14++;
+						var v2 = velocities[i2];
 						var c = count[i2];
 						if(c != 0) {
 							if(c == 1 && Math.random() < 0.1) {
 								continue;
 							}
-							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v3[0] / (c + 1) + (Math.random() - 0.5));
-							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v3[1] / (c + 1) + (Math.random() - 0.5));
+							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v2[0] / (c + 1) + (Math.random() - 0.5));
+							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v2[1] / (c + 1) + (Math.random() - 0.5));
 						}
 					}
 				}
@@ -394,7 +394,7 @@ Main.selectProblem = function(e) {
 Main.updateBest = function() {
 	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
 	var fail = ProblemTools.failCount(Main.problem,Main.answer);
-	var $eval = fail * 1000 + dislike;
+	var $eval = ProblemTools.eval(dislike,fail);
 	if($eval < Main.bestEval) {
 		Main.bestEval = $eval;
 		var _g = [];
@@ -476,7 +476,7 @@ Main.updateScore = function() {
 	Main.updateBest();
 	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
 	var fail = ProblemTools.failCount(Main.problem,Main.answer);
-	var $eval = fail * 1000 + dislike;
+	var $eval = ProblemTools.eval(dislike,fail);
 	window.document.getElementById("dislike").textContent = "" + dislike;
 	window.document.getElementById("fail").textContent = "" + fail;
 	window.document.getElementById("eval").textContent = "" + $eval;
@@ -855,7 +855,7 @@ ProblemTools.failCount = function(problem,answer) {
 			var edge = _g3[_g2];
 			++_g2;
 			if(ProblemTools.intersect(h0,h1,answer[edge[0]],answer[edge[1]])) {
-				++failCount;
+				failCount += 4;
 			}
 		}
 		h0 = h1;
@@ -897,6 +897,9 @@ ProblemTools.intersect = function(a,b,c,d) {
 		return false;
 	}
 	return true;
+};
+ProblemTools.eval = function(dislike,fail) {
+	return fail * 200 + dislike + fail / 5 * dislike;
 };
 var Reflect = function() { };
 Reflect.__name__ = true;
