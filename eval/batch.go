@@ -17,13 +17,12 @@ const contestUrl = "https://poses.live"
 const problemsUrl = "http://13.114.46.162:8800/problems.json"
 const problemsFetchUrl = "http://13.114.46.162:8800/fetch_problems"
 
-var lastFetchTime time.Time = time.Now()
+var lastFetchTime = time.Time{}
 var latestDislike = map[string]*Int{}
 
 
 func fetchProblemsJson() {
-	// コンテストポータルをクロールしてくるので制限きつめ
-	if time.Minute < time.Since(lastFetchTime) {
+	if 30 * time.Second < time.Since(lastFetchTime) {
 		resp, err := http.Get(problemsFetchUrl)
 		if err != nil {
 			log.Println(err)
