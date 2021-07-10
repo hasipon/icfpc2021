@@ -10,6 +10,9 @@
     <li>http://13.114.46.162:8800/eval</li>
 
     <h2>問題一覧</h2>
+    <a href="/?search=1&dislike-min=99999999999">未回答</a>
+    <a href="/?search=1&dislike-min=1&top-dislike-max=0">トップは厳密解</a>
+    <a href="/?search=1&dislike-ratio-max=20">トップとの差が大</a>
     {% if is_search %}
     <pre>{% for p in problems %}{{p.name}} {% endfor %}</pre>
     {% endif %}

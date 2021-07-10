@@ -57,6 +57,8 @@ def filter_problems(problems):
     dislike_max = request.args.get("dislike-max")
     top_dislike_min = request.args.get("top-dislike-min")
     top_dislike_max = request.args.get("top-dislike-max")
+    dislike_ratio_min = request.args.get("dislike-ratio-min")
+    dislike_ratio_max = request.args.get("dislike-ratio-max")
 
     def fix_dislike(d):
         if type(d) == int:
@@ -73,6 +75,10 @@ def filter_problems(problems):
         if top_dislike_max and int(top_dislike_max) < fix_dislike(p["dislike_min"]):
             return False
         if top_dislike_min and int(top_dislike_min) > fix_dislike(p["dislike_min"]):
+            return False
+        if dislike_ratio_max and int(dislike_ratio_max) < p["dislike_ratio"] * 100:
+            return False
+        if dislike_ratio_min and int(dislike_ratio_min) > p["dislike_ratio"] * 100:
             return False
         return True
 
