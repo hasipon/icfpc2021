@@ -77,6 +77,7 @@ def index():
             "edges": len(problem_details[x]["figure"]["edges"]),
             "vertices": len(problem_details[x]["figure"]["vertices"]),
             "dislike": dislikes[x][0],
+            "dislike_min": dislikes[x][1],
             "dislike_ratio": dislikes[x][2],
             "topscore": math.ceil(problem_details[x]["base_score"]),
             "score": math.ceil(problem_details[x]["base_score"] * math.sqrt(dislikes[x][2])),

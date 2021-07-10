@@ -18,7 +18,7 @@
     <th class="text-center">ε</th>
     <th class="text-center">E</th>
     <th class="text-center">V</th>
-    <th class="text-center">Dislike(トップとの比)</th>
+    <th class="text-center">Dislike(トップ, 比)</th>
     <th class="text-center">Score(トップとの差)</th>
   </tr>
 
@@ -39,7 +39,10 @@
     {% else %}
       <td class="text-center">
     {% endif %}
-      {{p.dislike}} ({{'%.1f' % (p.dislike_ratio * 100)}} %)</td>
+      {{p.dislike}} ({{p.dislike_min}}
+      {% if p.dislike_min == 0 %} <span class="badge">厳密解</span> {% endif %}
+      , {{'%.1f' % (p.dislike_ratio * 100)}} %
+    )</td>
 
     {% set sd = p.topscore - p.score %}
     {% if sd < 1 %}
