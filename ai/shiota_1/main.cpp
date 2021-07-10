@@ -52,7 +52,7 @@ vp improveOne(const Problem &p, vp pose, int holeId, bool x){
     if(h.y < target.y){
       target.y--;
     }else{
-      target.x++;
+      target.y++;
     }
   }
   if(validate(p, pose)){
