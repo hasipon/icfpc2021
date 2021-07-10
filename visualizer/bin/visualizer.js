@@ -375,6 +375,16 @@ Main.onMouseUp = function() {
 	Main.selectGraphics.beginFill(13369344);
 	if(Main.selectRect != null) {
 		var i = 0;
+		if(Main.selectRect.width < 0) {
+			var rx = Main.selectRect.x + Main.selectRect.width;
+			Main.selectRect.x = rx;
+			Main.selectRect.width = -Main.selectRect.width;
+		}
+		if(Main.selectRect.height < 0) {
+			var ry = Main.selectRect.y + Main.selectRect.height;
+			Main.selectRect.y = ry;
+			Main.selectRect.height = -Main.selectRect.height;
+		}
 		var _g = 0;
 		var _g1 = Main.answer;
 		while(_g < _g1.length) {
@@ -478,7 +488,7 @@ Main.onMouseDown = function(e) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
 	} else {
-		console.log("src/Main.hx:466:",selectedPoint);
+		console.log("src/Main.hx:478:",selectedPoint);
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();
