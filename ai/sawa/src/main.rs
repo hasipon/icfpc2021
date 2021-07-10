@@ -11,7 +11,7 @@ use solve::solve;
 
 fn main()  -> std::io::Result<()>  {
     let arg:Vec<String> = args().collect();
-    let mut target = "1".to_owned();
+    let mut target = "8".to_owned();
     if arg.len() > 1 {
         target = arg[1].to_owned();
     }
@@ -23,7 +23,9 @@ fn main()  -> std::io::Result<()>  {
     let result = solve(&problem);
     
     println!("{}", json!(result.dislike));
-    println!("{}", json!(result.answer));
+    println!("{}", json!(result.get_score()));
+    println!("{}", json!(result.is_valid()));
+    println!("{}", json!(Answer{ vertices:result.answer }));
 
     Ok(())
 }

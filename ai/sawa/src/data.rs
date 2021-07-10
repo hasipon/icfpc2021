@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::util::*;
+use std::cmp::Ordering;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Problem {
@@ -10,11 +11,11 @@ pub struct Problem {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Figure {
-    pub edges   :Vec<(i64, i64)>,
+    pub edges   :Vec<(usize, usize)>,
     pub vertices:Vec<Point>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq)]
 pub struct Point(pub i64, pub i64);
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -28,11 +29,11 @@ pub struct SolveResult {
     pub valid  :bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq)]
 pub struct State {
     pub answer:Vec<Point>,
     pub dislike:i64,
-    pub interrupted:i64,
+    pub intersected:i64,
     pub unmatched:i64,
 }
 
@@ -40,12 +41,33 @@ impl State {
     pub fn new(problem:&Problem, answer:Vec<Point>) -> State {
         State {
             dislike    : get_dislike(problem, &answer),
-            interrupted: get_interrupted(problem, &answer),
+            intersected: get_intersected(problem, &answer),
             unmatched  : get_unmatched(problem, &answer),
             answer:  answer,
         }
     }
     pub fn is_valid(&self) -> bool {
-        self.interrupted == 0 && self.unmatched == 0
+        self.intersected == 0 && self.unmatched == 0
+    }
+    pub fn get_score(&self) -> i64 {
+        self.dislike + self.intersected * 1000 + self.unmatched * 300
+    }
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.get_score().cmp(&other.get_score())
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for State {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_score() == other.get_score()
     }
 }
