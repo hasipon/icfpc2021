@@ -8,8 +8,6 @@ import js.html.CanvasElement;
 import js.html.Document;
 import js.html.Element;
 import js.html.Event;
-import js.html.InputElement;
-import js.html.KeyEvent;
 import js.html.KeyboardEvent;
 import js.html.SelectElement;
 import js.html.TextAreaElement;
@@ -21,6 +19,7 @@ import pixi.core.math.shapes.Rectangle;
 import pixi.interaction.InteractionEvent;
 import tweenxcore.color.RgbColor;
 using tweenxcore.Tools;
+using ProblemTools;
 
 class Main 
 {
@@ -70,7 +69,7 @@ class Main
 		Browser.document.getElementById("random_button"         ).addEventListener("mousedown", () -> { randomDown = true; });
 		Browser.document.getElementById("random_auto_button"    ).addEventListener("mousedown", () -> { randomDown = autoDown = true; });
 		Browser.document.getElementById("random_fit_auto_button").addEventListener("mousedown", () -> { randomDown = fitDown = autoDown = true; });
-		
+		Browser.document.getElementById("reload_button").addEventListener("mousedown", () -> { readProblem(problemIndex); });
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
@@ -193,7 +192,6 @@ class Main
 	{
 		problems = Json.parse(Resource.getString("problems"));
 		start();
-		
 		for (index in 0...problems.length)
 		{
 			var element = Browser.document.createElement('option');
@@ -202,7 +200,6 @@ class Main
 			problemCombo.appendChild(element);
 		}
 	}
-	
 	static function start():Void
 	{
 		var background = new Graphics();
@@ -306,12 +303,7 @@ class Main
 							var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
 							var pd = px * px + py * py;
 							
-							if (
-								if (ad < pd) -(1000000 * ad) <= (e - 1000000) * pd else (1000000 * ad) <= (e + 1000000) * pd
-							) 
-							{
-							}
-							else 
+							if (!problem.checkEpsilonValue(ad, pd)) 
 							{
 								count[edge[0]] += 1; 
 								count[edge[1]] += 1; 
@@ -478,7 +470,6 @@ class Main
 		else
 		{
 		}
-
 		if (selectedPoints.length >= 1)
 		{
 			selectGraphics.clear();
@@ -518,7 +509,6 @@ class Main
 			var r = if (right < sx + 300 ) right  else sx + 300;
 			var t = if (sy - 300 < top   ) top    else sy - 300;
 			var b = if (bottom < sy + 300) bottom else sy + 300;
-			var e = problem.epsilon;
 			for (x in l...r)
 			{
 				for (y in t...b)
@@ -533,12 +523,7 @@ class Main
 						var py = problem.figure.vertices[selectedPoint][1] - problem.figure.vertices[point][1];
 						var pd = px * px + py * py;
 						
-						if (
-							if (ad < pd) -(1000000 * ad) <= (e - 1000000) * pd else (1000000 * ad) <= (e + 1000000) * pd
-						)
-						{
-						}
-						else
+						if (!problem.checkEpsilonValue(ad, pd))
 						{
 							fail = true;
 						}
@@ -662,9 +647,7 @@ class Main
 			
 			answerGraphics.lineStyle(
 				2,
-				if (
-					if (ad < pd) -(1000000 * ad) <= (e - 1000000) * pd else (1000000 * ad) <= (e + 1000000) * pd
-				)
+				if (problem.checkEpsilonValue(ad, pd)) 
 				{
 					0x00CC00;
 				}

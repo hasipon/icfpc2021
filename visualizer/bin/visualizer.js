@@ -84,6 +84,9 @@ Main.main = function() {
 	window.document.getElementById("random_fit_auto_button").addEventListener("mousedown",function() {
 		return Main.randomDown = Main.fitDown = Main.autoDown = true;
 	});
+	window.document.getElementById("reload_button").addEventListener("mousedown",function() {
+		Main.readProblem(Main.problemIndex);
+	});
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.answerText.addEventListener("input",Main.onChangeAnswer);
 	Main.canvas.addEventListener("keydown",Main.onKeyDown);
@@ -201,7 +204,7 @@ Main.onChangeAnswer = function() {
 		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:188:",e);
+		console.log("src/Main.hx:187:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -327,7 +330,7 @@ Main.onEnterFrame = function(f) {
 						var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
 						var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 						var pd = px * px + py * py;
-						if(!(ad < pd ? -(1000000 * ad) <= (e - 1000000) * pd : 1000000 * ad <= (e + 1000000) * pd)) {
+						if(!ProblemTools.checkEpsilonValue(Main.problem,ad,pd)) {
 							count[edge[0]] += 1;
 							count[edge[1]] += 1;
 							var v2 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
@@ -536,7 +539,6 @@ Main.onMouseDown = function(e) {
 		var r = Main.right < sx + 300 ? Main.right : sx + 300;
 		var t = sy - 300 < Main.top ? Main.top : sy - 300;
 		var b = Main.bottom < sy + 300 ? Main.bottom : sy + 300;
-		var e = Main.problem.epsilon;
 		var _g = l;
 		var _g1 = r;
 		while(_g < _g1) {
@@ -556,7 +558,7 @@ Main.onMouseDown = function(e) {
 					var px = Main.problem.figure.vertices[selectedPoint][0] - Main.problem.figure.vertices[point][0];
 					var py = Main.problem.figure.vertices[selectedPoint][1] - Main.problem.figure.vertices[point][1];
 					var pd = px * px + py * py;
-					if(!(ad < pd ? -(1000000 * ad) <= (e - 1000000) * pd : 1000000 * ad <= (e + 1000000) * pd)) {
+					if(!ProblemTools.checkEpsilonValue(Main.problem,ad,pd)) {
 						fail = true;
 					}
 				}
@@ -696,9 +698,10 @@ Main.drawAnswer = function() {
 		var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
 		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 		var pd = px * px + py * py;
-		var tmp;
-		if(ad < pd ? -(1000000 * ad) <= (e - 1000000) * pd : 1000000 * ad <= (e + 1000000) * pd) {
-			tmp = 52224;
+		var tmp = Main.answerGraphics;
+		var tmp1;
+		if(ProblemTools.checkEpsilonValue(Main.problem,ad,pd)) {
+			tmp1 = 52224;
 		} else if(ad > pd) {
 			var value = (ad / pd - 1) / 3;
 			var rate = value <= 0.0 ? 0.0 : 1.0 <= value ? 1.0 : value;
@@ -723,7 +726,7 @@ Main.drawAnswer = function() {
 			} else if(1.0 <= b) {
 				b = 1.0;
 			}
-			tmp = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
 		} else {
 			var value1 = (pd / ad - 1) / 3;
 			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
@@ -748,9 +751,9 @@ Main.drawAnswer = function() {
 			} else if(1.0 <= b1) {
 				b1 = 1.0;
 			}
-			tmp = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
+			tmp1 = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
 		}
-		Main.answerGraphics.lineStyle(2,tmp);
+		tmp.lineStyle(2,tmp1);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
 		var y = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.moveTo(x,y);
@@ -773,6 +776,19 @@ Main.drawAnswer = function() {
 	Main.answerGraphics.endFill();
 };
 Math.__name__ = true;
+var ProblemTools = function() { };
+ProblemTools.__name__ = true;
+ProblemTools.checkEpsilonValue = function(problem,ad,pd) {
+	var e = problem.epsilon;
+	if(ad < pd) {
+		return -(1000000 * ad) <= (e - 1000000) * pd;
+	} else {
+		return 1000000 * ad <= (e + 1000000) * pd;
+	}
+};
+ProblemTools.failCount = function(problem,answer) {
+	return 0;
+};
 var Reflect = function() { };
 Reflect.__name__ = true;
 Reflect.isFunction = function(f) {
