@@ -150,6 +150,7 @@ vec<pair<lli, lli>> list_candidates(vec<pair<lli, lli>> hole)
   each (i, hole) {
     assert(count(v.begin(), v.end(), i));
   }
+  random_shuffle(v.begin(), v.end());
   return v;
 }
 
@@ -182,11 +183,13 @@ vec<pair<lli, lli>> dist_filter(vec<pair<lli, lli>> candidates, map<int, pair<ll
     each (f, fixed) {
       if (g[f.first][target] == -1) continue;
       ok = ok && dist_epsilon(g[f.first][target], dist(f.second, c));
-      // ok = ok && (g[f.first][target] == dist(f.second, c));
+      int x = 0;
       for (int i = 0; i < hole.size(); ++i) {
         int j = (i + 1) % hole.size();
         ok = ok && !intersect(hole[i], hole[j], f.second, c);
+        // x += intersect(hole[i], hole[j], f.second, c);
       }
+      // ok = ok && (x <= 1);
       unless (ok) break;
     }
     if (ok) v.push_back(c);
@@ -210,6 +213,7 @@ vec<pair<lli, lli>> near_hole(void)
   return v;
 }
 
+static int try_cnt = 0;
 lli solve(vec<pair<lli, lli>> candidates, map<int, pair<lli, lli>> fixed, vec<int> ord)
 {
   if (ord.empty()) {
@@ -234,6 +238,7 @@ lli solve(vec<pair<lli, lli>> candidates, map<int, pair<lli, lli>> fixed, vec<in
     return 1;
   }
 
+  if (++try_cnt == 5000) throw "";
   const int target = ord.back();
   ord.pop_back();
   if (ord.size() % 5 == 0) clog << "target: " << target << endl;
@@ -331,11 +336,58 @@ int main(int argc, char *argv[])
   // }
   // assert(succ);
 
-
-  {
-    map<int, pair<lli, lli>> fixed;
-    // fixed[0] = make_pair(48, 3);
-    assert(solve(cs, fixed, ord));
+  vec<int> vidx;
+  for (int i = 0; i < vertex.size(); ++i) {
+    vidx.push_back(i);
   }
-  return 0;
+  random_shuffle(vidx.begin(), vidx.end());
+  lli succ = 0;
+  // for (int i1 = 0; i1 < vertex.size(); ++i1) {
+  //   for (int i2 = i1 + 1; i2 < vertex.size(); ++i2) {
+  // for (int i3 = i1 + 1; i3 < vertex.size(); ++i3) {
+  //   for (int i4 = i3 + 1; i4 < vertex.size(); ++i4) {
+  for (int _i1 = 0; _i1 < vertex.size(); ++_i1) {
+    for (int _i2 = _i1 + 1; _i2 < vertex.size(); ++_i2) {
+      int i1 = vidx[_i1];
+      int i2 = vidx[_i2];
+      if (g[i1][i2] == -1) continue;
+      for (int _i3 = _i1 + 1; _i3 < vertex.size(); ++_i3) {
+        for (int _i4 = _i3 + 1; _i4 < vertex.size(); ++_i4) {
+          int i3 = vidx[_i3];
+          int i4 = vidx[_i4];
+          if (g[i3][i4] == -1) continue;
+          for (int j1 = 0; j1 < hole.size(); ++j1) {
+            for (int j2 = 0; j2 < hole.size(); ++j2) {
+              for (int j3 = 0; j3 < hole.size(); ++j3) {
+                for (int j4 = 0; j4 < hole.size(); ++j4) {
+                  lli a = dist(hole[j1], hole[j2]);
+                  lli b = dist(hole[j3], hole[j4]);
+                  if (g[i1][i2] != a) continue;
+                  if (g[i3][i4] != b) continue;
+                  map<int, pair<lli, lli>> fixed;
+                  fixed[i1] = hole[j1];
+                  fixed[i2] = hole[j2];
+                  fixed[i3] = hole[j3];
+                  fixed[i4] = hole[j4];
+                  cout << fixed << endl;
+                  try {
+                    try_cnt = 0;
+                    succ += solve(cs, fixed, ord);
+                  } catch (const char* e) {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  assert(succ);
+
+  // {
+  //   map<int, pair<lli, lli>> fixed;
+  //   assert(solve(cs, fixed, ord));
+  // }
+  // return 0;
 }
