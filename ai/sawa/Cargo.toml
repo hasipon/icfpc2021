@@ -1,0 +1,9 @@
+[package]
+name = "application_a"
+version = "0.1.0"
+authors = ["shohei909 <909mmsphere@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

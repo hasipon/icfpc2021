@@ -222,7 +222,7 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:191:",e);
+		console.log("src/Main.hx:192:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -261,20 +261,49 @@ Main.start = function() {
 };
 Main.onEnterFrame = function(f) {
 	if(Main.fitDown || Main.autoDown || Main.randomDown) {
-		if(Main.randomDown) {
+		var shouldFix = window.document.getElementById("fix_checkbox").checked;
+		var fixedMap_h = { };
+		if(shouldFix) {
 			var _g = 0;
 			var _g1 = Main.problem.hole;
 			while(_g < _g1.length) {
 				var hole = _g1[_g];
 				++_g;
-				var a = Main.answer[Std.random(Main.answer.length)];
-				var dx = a[0] - hole[0];
-				var dy = a[1] - hole[1];
-				if(dx != 0 || dy != 0) {
-					var v = Math.sqrt(dx * dx + dy * dy);
-					var d = Math.atan2(dy,dx);
-					a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
-					a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
+				var _g_current = 0;
+				var _g_array = Main.answer;
+				while(_g_current < _g_array.length) {
+					var _g1_value = _g_array[_g_current];
+					var _g1_key = _g_current++;
+					var i = _g1_key;
+					var a = _g1_value;
+					if(hole[0] == a[0] && hole[1] == a[1]) {
+						fixedMap_h[i] = true;
+					}
+				}
+			}
+		}
+		if(Main.randomDown) {
+			var _g = 0;
+			while(_g < 1) {
+				var i = _g++;
+				var _g1 = 0;
+				var _g2 = Main.problem.hole;
+				while(_g1 < _g2.length) {
+					var hole = _g2[_g1];
+					++_g1;
+					var i1 = Std.random(Main.answer.length);
+					if(shouldFix && fixedMap_h[i1]) {
+						continue;
+					}
+					var a = Main.answer[i1];
+					var dx = a[0] - hole[0];
+					var dy = a[1] - hole[1];
+					if(dx != 0 || dy != 0) {
+						var v = Math.sqrt(dx * dx + dy * dy);
+						var d = Math.atan2(dy,dx);
+						a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
+						a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
+					}
 				}
 			}
 		}
@@ -283,68 +312,75 @@ Main.onEnterFrame = function(f) {
 			var _ = _g++;
 			if(Main.fitDown) {
 				var _g1 = 0;
-				var _g2 = Main.problem.hole;
-				while(_g1 < _g2.length) {
-					var hole = _g2[_g1];
-					++_g1;
-					var min = Infinity;
-					var target = 0;
-					var _g3 = 0;
-					var _g4 = Main.answer.length;
-					while(_g3 < _g4) {
-						var i = _g3++;
-						var a = Main.answer[i];
-						var dx = a[0] - hole[0];
-						var dy = a[1] - hole[1];
-						var d = dx * dx + dy * dy;
-						if(d < min && (d == 0 || d + 20 < min || Math.random() < 0.5)) {
-							min = d;
-							target = i;
+				while(_g1 < 1) {
+					var i = _g1++;
+					var _g2 = 0;
+					var _g3 = Main.problem.hole;
+					while(_g2 < _g3.length) {
+						var hole = _g3[_g2];
+						++_g2;
+						var min = Infinity;
+						var target = 0;
+						var _g4 = 0;
+						var _g5 = Main.answer.length;
+						while(_g4 < _g5) {
+							var i1 = _g4++;
+							var a = Main.answer[i1];
+							var dx = a[0] - hole[0];
+							var dy = a[1] - hole[1];
+							var d = dx * dx + dy * dy;
+							if(d < min && (d == 0 || d + 20 < min || Math.random() < 0.5)) {
+								min = d;
+								target = i1;
+							}
 						}
-					}
-					if(min > 0) {
-						var v = Math.sqrt(min);
-						var a1 = Main.answer[target];
-						var dx1 = a1[0] - hole[0];
-						var dy1 = a1[1] - hole[1];
-						var d1 = Math.atan2(dy1,dx1);
-						a1[0] = Math.round(a1[0] - v * Math.cos(d1) + Math.random() - 0.5);
-						a1[1] = Math.round(a1[1] - v * Math.sin(d1) + Math.random() - 0.5);
+						if(min > 0) {
+							if(shouldFix && fixedMap_h[target]) {
+								continue;
+							}
+							var v = Math.sqrt(min);
+							var a1 = Main.answer[target];
+							var dx1 = a1[0] - hole[0];
+							var dy1 = a1[1] - hole[1];
+							var d1 = Math.atan2(dy1,dx1);
+							a1[0] = Math.round(a1[0] - v * Math.cos(d1) + Math.random() - 0.5);
+							a1[1] = Math.round(a1[1] - v * Math.sin(d1) + Math.random() - 0.5);
+						}
 					}
 				}
 			}
 			if(Main.autoDown) {
-				var _g5 = 0;
-				while(_g5 < 50000) {
-					var i1 = _g5++;
-					if(i1 % 10 == 0) {
+				var _g6 = 0;
+				while(_g6 < 50000) {
+					var i2 = _g6++;
+					if(i2 % 10 == 0) {
 						Main.updateBest();
 					}
-					var _g6 = [];
-					var _g7 = 0;
-					var _g8 = Main.answer;
-					while(_g7 < _g8.length) {
-						var _1 = _g8[_g7];
-						++_g7;
-						_g6.push(0);
+					var _g7 = [];
+					var _g8 = 0;
+					var _g9 = Main.answer;
+					while(_g8 < _g9.length) {
+						var _1 = _g9[_g8];
+						++_g8;
+						_g7.push(0);
 					}
-					var count = _g6;
-					var _g9 = [];
-					var _g10 = 0;
-					var _g11 = Main.answer;
-					while(_g10 < _g11.length) {
-						var _2 = _g11[_g10];
-						++_g10;
-						_g9.push([0.0,0.0]);
+					var count = _g7;
+					var _g10 = [];
+					var _g11 = 0;
+					var _g12 = Main.answer;
+					while(_g11 < _g12.length) {
+						var _2 = _g12[_g11];
+						++_g11;
+						_g10.push([0.0,0.0]);
 					}
-					var velocities = _g9;
+					var velocities = _g10;
 					var e = Main.problem.epsilon;
 					var matched = true;
-					var _g12 = 0;
-					var _g13 = Main.problem.figure.edges;
-					while(_g12 < _g13.length) {
-						var edge = _g13[_g12];
-						++_g12;
+					var _g13 = 0;
+					var _g14 = Main.problem.figure.edges;
+					while(_g13 < _g14.length) {
+						var edge = _g14[_g13];
+						++_g13;
 						var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
 						var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
 						var ad = ax * ax + ay * ay;
@@ -366,18 +402,21 @@ Main.onEnterFrame = function(f) {
 					if(matched) {
 						break;
 					}
-					var _g14 = 0;
-					var _g15 = Main.answer.length;
-					while(_g14 < _g15) {
-						var i2 = _g14++;
-						var v2 = velocities[i2];
-						var c = count[i2];
+					var _g15 = 0;
+					var _g16 = Main.answer.length;
+					while(_g15 < _g16) {
+						var i3 = _g15++;
+						if(shouldFix && fixedMap_h[i3]) {
+							continue;
+						}
+						var v2 = velocities[i3];
+						var c = count[i3];
 						if(c != 0) {
 							if(c == 1 && Math.random() < 0.1) {
 								continue;
 							}
-							Main.answer[i2][0] = Math.round(Main.answer[i2][0] + v2[0] / (c + 1) + (Math.random() - 0.5));
-							Main.answer[i2][1] = Math.round(Main.answer[i2][1] + v2[1] / (c + 1) + (Math.random() - 0.5));
+							Main.answer[i3][0] = Math.round(Main.answer[i3][0] + v2[0] / (c + 1) + (Math.random() - 0.5));
+							Main.answer[i3][1] = Math.round(Main.answer[i3][1] + v2[1] / (c + 1) + (Math.random() - 0.5));
 						}
 					}
 				}

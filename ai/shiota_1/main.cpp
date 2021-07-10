@@ -8,6 +8,8 @@
 #include<sstream>
 
 #include "lib.hpp"
+#include<cmath>
+
 
 vp improveOne(const Problem &p, vp pose, int holeId, bool x){
   Point h = p.holes[holeId];
@@ -45,28 +47,69 @@ vp improveOne(const Problem &p, vp pose, int holeId, bool x){
   return vp();
 }
 
+void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd){
+  if(!pruneEps(p, pose, used, floyd)){
+    return;
+  }
+  if(holeId == p.holes.size()){
+    cout << "{\"vertices\":[";
+    bool first = true;
+    rep(i, used.size()){
+      if(!first){
+        cout <<",";
+      }
+      first = false;
+      if(used[i]){
+        cout <<"["<<pose[i].x <<","<<pose[i].y<<"]";
+      }else {
+        cout <<"["<<p.figure.V[i].x <<","<<p.figure.V[i].y<<"]";
+      }
+    }
+    cout << "]}";
+    cout << endl;
+    return;
+  }
+  rep(i, pose.size()){
+    if(used[i])continue;
+    used[i] = true;
+    pose[i] = p.holes[holeId];
+    dfs(p, holeId+1, pose, used, floyd);
+    used[i] = false;
+  }
+}
+
+
+
 
 int main() {
   srand(0);
   Problem p;
   p.input();
-  vp pose = readPose();
-  cerr << "now: " << dislike(p, pose) <<endl;
-  cerr << validate(p, pose) <<endl;
-  rep(i, p.holes.size()){
-    while(true){
-      bool x = (rand() % 2)==1;
-      vp newPose = improveOne(p, pose, i, x);
-      if(newPose.empty()){
-        newPose = improveOne(p, pose, i, !x);
+
+  int VN = p.figure.V.size();
+
+  vii floyd;
+  rep(i, p.figure.V.size()){
+    floyd.push_back(vi(p.figure.V.size(), (1LL<<60)));
+  }
+  rep(i, VN){
+    floyd[i][i] = 0;
+  }
+  FOR(e, p.figure.E){
+    Int i = e.first;
+    Int j = e.second;
+    floyd[i][j] = floyd[j][i] = sqrt(distance(p.figure.V[i], p.figure.V[j]));
+  }
+  rep(k, VN){
+    rep(i, VN){
+      rep(j, VN){
+        floyd[i][j] = min(floyd[i][j], floyd[i][k] + floyd[k][j]);
       }
-      if(newPose.empty()){
-        break;
-      }
-      pose = newPose;
-      cerr << "now: " << dislike(p, pose) <<endl;
     }
   }
+  vp pose = p.figure.V;
+  vector<bool> used(VN, false);
+  dfs(p, 0, pose, used, floyd);
 
   return 0;
 }
