@@ -88,6 +88,52 @@ func dislike(problem *Problem, pose *Pose) *Int {
 	return sum
 }
 
+
+
+func include(problem *Problem, p Point) bool {
+	x := p[0]
+	y := p[1]
+	cnt := 0
+	for i, _ := range problem.Hole {
+		j := (i+1) % len(problem.Hole)
+		x0 := new(Int).Set(problem.Hole[i][0])
+		y0 := new(Int).Set(problem.Hole[i][1])
+		x1 := new(Int).Set(problem.Hole[j][0])
+		y1 := new(Int).Set(problem.Hole[j][1])
+
+		x0 = x0.Sub(x0, x)
+		y0 = y0.Sub(y0, y)
+		x1 = x1.Sub(x1, x)
+		y1 = y1.Sub(y1, y)
+
+		cv := new(Int).Add(new(Int).Mul(x0, x1), new(Int).Mul(y0, y1))
+		sv := new(Int).Sub(new(Int).Mul(x0, y1), new(Int).Mul(x1, y0))
+		zero := new(Int).SetInt64(0)
+		if sv.Cmp(zero) == 0 && cv.Cmp(zero) <= 0 {
+			return true
+		}
+
+		if y0.Cmp(y1) < 0{
+		} else {
+			tmp := x0
+			x0 = x1
+			x1 = tmp
+			tmp = y0
+			y0 = y1
+			y1 = tmp
+		}
+
+		if y0.Cmp(zero) <= 0 && zero.Cmp(y1) < 0 {
+			a := new(Int).Mul(x0, new(Int).Sub(y1, y0))
+			b := new(Int).Mul(y0, new(Int).Sub(x1, x0))
+			if b.Cmp(a) < 0 {
+				cnt++
+			}
+		}
+	}
+	return cnt % 2 == 1
+}
+
 func validate(problem *Problem, pose *Pose) (bool, string) {
 	origV := problem.Figure.Vertices
 	nowV := pose.Vertices
@@ -120,6 +166,11 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 					"%d) intersects: hole(%d, %d)", i, j, ii, jj)
 			}
 
+		}
+	}
+	for _, p := range pose.Vertices {
+		if !include(problem, p) {
+			return false, "out of hole"
 		}
 	}
 	return true, "OK"
