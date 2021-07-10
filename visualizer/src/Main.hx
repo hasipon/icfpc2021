@@ -362,6 +362,18 @@ class Main
 		if (selectRect != null)
 		{
 			var i = 0;
+			if (selectRect.width < 0)
+			{
+				var rx = selectRect.x + selectRect.width;
+				selectRect.x = rx;
+				selectRect.width = -selectRect.width;
+			}
+			if (selectRect.height < 0)
+			{
+				var ry = selectRect.y + selectRect.height;
+				selectRect.y = ry;
+				selectRect.height = -selectRect.height;
+			}
 			for (point in answer)
 			{
 				var x = (point[0] - left) * scale;
@@ -463,7 +475,6 @@ class Main
 		}
 		else
 		{
-			trace(selectedPoint);
 		}
 
 		if (selectedPoints.length >= 1)
@@ -564,6 +575,13 @@ class Main
 				problemGraphics.lineTo(x, y);
 			}
 			first = false;
+		}
+		for (hole in problem.hole)
+		{
+			var x = (hole[0] - left) * scale;
+			var y = (hole[1] - top ) * scale;
+			problemGraphics.beginFill(0x399999);
+			problemGraphics.drawCircle(x, y, 4);
 		}
 		problemGraphics.endFill();
 		
