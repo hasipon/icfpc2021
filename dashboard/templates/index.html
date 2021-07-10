@@ -9,11 +9,13 @@
     <li><a href="/visualizer">Visualizer</a></li>
     <li>http://13.114.46.162:8800/eval</li>
 
-    <h2>問題一覧</h2>
+    <h2>問題一覧 ({{problems|length}} 件)</h2>
     <a href="/">すべて</a>
     <a href="/?search=1&dislike-min=99999999999">未回答</a>
     <a href="/?search=1&dislike-min=1&top-dislike-max=0">トップは厳密解</a>
     <a href="/?search=1&dislike-ratio-max=20">トップとの差が大</a>
+    <a href="/?search=1&bonus-from=0">BonusFrom[0]で辿る</a>
+    <a href="/?search=1&bonus-to=0">BonusTo[0]で辿る</a>
     {% if is_search %}
     <pre>{% for p in problems %}{{p.name}} {% endfor %}</pre>
     {% endif %}
@@ -21,20 +23,30 @@
         <tr>
             <th class="text-center">Name</th>
             <th class="text-center">Thumb</th>
+            <th class="text-center">BonusFrom</th>
+            <th class="text-center">BonusTo</th>
             <th class="text-center">H</th>
             <th class="text-center">ε</th>
             <th class="text-center">E</th>
             <th class="text-center">V</th>
             <th class="text-center">Dislike(トップ, 比)</th>
             <th class="text-center">Score(トップとの差)</th>
-            <th class="text-center">Bonus From</th>
-            <th class="text-center">Bonus To</th>
         </tr>
 
         {% for p in problems %}
         <tr>
             <td class="text-center" id="{{p.name}}"><a href="https://poses.live/problems/{{p.name}}">{{p.name}}</a></td>
             <td class="text-center"><img src="/{{p.name}}.svg"></td>
+            <td class="text-center">
+                {% for bf in p.bonus_from %}
+                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
+                {% endfor %}
+            </td>
+            <td class="text-center">
+                {% for bf in p.bonus_to %}
+                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
+                {% endfor %}
+            </td>
             <td class="text-center">{{p.hole}}</td>
             <td class="text-center">{{p.eps}}</td>
             <td class="text-center">{{p.edges}}</td>
@@ -65,16 +77,6 @@
             <td class="text-center">
                 {% endif %}
                 {{p.score}} ({{ sd }})
-            </td>
-            <td class="text-center">
-                {% for bf in p.bonus_from %}
-                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
-                {% endfor %}
-            </td>
-            <td class="text-center">
-                {% for bf in p.bonus_to %}
-                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
-                {% endfor %}
             </td>
         </tr>
         {% endfor %}
