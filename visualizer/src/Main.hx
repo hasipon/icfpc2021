@@ -8,6 +8,7 @@ import js.html.CanvasElement;
 import js.html.Document;
 import js.html.Element;
 import js.html.Event;
+import js.html.InputElement;
 import js.html.KeyboardEvent;
 import js.html.SelectElement;
 import js.html.TextAreaElement;
@@ -236,13 +237,31 @@ class Main
 	{
 		if (fitDown || autoDown || randomDown)
 		{
+			var shouldFix = cast (Browser.document.getElementById("fix_checkbox"), InputElement).checked;
+			var fixedMap = new Map();
+			if (shouldFix)
+			{
+				for (hole in problem.hole)
+				{
+					for (i => a in answer)
+					{
+						if (hole[0] == a[0] && hole[1] == a[1])
+						{
+							fixedMap[i] = true;
+						}
+					}
+				}
+			}
 			if (randomDown)
 			{
 				for (i in 0...1)
 				{
 					for (hole in problem.hole)
 					{
-						var a = answer[Std.random(answer.length)];
+						var i = Std.random(answer.length);
+						if (fixedMap[i]) { continue; }
+						
+						var a = answer[i];
 						var dx = a[0] - hole[0];
 						var dy = a[1] - hole[1];
 						if (dx != 0 || dy !=0)
@@ -282,6 +301,7 @@ class Main
 							}
 							if (min > 0)
 							{
+								if (fixedMap[target]) { continue; }
 								var v = Math.sqrt(min);
 								var a = answer[target];
 								var dx = a[0] - hole[0];
@@ -328,6 +348,7 @@ class Main
 						if (matched) { break; }
 						for (i in 0...answer.length)
 						{
+							if (fixedMap[i]) { continue; }
 							var v = velocities[i];
 							var c = count[i];
 							if (c != 0)
