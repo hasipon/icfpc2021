@@ -487,8 +487,6 @@ Main.onMouseDown = function(e) {
 	} else if(Main.selectedPoints.indexOf(selectedPoint) == -1) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
-	} else {
-		console.log("src/Main.hx:478:",selectedPoint);
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();
@@ -603,6 +601,16 @@ Main.readProblem = function(index) {
 			Main.problemGraphics.lineTo(x,y);
 		}
 		first = false;
+	}
+	var _g = 0;
+	var _g1 = Main.problem.hole;
+	while(_g < _g1.length) {
+		var hole = _g1[_g];
+		++_g;
+		var x = (hole[0] - Main.left) * Main.scale;
+		var y = (hole[1] - Main.top) * Main.scale;
+		Main.problemGraphics.beginFill(3774873);
+		Main.problemGraphics.drawCircle(x,y,4);
 	}
 	Main.problemGraphics.endFill();
 	Main.answer = [];

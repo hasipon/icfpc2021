@@ -475,7 +475,6 @@ class Main
 		}
 		else
 		{
-			trace(selectedPoint);
 		}
 
 		if (selectedPoints.length >= 1)
@@ -576,6 +575,13 @@ class Main
 				problemGraphics.lineTo(x, y);
 			}
 			first = false;
+		}
+		for (hole in problem.hole)
+		{
+			var x = (hole[0] - left) * scale;
+			var y = (hole[1] - top ) * scale;
+			problemGraphics.beginFill(0x399999);
+			problemGraphics.drawCircle(x, y, 4);
 		}
 		problemGraphics.endFill();
 		
