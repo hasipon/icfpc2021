@@ -587,7 +587,7 @@ Main.readProblem = function(index) {
 	var first = true;
 	Main.problemGraphics.clear();
 	Main.problemGraphics.beginFill(15724527);
-	Main.problemGraphics.lineStyle(1,559240);
+	Main.problemGraphics.lineStyle(1,7899272);
 	var _g = 0;
 	var _g1 = Main.problem.hole;
 	while(_g < _g1.length) {
@@ -609,7 +609,7 @@ Main.readProblem = function(index) {
 		++_g;
 		var x = (hole[0] - Main.left) * Main.scale;
 		var y = (hole[1] - Main.top) * Main.scale;
-		Main.problemGraphics.beginFill(3774873);
+		Main.problemGraphics.beginFill(9017753);
 		Main.problemGraphics.drawCircle(x,y,4);
 	}
 	Main.problemGraphics.endFill();

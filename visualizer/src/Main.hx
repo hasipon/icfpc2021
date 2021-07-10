@@ -561,7 +561,7 @@ class Main
 		var first = true;
 		problemGraphics.clear();
 		problemGraphics.beginFill(0xEFEFEF);
-		problemGraphics.lineStyle(1, 0x88888);
+		problemGraphics.lineStyle(1, 0x788888);
 		for (hole in problem.hole)
 		{
 			var x = (hole[0] - left) * scale;
@@ -580,7 +580,7 @@ class Main
 		{
 			var x = (hole[0] - left) * scale;
 			var y = (hole[1] - top ) * scale;
-			problemGraphics.beginFill(0x399999);
+			problemGraphics.beginFill(0x899999);
 			problemGraphics.drawCircle(x, y, 4);
 		}
 		problemGraphics.endFill();
