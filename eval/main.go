@@ -134,6 +134,9 @@ func main(){
 	var problemId = flag.String("problem-id", "", "problem id")
 	var problemFile = flag.String("problem-file", "", "problem file")
 	var poseFile = flag.String("pose-file", "", "pose file")
+	var batch = flag.Bool("batch", false, "batch mode")
+	var solutions = flag.String("solutions", "solutions", "solutions directory")
+	var submit = flag.Bool("submit", false, "auto submit (batch mode)")
 	var convertFlag = flag.Bool("convert", false, "input convert")
 	var allFlag = flag.Bool("all", false, "convert all")
 	flag.Parse()
@@ -172,6 +175,8 @@ func main(){
 			err := http.ListenAndServe(*server, nil)
 			log.Print(err)
 		}
+	} else if *batch {
+		batchMode(*solutions, *submit)
 	} else if *allFlag {
 		convertAll()
 	} else if *convertFlag {

@@ -5,6 +5,7 @@
 #include<iostream>
 #include<cstdlib>
 #include<vector>
+#include<sstream>
 
 #define REP(i, b, n) for (Int i = b; i < Int(n); i++)
 #define rep(i, n) REP(i, 0, n)
@@ -90,9 +91,44 @@ bool validate(Problem &problem, vp &nowV){
   return true;
 }
 
+Int dislike(Problem &p, vp &v){
+  Int ret = 0;
+  FOR(h, p.holes){
+    Int mini = distance(h, v[0]);
+    REP(i, 1, v.size()){
+      mini = min(mini, distance(h, v[i]));
+    }
+    ret += mini;
+  }
+  return ret;
+}
+
+vp readPose(){
+  string s;
+  {
+    string tmp;
+    while(cin >> tmp){
+      s += tmp;
+    }
+  }
+
+  FOR(c, s){
+    if(!isdigit(c))c=' ';
+  }
+  stringstream ss(s);
+  vp ret;
+  Point p;
+  while(ss >> p.x >> p.y){
+    ret.push_back(p);
+  }
+  return ret;
+}
+
 int main() {
   Problem p;
   p.input();
-  validate(p, p.figure.V);
+  vp pose = readPose();
+  cout << dislike(p, pose) <<endl;
+
   return 0;
 }
