@@ -2,61 +2,70 @@
 {% block content %}
 
 <div class="container">
-  <h2>リンク集</h2>
-  <li><a href="https://github.com/hasipon/icfpc2021">GitHub</a></li>
-  <li><a href="https://icfpcontest2021.github.io/">コンテストサイト</a></li>
-  <li><a href="https://poses.live/problems">コンテストポータル</a></li>
-  <li><a href="/visualizer">Visualizer</a></li>
-  <li>http://13.114.46.162:8800/eval</li>
+    <h2>リンク集</h2>
+    <li><a href="https://github.com/hasipon/icfpc2021">GitHub</a></li>
+    <li><a href="https://icfpcontest2021.github.io/">コンテストサイト</a></li>
+    <li><a href="https://poses.live/problems">コンテストポータル</a></li>
+    <li><a href="/visualizer">Visualizer</a></li>
+    <li>http://13.114.46.162:8800/eval</li>
 
-  <h2>問題一覧</h2>
-  <table class="table table-condensed table-striped">
-  <tr>
-    <th class="text-center">Name</th>
-    <th class="text-center">Thumb</th>
-    <th class="text-center">H</th>
-    <th class="text-center">ε</th>
-    <th class="text-center">E</th>
-    <th class="text-center">V</th>
-    <th class="text-center">Dislike(トップ, 比)</th>
-    <th class="text-center">Score(トップとの差)</th>
-  </tr>
-
-  {% for p in problems %}
-  <tr>
-    <td class="text-center"><a href="https://poses.live/problems/{{p.name}}">{{p.name}}</a></td>
-    <td class="text-center"><img src="/{{p.name}}.svg"></td>
-    <td class="text-center">{{p.hole}}</td>
-    <td class="text-center">{{p.eps}}</td>
-    <td class="text-center">{{p.edges}}</td>
-    <td class="text-center">{{p.vertices}}</td>
-    {% if p.dislike_ratio >= 0.99 %}
-    <td class="text-center bg-success">
-    {% elif p.dislike_ratio < 0.2 %}
-      <td class="text-center bg-danger">
-    {% elif p.dislike_ratio < 0.4 %}
-      <td class="text-center bg-warning">
-    {% else %}
-      <td class="text-center">
+    <h2>問題一覧</h2>
+    <a href="/">すべて</a>
+    <a href="/?search=1&dislike-min=99999999999">未回答</a>
+    <a href="/?search=1&dislike-min=1&top-dislike-max=0">トップは厳密解</a>
+    <a href="/?search=1&dislike-ratio-max=20">トップとの差が大</a>
+    {% if is_search %}
+    <pre>{% for p in problems %}{{p.name}} {% endfor %}</pre>
     {% endif %}
-      {{p.dislike}} ({{p.dislike_min}}
-      {% if p.dislike_min == 0 %} <span class="badge">厳密解</span> {% endif %}
-      , {{'%.1f' % (p.dislike_ratio * 100)}} %
-    )</td>
+    <table class="table table-condensed table-striped">
+        <tr>
+            <th class="text-center">Name</th>
+            <th class="text-center">Thumb</th>
+            <th class="text-center">H</th>
+            <th class="text-center">ε</th>
+            <th class="text-center">E</th>
+            <th class="text-center">V</th>
+            <th class="text-center">Dislike(トップ, 比)</th>
+            <th class="text-center">Score(トップとの差)</th>
+        </tr>
 
-    {% set sd = p.topscore - p.score %}
-    {% if sd < 1 %}
-    <td class="text-center bg-success">
-    {% elif 4000 < sd %}
-      <td class="text-center bg-danger">
-    {% elif 2000 < sd %}
-      <td class="text-center bg-warning">
-    {% else %}
-      <td class="text-center">
-    {% endif %}
-      {{p.score}} ({{ sd }})</td>
-  </tr>
-  {% endfor %}
+        {% for p in problems %}
+        <tr>
+            <td class="text-center"><a href="https://poses.live/problems/{{p.name}}">{{p.name}}</a></td>
+            <td class="text-center"><img src="/{{p.name}}.svg"></td>
+            <td class="text-center">{{p.hole}}</td>
+            <td class="text-center">{{p.eps}}</td>
+            <td class="text-center">{{p.edges}}</td>
+            <td class="text-center">{{p.vertices}}</td>
+            {% if p.dislike_ratio >= 0.99 %}
+            <td class="text-center bg-success">
+                {% elif p.dislike_ratio < 0.2 %}
+            <td class="text-center bg-danger">
+                {% elif p.dislike_ratio < 0.4 %}
+            <td class="text-center bg-warning">
+                {% else %}
+            <td class="text-center">
+                {% endif %}
+                {{p.dislike}} ({{p.dislike_min}}
+                {% if p.dislike_min == 0 %} <span class="badge">厳密解</span> {% endif %}
+                , {{'%.1f' % (p.dislike_ratio * 100)}} %
+                )
+            </td>
+
+            {% set sd = p.topscore - p.score %}
+            {% if sd < 1 %}
+            <td class="text-center bg-success">
+                {% elif 4000 < sd %}
+            <td class="text-center bg-danger">
+                {% elif 2000 < sd %}
+            <td class="text-center bg-warning">
+                {% else %}
+            <td class="text-center">
+                {% endif %}
+                {{p.score}} ({{ sd }})
+            </td>
+        </tr>
+        {% endfor %}
 </div>
 
 {% endblock %}

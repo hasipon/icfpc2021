@@ -8,6 +8,7 @@ import js.html.CanvasElement;
 import js.html.Document;
 import js.html.Element;
 import js.html.Event;
+import js.html.InputElement;
 import js.html.KeyboardEvent;
 import js.html.SelectElement;
 import js.html.TextAreaElement;
@@ -236,27 +237,45 @@ class Main
 	{
 		if (fitDown || autoDown || randomDown)
 		{
-			for (_ in 0...3)
+			var shouldFix = (cast Browser.document.getElementById("fix_checkbox")).checked;
+			var fixedMap = new Map();
+			if (shouldFix)
 			{
-				if (randomDown)
+				for (hole in problem.hole)
 				{
-					for (i in 0...1)
+					for (i => a in answer)
 					{
-						for (hole in problem.hole)
+						if (hole[0] == a[0] && hole[1] == a[1])
 						{
-							var a = answer[Std.random(answer.length)];
-							var dx = a[0] - hole[0];
-							var dy = a[1] - hole[1];
-							if (dx != 0 || dy !=0)
-							{
-								var v = Math.sqrt(dx * dx + dy * dy);
-								var d = Math.atan2(dy, dx);
-								a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
-								a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
-							}
+							fixedMap[i] = true;
 						}
 					}
 				}
+			}
+			if (randomDown)
+			{
+				for (i in 0...1)
+				{
+					for (hole in problem.hole)
+					{
+						var i = Std.random(answer.length);
+						if (shouldFix && fixedMap[i]) { continue; }
+						
+						var a = answer[i];
+						var dx = a[0] - hole[0];
+						var dy = a[1] - hole[1];
+						if (dx != 0 || dy !=0)
+						{
+							var v = Math.sqrt(dx * dx + dy * dy);
+							var d = Math.atan2(dy, dx);
+							a[0] = Math.round(a[0] - v * Math.cos(d) * Math.random() * Math.random() + Math.random() - 0.5);
+							a[1] = Math.round(a[1] - v * Math.sin(d) * Math.random() * Math.random() + Math.random() - 0.5);
+						}
+					}
+				}
+			}
+			for (_ in 0...5)
+			{
 				if (fitDown)
 				{
 					for (i in 0...1)
@@ -271,7 +290,10 @@ class Main
 								var dx = a[0] - hole[0];
 								var dy = a[1] - hole[1];
 								var d = dx * dx + dy * dy;
-								if (d < min)
+								if (
+									d < min &&
+									(d == 0 || d + 20 < min || Math.random() < 0.5)
+								)
 								{
 									min = d;
 									target = i;
@@ -279,6 +301,7 @@ class Main
 							}
 							if (min > 0)
 							{
+								if (shouldFix && fixedMap[target]) { continue; }
 								var v = Math.sqrt(min);
 								var a = answer[target];
 								var dx = a[0] - hole[0];
@@ -325,6 +348,7 @@ class Main
 						if (matched) { break; }
 						for (i in 0...answer.length)
 						{
+							if (shouldFix && fixedMap[i]) { continue; }
 							var v = velocities[i];
 							var c = count[i];
 							if (c != 0)
@@ -351,7 +375,7 @@ class Main
 	{
 		var dislike = ProblemTools.dislike(problem, answer);
 		var fail = ProblemTools.failCount(problem, answer);
-		var eval = fail * 1000 + dislike;
+		var eval = ProblemTools.eval(dislike, fail);
 		if (eval < bestEval)
 		{
 			bestEval = eval;
@@ -424,7 +448,7 @@ class Main
 		updateBest();
 		var dislike = ProblemTools.dislike(problem, answer);
 		var fail = ProblemTools.failCount(problem, answer);
-		var eval = fail * 1000 + dislike;
+		var eval = ProblemTools.eval(dislike, fail);
 		Browser.document.getElementById("dislike").textContent = "" + dislike; 
 		Browser.document.getElementById("fail").textContent = "" + fail; 
 		Browser.document.getElementById("eval").textContent = "" + eval; 

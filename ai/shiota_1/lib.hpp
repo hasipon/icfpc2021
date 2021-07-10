@@ -13,6 +13,8 @@
 using namespace std;
 
 using Int = long long;
+using vi = vector<Int>;
+using vii = vector<vi>;
 using pii = pair<Int, Int>;
 
 class Point {
@@ -61,6 +63,39 @@ Int distance(Point a, Point b) {
   Int x =  a.x - b.x;
   Int y = a.y - b.y;
   return x*x + y*y;
+}
+
+bool pruneEps(const Problem &problem, vp &pose, vector<bool> &used, const vii &floyd){
+  vp origV = problem.figure.V;
+  rep(i, used.size()){
+    if(!used[i])continue;
+    REP(j, i+1, used.size()){
+      if(!used[j])continue;
+      {
+        double origD = floyd[i][j] * floyd[i][j];
+        Int nowD = distance(pose[i], pose[j]);
+        if(nowD > origD){
+          // TODO tuning
+          if ((nowD - origD) * 1000000 > (double)problem.epsilon * origD) {
+            return false;
+          }
+        }
+      }
+    }
+  }
+  FOR(e, problem.figure.E) {
+    Int i = e.first;
+    Int j = e.second;
+    if(!used[i] )continue;
+    if(!used[j] )continue;
+    Int origD = distance(origV[i], origV[j]);
+    Int nowD = distance(pose[i], pose[j]);
+    Int diff = max(origD, nowD) - min(origD, nowD);
+    if (diff * 1000000 > problem.epsilon * origD) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool validate(const Problem &problem, vp &nowV){

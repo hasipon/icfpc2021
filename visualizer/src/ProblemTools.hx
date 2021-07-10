@@ -49,7 +49,7 @@ class ProblemTools
 						answer[edge[1]] 
 					)
 				) {
-					failCount += 1;
+					failCount += 4;
 				}
 			}
 			h0 = h1;
@@ -91,5 +91,10 @@ class ProblemTools
 		var t  = (cx - dx) * (by - cy) - (cy - dy) * (bx - cx);
 		if (s * t >= 0) return false;
 		return true;
+	}
+	
+	public static function eval(dislike:Float, fail:Int):Float
+	{
+		return fail * 200 + dislike + (fail / 5) * dislike;
 	}
 }

@@ -8,7 +8,23 @@
 #include<sstream>
 
 #include "lib.hpp"
+#include<cmath>
 
+
+
+void output(vp &pose) {
+  cout << "{\"vertices\":[";
+  bool first = true;
+  rep(i, pose.size()){
+    if(!first){
+      cout <<",";
+    }
+    first = false;
+    cout <<"["<<pose[i].x <<","<<pose[i].y<<"]";
+  }
+  cout << "]}";
+  cout << endl;
+}
 vp improveOne(const Problem &p, vp pose, int holeId, bool x){
   Point h = p.holes[holeId];
   Int mini = distance(h, pose[0]);
@@ -36,7 +52,7 @@ vp improveOne(const Problem &p, vp pose, int holeId, bool x){
     if(h.y < target.y){
       target.y--;
     }else{
-      target.x++;
+      target.y++;
     }
   }
   if(validate(p, pose)){
@@ -45,27 +61,106 @@ vp improveOne(const Problem &p, vp pose, int holeId, bool x){
   return vp();
 }
 
+const int magic = 250;
+
+void drushUp(Problem &p, vp &pose, vector<bool> used, const vii &floyd, const vii &nextTo){
+  vp origV = p.figure.V;
+  FOR(e, p.figure.E){
+    if(used[e.first] && used[e.second])continue;
+    if(!used[e.first] && !used[e.second])continue;
+    int from = e.first, to = e.second;
+    if(used[to])swap(from, to);
+    for(int i = -magic; i<magic; i++){
+      for(int j = -magic; j<magic; j++){
+        Point newTo;
+        newTo.x = pose[to].x + i;
+        newTo.y = pose[to].y + j;
+        FOR(next, nextTo[to]){
+          Int origD = distance(origV[from], origV[to]);
+          Int nowD = distance(pose[from], newTo);
+          Int diff = max(origD, nowD) - min(origD, nowD);
+          if (diff * 1000000 > p.epsilon * origD) {
+            continue;
+          }
+          pose[to] = newTo;
+          goto OK;
+        }
+      }
+    }
+    OK:;
+      used[to] = true;
+  }
+
+  output(pose);
+}
+
+void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd, const vii &nextTo, int last, int skipShareEdge){
+  if(!pruneEps(p, pose, used, floyd)){
+    return;
+  }
+  if(holeId == p.holes.size()){
+    drushUp(p, pose, used, floyd, nextTo);
+    return;
+  }
+  if(last != -1){
+    FOR(next, nextTo[last]){
+      if(used[next])continue;
+      used[next] = true;
+      pose[next] = p.holes[holeId];
+      dfs(p, holeId+1, pose, used, floyd, nextTo, next, skipShareEdge);
+      used[next] = false;
+    }
+  }
+  if(skipShareEdge>0 ) {
+    rep(i, pose.size()) {
+      if (used[i])
+        continue;
+      used[i] = true;
+      pose[i] = p.holes[holeId];
+      dfs(p, holeId + 1, pose, used, floyd, nextTo, i, skipShareEdge - 1);
+      used[i] = false;
+    }
+  }
+}
+
+
+
 
 int main() {
   srand(0);
   Problem p;
   p.input();
-  vp pose = readPose();
-  cerr << "now: " << dislike(p, pose) <<endl;
-  cerr << validate(p, pose) <<endl;
-  rep(i, p.holes.size()){
-    while(true){
-      bool x = (rand() % 2)==1;
-      vp newPose = improveOne(p, pose, i, x);
-      if(newPose.empty()){
-        newPose = improveOne(p, pose, i, !x);
+
+  int VN = p.figure.V.size();
+
+  vii floyd;
+  vii nextTo(p.figure.V.size());
+
+  rep(i, p.figure.V.size()){
+    floyd.push_back(vi(p.figure.V.size(), (1LL<<60)));
+  }
+  rep(i, VN){
+    floyd[i][i] = 0;
+  }
+  FOR(e, p.figure.E){
+    Int i = e.first;
+    Int j = e.second;
+    floyd[i][j] = floyd[j][i] = sqrt(distance(p.figure.V[i], p.figure.V[j]));
+    nextTo[i].push_back(j);
+    nextTo[j].push_back(i);
+  }
+  rep(k, VN){
+    rep(i, VN){
+      rep(j, VN){
+        floyd[i][j] = min(floyd[i][j], floyd[i][k] + floyd[k][j]);
       }
-      if(newPose.empty()){
-        break;
-      }
-      pose = newPose;
-      cerr << "now: " << dislike(p, pose) <<endl;
     }
+  }
+  vp pose = p.figure.V;
+  vector<bool> used(VN, false);
+  rep(i, VN){
+    cout << "skipShareEdge" << ' ' << i << endl;
+    dfs(p, 0, pose, used, floyd, nextTo, -1, i);
   }
 
   return 0;
