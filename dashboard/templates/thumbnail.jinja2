@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0.0 0.0 {{maxx}} {{maxy}}">
+  <path
+    d="M {{hole[0][0]}},{{hole[0][1]}} {% for h in hole[1:] %} L {{h[0]}},{{h[1]}} {% endfor %}"
+    id="hole{{name}}" style="fill:#00000066;fill-rule:evenodd;stroke:none;">
+  </path>
+  <g id="figure{{name}}" style="fill:none;stroke:#ff0000;stroke-linecap:round" transform="translate(0.0, 0.0)">
+    {% for e in figure.edges %}
+    {% set v0, v1 = figure.vertices[e[0]], figure.vertices[e[1]] %}
+    <path d="M {{v0[0]}},{{v0[1]}} L {{v1[0]}},{{v1[1]}}"></path>
+    {% endfor %}
+  </g>
+</svg>

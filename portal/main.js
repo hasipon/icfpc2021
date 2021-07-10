@@ -8,14 +8,23 @@ async function main() {
     dotenv.config();
     const email = process.env.ICFPC_EMAIL;
     const password = process.env.ICFPC_PASSWORD;
-    console.log(email);
 
     puppeteer.launch({
         headless: true,
 	args: ['--no-sandbox', '--disable-setuid-sandbox'],
     }).then(async browser => {
         const page = await browser.newPage();
-        await login(page, email, password);
+
+        if (fs.existsSync("cookies.json")) {
+            const cookies = JSON.parse(fs.readFileSync("cookies.json", 'utf-8'));
+            for (let cookie of cookies) {
+                await page.setCookie(cookie);
+            }
+        } else {
+            await login(page, email, password);
+            const cookies = await page.cookies();
+            fs.writeFileSync("cookies.json", JSON.stringify(cookies));
+        }
         await save_problems_json(page);
         await browser.close();
     });

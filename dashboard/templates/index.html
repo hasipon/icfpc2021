@@ -12,7 +12,8 @@
   <h2>問題一覧</h2>
   <table class="table table-condensed table-striped">
   <tr>
-    <th class="text-center">File</th>
+    <th class="text-center">Name</th>
+    <th class="text-center">Thumb</th>
     <th class="text-center">H</th>
     <th class="text-center">ε</th>
     <th class="text-center">E</th>
@@ -24,12 +25,33 @@
   {% for p in problems %}
   <tr>
     <td class="text-center"><a href="https://poses.live/problems/{{p.name}}">{{p.name}}</a></td>
+    <td class="text-center"><img src="/{{p.name}}.svg"></td>
     <td class="text-center">{{p.hole}}</td>
     <td class="text-center">{{p.eps}}</td>
     <td class="text-center">{{p.edges}}</td>
     <td class="text-center">{{p.vertices}}</td>
-    <td class="text-center">{{p.dislike}} ({{'%.1f' % (p.dislike_ratio * 100)}} %)</td>
-    <td class="text-center">{{p.score}} ({{p.topscore - p.score}})</td>
+    {% if p.dislike_ratio >= 0.99 %}
+    <td class="text-center bg-success">
+    {% elif p.dislike_ratio < 0.2 %}
+      <td class="text-center bg-danger">
+    {% elif p.dislike_ratio < 0.4 %}
+      <td class="text-center bg-warning">
+    {% else %}
+      <td class="text-center">
+    {% endif %}
+      {{p.dislike}} ({{'%.1f' % (p.dislike_ratio * 100)}} %)</td>
+
+    {% set sd = p.topscore - p.score %}
+    {% if sd < 1 %}
+    <td class="text-center bg-success">
+    {% elif 4000 < sd %}
+      <td class="text-center bg-danger">
+    {% elif 2000 < sd %}
+      <td class="text-center bg-warning">
+    {% else %}
+      <td class="text-center">
+    {% endif %}
+      {{p.score}} ({{ sd }})</td>
   </tr>
   {% endfor %}
 </div>
