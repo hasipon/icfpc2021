@@ -95,7 +95,41 @@ def filter_problems(problems):
             return False
         return True
 
-    return list(filter(f, problems))
+    return bonus_filter(list(filter(f, problems)))
+
+
+def bonus_filter(problems):
+    key = ""
+    if request.args.get("bonus-from"):
+        key = "bonus_from"
+    elif request.args.get("bonus-to"):
+        key = "bonus_to"
+    else:
+        return problems
+
+    problems_dict = {p["name"]: p for p in problems}
+    next_problems = []
+    checked = set()
+
+    def next_unchecked():
+        for p in problems:
+            if p["name"] not in checked:
+                return p
+        return None
+
+    p = next_unchecked()
+    while p:
+        if p["name"] in checked:
+            p = next_unchecked()
+            continue
+        checked.add(p["name"])
+        next_problems.append(p)
+        if p["bonus_from"] and p[key][0][0]:
+            p = problems_dict[p[key][0][0]]
+        else:
+            if p["name"] in checked:
+                p = next_unchecked()
+    return next_problems
 
 
 @app.route('/')
@@ -136,9 +170,10 @@ def index():
 
     problems = filter_problems(problems)
 
-    return render_template('index.html',
-                           is_search=request.args.get("search"),
-                           problems=problems)
+    return render_template(
+        'index.html',
+        is_search=request.args.get("search"),
+        problems=problems)
 
 
 @app.route('/filter')
