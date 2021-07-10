@@ -201,7 +201,7 @@ Main.onChangeAnswer = function() {
 		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:189:",e);
+		console.log("src/Main.hx:188:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -228,6 +228,8 @@ Main.start = function() {
 	Main.pixi.stage.addChild(Main.answerGraphics);
 	Main.selectGraphics = new PIXI.Graphics();
 	Main.pixi.stage.addChild(Main.selectGraphics);
+	Main.hintGraphics = new PIXI.Graphics();
+	Main.pixi.stage.addChild(Main.hintGraphics);
 	Main.selectedPoints = [];
 	Main.startAnswers = [];
 	Main.readProblem(0);
@@ -371,6 +373,7 @@ Main.onMouseUp = function() {
 	}
 	Main.selectedPoints.length = 0;
 	Main.startPoint = null;
+	Main.hintGraphics.clear();
 	Main.selectGraphics.clear();
 	Main.selectGraphics.beginFill(13369344);
 	if(Main.selectRect != null) {
@@ -510,6 +513,61 @@ Main.onMouseDown = function(e) {
 		Main.selectRect.y = e.data.global.y;
 		Main.selectRect.width = 0;
 		Main.selectRect.height = 0;
+	}
+	Main.hintGraphics.clear();
+	if(Main.selectedPoints.length == 1) {
+		var selectedPoint = Main.selectedPoints[0];
+		var sx = Main.answer[selectedPoint][0];
+		var sy = Main.answer[selectedPoint][1];
+		var points = [];
+		var _g = 0;
+		var _g1 = Main.problem.figure.edges;
+		while(_g < _g1.length) {
+			var edge = _g1[_g];
+			++_g;
+			if(edge[0] == selectedPoint) {
+				points.push(edge[1]);
+			}
+			if(edge[1] == selectedPoint) {
+				points.push(edge[0]);
+			}
+		}
+		var l = sx - 300 < Main.left ? Main.left : sx - 300;
+		var r = Main.right < sx + 300 ? Main.right : sx + 300;
+		var t = sy - 300 < Main.top ? Main.top : sy - 300;
+		var b = Main.bottom < sy + 300 ? Main.bottom : sy + 300;
+		var e = Main.problem.epsilon;
+		var _g = l;
+		var _g1 = r;
+		while(_g < _g1) {
+			var x = _g++;
+			var _g2 = t;
+			var _g3 = b;
+			while(_g2 < _g3) {
+				var y = _g2++;
+				var fail = false;
+				var _g4 = 0;
+				while(_g4 < points.length) {
+					var point = points[_g4];
+					++_g4;
+					var ax = Main.answer[point][0] - x;
+					var ay = Main.answer[point][1] - y;
+					var ad = ax * ax + ay * ay;
+					var px = Main.problem.figure.vertices[selectedPoint][0] - Main.problem.figure.vertices[point][0];
+					var py = Main.problem.figure.vertices[selectedPoint][1] - Main.problem.figure.vertices[point][1];
+					var pd = px * px + py * py;
+					if(!(ad < pd ? -(1000000 * ad) <= (e - 1000000) * pd : 1000000 * ad <= (e + 1000000) * pd)) {
+						fail = true;
+					}
+				}
+				if(!fail) {
+					var x1 = (x - Main.left) * Main.scale;
+					var y1 = (y - Main.top) * Main.scale;
+					Main.hintGraphics.beginFill(10066431);
+					Main.hintGraphics.drawCircle(x1,y1,4);
+				}
+			}
+		}
 	}
 };
 Main.onMouseMove = function(e) {

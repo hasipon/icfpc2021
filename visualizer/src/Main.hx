@@ -35,7 +35,7 @@ class Main
 	static var problemGraphics:Graphics;
 	static var answerGraphics:Graphics;
 	static var selectGraphics:Graphics;
-	static var gridGraphics:Graphics;
+	static var hintGraphics:Graphics;
 	
 	static var problemIndex:Int;
 	static var answer:Array<Array<Int>>;
@@ -52,7 +52,6 @@ class Main
 	static var fitDown   :Bool;
 	static var randomDown:Bool;
 	static var requestCount:Int;
-	static var center    :Point;
 	
 	static function main() 
 	{
@@ -220,6 +219,8 @@ class Main
 		selectGraphics = new Graphics();
 		pixi.stage.addChild(selectGraphics);
 		
+		hintGraphics = new Graphics();
+		pixi.stage.addChild(hintGraphics);
 		
 		selectedPoints = [];
 		startAnswers = [];
@@ -357,6 +358,7 @@ class Main
 		}
 		untyped selectedPoints.length = 0;
 		startPoint = null;
+		hintGraphics.clear();
 		selectGraphics.clear();
 		selectGraphics.beginFill(0xCC0000);
 		if (selectRect != null)
@@ -499,6 +501,57 @@ class Main
 			selectRect.y = e.data.global.y;
 			selectRect.width  = 0;
 			selectRect.height = 0;
+		}
+		hintGraphics.clear();
+		if (selectedPoints.length == 1)
+		{
+			var selectedPoint = selectedPoints[0];
+			var sx = answer[selectedPoint][0];
+			var sy = answer[selectedPoint][1];
+			var points = [];
+			for (edge in problem.figure.edges)
+			{
+				if (edge[0] == selectedPoint) points.push(edge[1]);
+				if (edge[1] == selectedPoint) points.push(edge[0]);
+			}
+			var l = if (sx - 300 < left  ) left   else sx - 300;
+			var r = if (right < sx + 300 ) right  else sx + 300;
+			var t = if (sy - 300 < top   ) top    else sy - 300;
+			var b = if (bottom < sy + 300) bottom else sy + 300;
+			var e = problem.epsilon;
+			for (x in l...r)
+			{
+				for (y in t...b)
+				{
+					var fail = false;
+					for (point in points)
+					{
+						var ax = answer[point][0] - x;
+						var ay = answer[point][1] - y;
+						var ad = ax * ax + ay * ay;
+						var px = problem.figure.vertices[selectedPoint][0] - problem.figure.vertices[point][0];
+						var py = problem.figure.vertices[selectedPoint][1] - problem.figure.vertices[point][1];
+						var pd = px * px + py * py;
+						
+						if (
+							if (ad < pd) -(1000000 * ad) <= (e - 1000000) * pd else (1000000 * ad) <= (e + 1000000) * pd
+						)
+						{
+						}
+						else
+						{
+							fail = true;
+						}
+					}
+					if (!fail)
+					{
+						var x = (x - left) * scale;
+						var y = (y - top ) * scale;
+						hintGraphics.beginFill(0x9999FF);
+						hintGraphics.drawCircle(x, y, 4);
+					}
+				}
+			}
 		}
 	}
 	static function onMouseMove(e:InteractionEvent):Void
