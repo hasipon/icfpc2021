@@ -1,0 +1,10 @@
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/79 > problems/79
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/80 > problems/80
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/81 > problems/81
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/82 > problems/82
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/83 > problems/83
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/84 > problems/84
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/85 > problems/85
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/86 > problems/86
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/87 > problems/87
+curl -H "Authorization: Bearer $YOUR_API_TOKEN" https://poses.live/api/problems/88 > problems/88

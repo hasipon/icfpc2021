@@ -11,6 +11,20 @@
 #include<cmath>
 
 
+
+void output(vp &pose) {
+  cout << "{\"vertices\":[";
+  bool first = true;
+  rep(i, pose.size()){
+    if(!first){
+      cout <<",";
+    }
+    first = false;
+    cout <<"["<<pose[i].x <<","<<pose[i].y<<"]";
+  }
+  cout << "]}";
+  cout << endl;
+}
 vp improveOne(const Problem &p, vp pose, int holeId, bool x){
   Point h = p.holes[holeId];
   Int mini = distance(h, pose[0]);
@@ -38,7 +52,7 @@ vp improveOne(const Problem &p, vp pose, int holeId, bool x){
     if(h.y < target.y){
       target.y--;
     }else{
-      target.x++;
+      target.y++;
     }
   }
   if(validate(p, pose)){
@@ -47,34 +61,65 @@ vp improveOne(const Problem &p, vp pose, int holeId, bool x){
   return vp();
 }
 
-void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd){
+const int magic = 250;
+
+void drushUp(Problem &p, vp &pose, vector<bool> used, const vii &floyd, const vii &nextTo){
+  vp origV = p.figure.V;
+  FOR(e, p.figure.E){
+    if(used[e.first] && used[e.second])continue;
+    if(!used[e.first] && !used[e.second])continue;
+    int from = e.first, to = e.second;
+    if(used[to])swap(from, to);
+    for(int i = -magic; i<magic; i++){
+      for(int j = -magic; j<magic; j++){
+        Point newTo;
+        newTo.x = pose[to].x + i;
+        newTo.y = pose[to].y + j;
+        FOR(next, nextTo[to]){
+          Int origD = distance(origV[from], origV[to]);
+          Int nowD = distance(pose[from], newTo);
+          Int diff = max(origD, nowD) - min(origD, nowD);
+          if (diff * 1000000 > p.epsilon * origD) {
+            continue;
+          }
+          pose[to] = newTo;
+          goto OK;
+        }
+      }
+    }
+    OK:;
+      used[to] = true;
+  }
+
+  output(pose);
+}
+
+void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd, const vii &nextTo, int last, int skipShareEdge){
   if(!pruneEps(p, pose, used, floyd)){
     return;
   }
   if(holeId == p.holes.size()){
-    cout << "{\"vertices\":[";
-    bool first = true;
-    rep(i, used.size()){
-      if(!first){
-        cout <<",";
-      }
-      first = false;
-      if(used[i]){
-        cout <<"["<<pose[i].x <<","<<pose[i].y<<"]";
-      }else {
-        cout <<"["<<p.figure.V[i].x <<","<<p.figure.V[i].y<<"]";
-      }
-    }
-    cout << "]}";
-    cout << endl;
+    drushUp(p, pose, used, floyd, nextTo);
     return;
   }
-  rep(i, pose.size()){
-    if(used[i])continue;
-    used[i] = true;
-    pose[i] = p.holes[holeId];
-    dfs(p, holeId+1, pose, used, floyd);
-    used[i] = false;
+  if(last != -1){
+    FOR(next, nextTo[last]){
+      if(used[next])continue;
+      used[next] = true;
+      pose[next] = p.holes[holeId];
+      dfs(p, holeId+1, pose, used, floyd, nextTo, next, skipShareEdge);
+      used[next] = false;
+    }
+  }
+  if(skipShareEdge>0 ) {
+    rep(i, pose.size()) {
+      if (used[i])
+        continue;
+      used[i] = true;
+      pose[i] = p.holes[holeId];
+      dfs(p, holeId + 1, pose, used, floyd, nextTo, i, skipShareEdge - 1);
+      used[i] = false;
+    }
   }
 }
 
@@ -89,6 +134,8 @@ int main() {
   int VN = p.figure.V.size();
 
   vii floyd;
+  vii nextTo(p.figure.V.size());
+
   rep(i, p.figure.V.size()){
     floyd.push_back(vi(p.figure.V.size(), (1LL<<60)));
   }
@@ -99,6 +146,8 @@ int main() {
     Int i = e.first;
     Int j = e.second;
     floyd[i][j] = floyd[j][i] = sqrt(distance(p.figure.V[i], p.figure.V[j]));
+    nextTo[i].push_back(j);
+    nextTo[j].push_back(i);
   }
   rep(k, VN){
     rep(i, VN){
@@ -109,7 +158,10 @@ int main() {
   }
   vp pose = p.figure.V;
   vector<bool> used(VN, false);
-  dfs(p, 0, pose, used, floyd);
+  rep(i, VN){
+    cout << "skipShareEdge" << ' ' << i << endl;
+    dfs(p, 0, pose, used, floyd, nextTo, -1, i);
+  }
 
   return 0;
 }
