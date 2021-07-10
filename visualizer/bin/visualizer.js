@@ -261,7 +261,7 @@ Main.start = function() {
 };
 Main.onEnterFrame = function(f) {
 	if(Main.fitDown || Main.autoDown || Main.randomDown) {
-		var shouldFix = (js_Boot.__cast(window.document.getElementById("fix_checkbox") , HTMLInputElement)).checked;
+		var shouldFix = window.document.getElementById("fix_checkbox").checked;
 		var fixedMap_h = { };
 		if(shouldFix) {
 			var _g = 0;
@@ -292,7 +292,7 @@ Main.onEnterFrame = function(f) {
 					var hole = _g2[_g1];
 					++_g1;
 					var i1 = Std.random(Main.answer.length);
-					if(fixedMap_h[i1]) {
+					if(shouldFix && fixedMap_h[i1]) {
 						continue;
 					}
 					var a = Main.answer[i1];
@@ -335,7 +335,7 @@ Main.onEnterFrame = function(f) {
 							}
 						}
 						if(min > 0) {
-							if(fixedMap_h[target]) {
+							if(shouldFix && fixedMap_h[target]) {
 								continue;
 							}
 							var v = Math.sqrt(min);
@@ -406,7 +406,7 @@ Main.onEnterFrame = function(f) {
 					var _g16 = Main.answer.length;
 					while(_g15 < _g16) {
 						var i3 = _g15++;
-						if(fixedMap_h[i3]) {
+						if(shouldFix && fixedMap_h[i3]) {
 							continue;
 						}
 						var v2 = velocities[i3];

@@ -237,7 +237,7 @@ class Main
 	{
 		if (fitDown || autoDown || randomDown)
 		{
-			var shouldFix = cast (Browser.document.getElementById("fix_checkbox"), InputElement).checked;
+			var shouldFix = (cast Browser.document.getElementById("fix_checkbox")).checked;
 			var fixedMap = new Map();
 			if (shouldFix)
 			{
@@ -259,7 +259,7 @@ class Main
 					for (hole in problem.hole)
 					{
 						var i = Std.random(answer.length);
-						if (fixedMap[i]) { continue; }
+						if (shouldFix && fixedMap[i]) { continue; }
 						
 						var a = answer[i];
 						var dx = a[0] - hole[0];
@@ -301,7 +301,7 @@ class Main
 							}
 							if (min > 0)
 							{
-								if (fixedMap[target]) { continue; }
+								if (shouldFix && fixedMap[target]) { continue; }
 								var v = Math.sqrt(min);
 								var a = answer[target];
 								var dx = a[0] - hole[0];
@@ -348,7 +348,7 @@ class Main
 						if (matched) { break; }
 						for (i in 0...answer.length)
 						{
-							if (fixedMap[i]) { continue; }
+							if (shouldFix && fixedMap[i]) { continue; }
 							var v = velocities[i];
 							var c = count[i];
 							if (c != 0)
