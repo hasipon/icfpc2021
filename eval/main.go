@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 )
 
@@ -142,6 +144,11 @@ func main(){
 	flag.Parse()
 	if *server != "" {
 		fmt.Println("server mode")
+		if *batch {
+			fmt.Println("also batch mode")
+			go batchMode(*solutions, *submit)
+		}
+
 		http.HandleFunc("/health", func(w http.ResponseWriter, request *http.Request) {
 			w.WriteHeader(200)
 			_, _ = w.Write([]byte("ok"))
@@ -167,6 +174,16 @@ func main(){
 			if !valid {
 				result = "-1"
 			}
+
+			if *batch && valid {
+				fileName := fmt.Sprintf("%v-eval-dislike%v", id, result)
+				filePath := path.Join(*solutions, fileName)
+				_, err = os.Stat(filePath)
+				if os.IsNotExist(err) {
+					os.WriteFile(filePath, body, 0644)
+				}
+			}
+
 			_, _ = w.Write([]byte(fmt.Sprintf("{\"dislike\": %s, \"valid\": %t, \"msg\": \"%s\"}",
 				result, valid, msg)))
 			w.WriteHeader(200)
