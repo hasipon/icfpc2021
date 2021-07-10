@@ -97,19 +97,19 @@ Main.main = function() {
 Main.onKeyDown = function(e) {
 	switch(e.keyCode) {
 	case 37:
-		Main.rotate(5);
-		e.preventDefault();
-		break;
-	case 38:
 		Main.rotate(15);
 		e.preventDefault();
 		break;
+	case 38:
+		Main.rotate(90);
+		e.preventDefault();
+		break;
 	case 39:
-		Main.rotate(-5);
+		Main.rotate(-15);
 		e.preventDefault();
 		break;
 	case 40:
-		Main.rotate(-15);
+		Main.rotate(-90);
 		e.preventDefault();
 		break;
 	case 65:
@@ -239,7 +239,7 @@ Main.start = function() {
 Main.onEnterFrame = function(f) {
 	if(Main.fitDown || Main.autoDown || Main.randomDown) {
 		var _g = 0;
-		while(_g < 20) {
+		while(_g < 3) {
 			var _ = _g++;
 			if(Main.randomDown) {
 				var _g1 = 0;
@@ -292,7 +292,7 @@ Main.onEnterFrame = function(f) {
 			}
 			if(Main.autoDown) {
 				var _g7 = 0;
-				while(_g7 < 50) {
+				while(_g7 < 100000) {
 					var i1 = _g7++;
 					var _g8 = [];
 					var _g9 = 0;
@@ -312,7 +312,7 @@ Main.onEnterFrame = function(f) {
 						_g11.push([0.0,0.0]);
 					}
 					var velocities = _g11;
-					var e = Main.problem.epsilon / 1000000;
+					var e = Main.problem.epsilon;
 					var matched = true;
 					var _g14 = 0;
 					var _g15 = Main.problem.figure.edges;
@@ -325,7 +325,7 @@ Main.onEnterFrame = function(f) {
 						var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
 						var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 						var pd = px * px + py * py;
-						if(!(Math.abs(ad / pd - 1) <= e)) {
+						if(!(ad < pd ? -(1000000 * ad) <= (e - 1000000) * pd : 1000000 * ad <= (e + 1000000) * pd)) {
 							count[edge[0]] += 1;
 							count[edge[1]] += 1;
 							var v2 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
@@ -478,7 +478,7 @@ Main.onMouseDown = function(e) {
 		Main.selectedPoints.length = 0;
 		Main.selectedPoints.push(selectedPoint);
 	} else {
-		console.log("src/Main.hx:464:",selectedPoint);
+		console.log("src/Main.hx:466:",selectedPoint);
 	}
 	if(Main.selectedPoints.length >= 1) {
 		Main.selectGraphics.clear();
@@ -608,7 +608,7 @@ Main.readProblem = function(index) {
 };
 Main.drawAnswer = function() {
 	Main.answerGraphics.clear();
-	var e = Main.problem.epsilon / 1000000;
+	var e = Main.problem.epsilon;
 	var _g = 0;
 	var _g1 = Main.problem.figure.edges;
 	while(_g < _g1.length) {
@@ -621,7 +621,7 @@ Main.drawAnswer = function() {
 		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 		var pd = px * px + py * py;
 		var tmp;
-		if(Math.abs(ad / pd - 1) <= e) {
+		if(ad < pd ? -(1000000 * ad) <= (e - 1000000) * pd : 1000000 * ad <= (e + 1000000) * pd) {
 			tmp = 52224;
 		} else if(ad > pd) {
 			var value = (ad / pd - 1) / 3;
