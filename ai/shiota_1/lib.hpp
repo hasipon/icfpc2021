@@ -72,12 +72,11 @@ bool pruneEps(const Problem &problem, vp &pose, vector<bool> &used, const vii &f
     REP(j, i+1, used.size()){
       if(!used[j])continue;
       {
-        Int origD = floyd[i][j] * floyd[i][j];
+        double origD = floyd[i][j] * floyd[i][j];
         Int nowD = distance(pose[i], pose[j]);
         if(nowD > origD){
-          Int diff = max(origD, nowD) - min(origD, nowD);
           // TODO tuning
-          if (diff * 1000000 > problem.epsilon * origD) {
+          if ((nowD - origD) * 1000000 > (double)problem.epsilon * origD) {
             return false;
           }
         }
