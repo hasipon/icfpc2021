@@ -19,6 +19,7 @@ fn main()  -> std::io::Result<()>  {
     for i in 1..89 {
         if cleared.contains(&i) { continue; }
         let target = format!("{}", i);
+        println!("{}", target);
         let file = File::open(format!("../../problems/{}", target))?;
         let reader = BufReader::new(file);
         let problem:Problem = serde_json::from_reader(reader).unwrap();
@@ -27,13 +28,12 @@ fn main()  -> std::io::Result<()>  {
 
         let meta = json!({ "valid": result.is_valid(), "score": result.get_score(), "dislike": result.dislike });
         let answer = json!({ "vertices":result.answer.clone() });
-        println!("{}", target);
         println!("{}", meta);
         println!("{}", answer);
         if result.is_valid() {
-            let mut file = File::create(format!("out/{}-sawa-auto4.json", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto6.json", target))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto4.meta", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto6.meta", target))?;
             write!(file, "{}", meta);
         }
     }

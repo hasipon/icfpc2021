@@ -15,7 +15,7 @@ pub fn solve(problem:&Problem) -> State {
     let mut arr0 = Vec::new();
     let mut arr1 = Vec::new();
 
-    let size = 700;
+    let size = 3200;
     for i in 0..size {
         let mut vertecies = current.answer.clone();
         if i > 3 { random(problem, &mut vertecies, 1, &mut rng); }
@@ -23,7 +23,7 @@ pub fn solve(problem:&Problem) -> State {
     }
 
     let mut prev_score = 1200003;
-    for _ in 0..80 {
+    for _ in 0..210 {
         arr0.sort();
         arr0.split_off(size);
 

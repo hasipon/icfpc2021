@@ -1,4 +1,0 @@
--js bin/cli.js
--cp src
--main CliMain
--lib hxnodejs

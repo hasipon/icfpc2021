@@ -5,10 +5,7 @@ import haxe.Json;
 import haxe.Resource;
 import js.Browser;
 import js.html.CanvasElement;
-import js.html.Document;
-import js.html.Element;
 import js.html.Event;
-import js.html.InputElement;
 import js.html.KeyboardEvent;
 import js.html.SelectElement;
 import js.html.TextAreaElement;
@@ -654,6 +651,19 @@ class Main
 			problemGraphics.drawCircle(x, y, 4);
 		}
 		problemGraphics.endFill();
+		
+		for (bonus in problem.bonuses)
+		{
+			var color = switch (bonus.bonus)
+			{
+				case BonusKind.GLOBALIST  :0xFFFF00;
+				case BonusKind.BREAK_A_LEG:0x0000FF;
+			}
+			problemGraphics.beginFill(color);
+			var x = (bonus.position[0] - left) * scale;
+			var y = (bonus.position[1] - top ) * scale;
+			problemGraphics.drawCircle(x, y, 6);
+		}
 		
 		answer = [];
 		for (point in problem.figure.vertices)
