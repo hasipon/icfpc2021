@@ -27,11 +27,13 @@
             <th class="text-center">V</th>
             <th class="text-center">Dislike(トップ, 比)</th>
             <th class="text-center">Score(トップとの差)</th>
+            <th class="text-center">Bonus From</th>
+            <th class="text-center">Bonus To</th>
         </tr>
 
         {% for p in problems %}
         <tr>
-            <td class="text-center"><a href="https://poses.live/problems/{{p.name}}">{{p.name}}</a></td>
+            <td class="text-center" id="{{p.name}}"><a href="https://poses.live/problems/{{p.name}}">{{p.name}}</a></td>
             <td class="text-center"><img src="/{{p.name}}.svg"></td>
             <td class="text-center">{{p.hole}}</td>
             <td class="text-center">{{p.eps}}</td>
@@ -63,6 +65,16 @@
             <td class="text-center">
                 {% endif %}
                 {{p.score}} ({{ sd }})
+            </td>
+            <td class="text-center">
+                {% for bf in p.bonus_from %}
+                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
+                {% endfor %}
+            </td>
+            <td class="text-center">
+                {% for bf in p.bonus_to %}
+                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
+                {% endfor %}
             </td>
         </tr>
         {% endfor %}

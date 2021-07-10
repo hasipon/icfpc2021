@@ -41,6 +41,8 @@ def load_problem_details(problem_files):
     for prob in problem_files:
         with open(problems_path / prob) as fp:
             details.update({prob: json.load(fp)})
+        details[prob]["bonus_from"] = []
+        details[prob]["bonus_to"] = []
         details[prob]["base_score"] = 1000 * math.log2(
             len(details[prob]["hole"]) *
             len(details[prob]["figure"]["vertices"]) *
@@ -49,6 +51,17 @@ def load_problem_details(problem_files):
         svg_path = static_path / (prob + ".svg")
         if not svg_path.exists():
             svg_path.write_text(gen_problem_svg(prob, details[prob]), encoding="utf-8")
+
+    for prob in problem_files:
+        if "bonuses" in details[prob]:
+            for bonus in details[prob]["bonuses"]:
+                details[prob]["bonus_to"].append((str(bonus["problem"]), bonus))
+
+    for prob in problem_files:
+        for to in details[prob]["bonus_to"]:
+            to_id, to_bonus = to[0], to[1]
+            details[str(to_id)]["bonus_from"].append((prob, to_bonus))
+
     return details
 
 
@@ -95,12 +108,13 @@ def index():
         problem_details = load_problem_details(problem_files)
 
     problems_json = json.loads((static_path / "problems.json").read_text(encoding='utf-8'))
-    dislikes = {
+    dislikes = {x: (None, None, 0) for x in problem_files}
+    dislikes.update({
         x[0]: (
             int(x[1]) if x[1].isdigit() else None,  # 自分のdislike
             int(x[2]) if x[2].isdigit() else None,  # TOPのdislike
             (int(x[2]) + 1) / (int(x[1]) + 1) if x[1].isdigit() and x[2].isdigit() else 0,
-        ) for x in problems_json}
+        ) for x in problems_json})
 
     problems = [
         {
@@ -114,6 +128,8 @@ def index():
             "dislike_ratio": dislikes[x][2],
             "topscore": math.ceil(problem_details[x]["base_score"]),
             "score": math.ceil(problem_details[x]["base_score"] * math.sqrt(dislikes[x][2])),
+            "bonus_from": problem_details[x]["bonus_from"],
+            "bonus_to": problem_details[x]["bonus_to"],
         }
         for x in problem_files
     ]
