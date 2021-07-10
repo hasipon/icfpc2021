@@ -99,7 +99,6 @@ def filter_problems(problems):
 
 
 def bonus_filter(problems):
-    key = ""
     if request.args.get("bonus-from"):
         key = "bonus_from"
     elif request.args.get("bonus-to"):
@@ -118,17 +117,20 @@ def bonus_filter(problems):
         return None
 
     p = next_unchecked()
-    while p:
-        if p["name"] in checked:
+    while True:
+        if not p:
             p = next_unchecked()
+            if not p:
+                break
+
+        if p["name"] in checked:
+            p = None
             continue
+
         checked.add(p["name"])
         next_problems.append(p)
-        if p["bonus_from"] and p[key][0][0]:
+        if p[key] and p[key][0][0]:
             p = problems_dict[p[key][0][0]]
-        else:
-            if p["name"] in checked:
-                p = next_unchecked()
     return next_problems
 
 
