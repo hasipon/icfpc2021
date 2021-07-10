@@ -285,11 +285,13 @@ func batchMode(solutionsDir string, submit bool) {
 				prob, err := getProblem(sp[0])
 				if err != nil {
 					log.Println("getProblem failed:", err)
+					continue
 				}
 
 				ans, err := ioutil.ReadFile(path.Join(queueDir, entry.Name()))
 				if err != nil {
 					log.Println("ReadFile failed:", err)
+					continue
 				}
 
 				result, valid, msg := eval(prob, ans)
