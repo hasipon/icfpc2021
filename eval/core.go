@@ -235,13 +235,12 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 			v[0] = v[0].Mul(v[0], two)
 			v[1] = v[1].Mul(v[1], two)
 		}
-		defer func(){
-			for _, v := range problem.Hole {
-				v[0] = v[0].Div(v[0], two)
-				v[1] = v[1].Div(v[1], two)
-			}
-		}()
-		if !include(problem, mid) {
+		midInc:= include(problem, mid)
+		for _, v := range problem.Hole {
+			v[0] = v[0].Div(v[0], two)
+			v[1] = v[1].Div(v[1], two)
+		}
+		if !midInc{
 			return false, fmt.Sprintf("edge(%d, %d)(0-based) is out of hole", e[0], e[1])
 		}
 
