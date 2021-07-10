@@ -52,9 +52,35 @@ def load_problem_details(problem_files):
     return details
 
 
+def filter_problems(problems):
+    dislike_min = request.args.get("dislike-min")
+    dislike_max = request.args.get("dislike-max")
+    top_dislike_min = request.args.get("top-dislike-min")
+    top_dislike_max = request.args.get("top-dislike-max")
+
+    def fix_dislike(d):
+        if type(d) == int:
+            return d
+        if not d:
+            return 9999999999999999999
+        return d
+
+    def f(p):
+        if dislike_max and int(dislike_max) < fix_dislike(p["dislike"]):
+            return False
+        if dislike_min and int(dislike_min) > fix_dislike(p["dislike"]):
+            return False
+        if top_dislike_max and int(top_dislike_max) < fix_dislike(p["dislike_min"]):
+            return False
+        if top_dislike_min and int(top_dislike_min) > fix_dislike(p["dislike_min"]):
+            return False
+        return True
+
+    return list(filter(f, problems))
+
+
 @app.route('/')
 def index():
-    problems_json = json.loads((static_path / "problems.json").read_text(encoding='utf-8'))
     problem_files = [os.path.relpath(x, problems_path) for x in glob.glob(str(problems_path / "*"))]
     problem_files.sort(key=lambda x: int(x))
 
@@ -62,10 +88,11 @@ def index():
     if len(problem_details) != len(problem_files):
         problem_details = load_problem_details(problem_files)
 
+    problems_json = json.loads((static_path / "problems.json").read_text(encoding='utf-8'))
     dislikes = {
         x[0]: (
-            int(x[1]) if x[1].isdigit() else '',  # 自分のdislike
-            int(x[2]) if x[2].isdigit() else '',  # TOPのdislike
+            int(x[1]) if x[1].isdigit() else None,  # 自分のdislike
+            int(x[2]) if x[2].isdigit() else None,  # TOPのdislike
             (int(x[2]) + 1) / (int(x[1]) + 1) if x[1].isdigit() and x[2].isdigit() else 0,
         ) for x in problems_json}
 
@@ -85,7 +112,16 @@ def index():
         for x in problem_files
     ]
 
-    return render_template('index.html', problems=problems)
+    problems = filter_problems(problems)
+
+    return render_template('index.html',
+                           is_search=request.args.get("search"),
+                           problems=problems)
+
+
+@app.route('/filter')
+def get_filter():
+    return render_template('filter.jinja2')
 
 
 @app.route('/git_status')
