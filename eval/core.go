@@ -202,9 +202,9 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 
 		}
 	}
-	for _, p := range pose.Vertices {
+	for i, p := range pose.Vertices {
 		if !include(problem, p) {
-			return false, "point is out of hole"
+			return false, fmt.Sprintf("point %d(0-based) is out of hole", i)
 		}
 	}
 	holePointsInd := make(map[string]int)
@@ -242,7 +242,7 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 			}
 		}()
 		if !include(problem, mid) {
-			return false, "edge is out of hole"
+			return false, fmt.Sprintf("edge(%d, %d)(0-based) is out of hole", e[0], e[1])
 		}
 
 		/*
