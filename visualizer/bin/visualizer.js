@@ -87,6 +87,25 @@ Main.main = function() {
 	window.document.getElementById("reload_button").addEventListener("mousedown",function() {
 		Main.readProblem(Main.problemIndex);
 	});
+	window.document.getElementById("best_button").addEventListener("mousedown",function() {
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = Main.bestAnswer;
+		while(_g1 < _g2.length) {
+			var a = _g2[_g1];
+			++_g1;
+			var _g3 = [];
+			var _g4 = 0;
+			while(_g4 < a.length) {
+				var i = a[_g4];
+				++_g4;
+				_g3.push(i);
+			}
+			_g.push(_g3);
+		}
+		Main.answer = _g;
+		Main.drawAnswer();
+	});
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.answerText.addEventListener("input",Main.onChangeAnswer);
 	Main.canvas.addEventListener("keydown",Main.onKeyDown);
@@ -201,10 +220,9 @@ Main.onChangeAnswer = function() {
 			Main.answer[i][1] = Math.round(a[i][1]);
 		}
 		Main.drawAnswer();
-		Main.updateScore();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:187:",e);
+		console.log("src/Main.hx:191:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -297,8 +315,11 @@ Main.onEnterFrame = function(f) {
 			}
 			if(Main.autoDown) {
 				var _g7 = 0;
-				while(_g7 < 100000) {
+				while(_g7 < 50000) {
 					var i1 = _g7++;
+					if(i1 % 10 == 0) {
+						Main.updateBest();
+					}
 					var _g8 = [];
 					var _g9 = 0;
 					var _g10 = Main.answer;
@@ -370,6 +391,30 @@ Main.onEnterFrame = function(f) {
 Main.selectProblem = function(e) {
 	Main.readProblem(Main.problemCombo.selectedIndex);
 };
+Main.updateBest = function() {
+	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
+	var fail = ProblemTools.failCount(Main.problem,Main.answer);
+	var $eval = fail * 1000 + dislike;
+	if($eval < Main.bestEval) {
+		Main.bestEval = $eval;
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = Main.answer;
+		while(_g1 < _g2.length) {
+			var a = _g2[_g1];
+			++_g1;
+			var _g3 = [];
+			var _g4 = 0;
+			while(_g4 < a.length) {
+				var i = a[_g4];
+				++_g4;
+				_g3.push(i);
+			}
+			_g.push(_g3);
+		}
+		Main.bestAnswer = _g;
+	}
+};
 Main.onMouseUp = function() {
 	if(Main.selectedPoints.length >= 0) {
 		Main.outputAnswer();
@@ -425,34 +470,17 @@ Main.drawSelectedPoints = function() {
 	}
 };
 Main.outputAnswer = function() {
-	Main.updateScore();
 	Main.answerText.value = JSON.stringify({ vertices : Main.answer});
 };
 Main.updateScore = function() {
-	var dislike = 0.0;
-	var _g = 0;
-	var _g1 = Main.problem.hole;
-	while(_g < _g1.length) {
-		var hole = _g1[_g];
-		++_g;
-		var min = Infinity;
-		var hx = hole[0];
-		var hy = hole[1];
-		var _g2 = 0;
-		var _g3 = Main.answer;
-		while(_g2 < _g3.length) {
-			var a = _g3[_g2];
-			++_g2;
-			var dx = hx - a[0];
-			var dy = hy - a[1];
-			var value = dx * dx + dy * dy;
-			if(value < min) {
-				min = value;
-			}
-		}
-		dislike += min;
-	}
+	Main.updateBest();
+	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
+	var fail = ProblemTools.failCount(Main.problem,Main.answer);
+	var $eval = fail * 1000 + dislike;
 	window.document.getElementById("dislike").textContent = "" + dislike;
+	window.document.getElementById("fail").textContent = "" + fail;
+	window.document.getElementById("eval").textContent = "" + $eval;
+	window.document.getElementById("best").textContent = "" + Main.bestEval;
 	Main.requestValidate();
 };
 Main.requestValidate = function() {
@@ -594,6 +622,7 @@ Main.onMouseMove = function(e) {
 	}
 };
 Main.readProblem = function(index) {
+	Main.bestEval = Infinity;
 	Main.selectedPoints.length = 0;
 	Main.problem = Main.problems[index];
 	Main.left = Main.right = Main.problem.hole[0][0];
@@ -774,6 +803,7 @@ Main.drawAnswer = function() {
 		first = false;
 	}
 	Main.answerGraphics.endFill();
+	Main.updateScore();
 };
 Math.__name__ = true;
 var ProblemTools = function() { };
@@ -786,8 +816,87 @@ ProblemTools.checkEpsilonValue = function(problem,ad,pd) {
 		return 1000000 * ad <= (e + 1000000) * pd;
 	}
 };
+ProblemTools.dislike = function(problem,answer) {
+	var dislike = 0.0;
+	var _g = 0;
+	var _g1 = problem.hole;
+	while(_g < _g1.length) {
+		var hole = _g1[_g];
+		++_g;
+		var min = Infinity;
+		var hx = hole[0];
+		var hy = hole[1];
+		var _g2 = 0;
+		while(_g2 < answer.length) {
+			var a = answer[_g2];
+			++_g2;
+			var dx = hx - a[0];
+			var dy = hy - a[1];
+			var value = dx * dx + dy * dy;
+			if(value < min) {
+				min = value;
+			}
+		}
+		dislike += min;
+	}
+	return dislike;
+};
 ProblemTools.failCount = function(problem,answer) {
-	return 0;
+	var failCount = 0;
+	var h0 = problem.hole[problem.hole.length - 1];
+	var _g = 0;
+	var _g1 = problem.hole;
+	while(_g < _g1.length) {
+		var h1 = _g1[_g];
+		++_g;
+		var _g2 = 0;
+		var _g3 = problem.figure.edges;
+		while(_g2 < _g3.length) {
+			var edge = _g3[_g2];
+			++_g2;
+			if(ProblemTools.intersect(h0,h1,answer[edge[0]],answer[edge[1]])) {
+				++failCount;
+			}
+		}
+		h0 = h1;
+	}
+	var _g = 0;
+	var _g1 = problem.figure.edges;
+	while(_g < _g1.length) {
+		var edge = _g1[_g];
+		++_g;
+		var ax = answer[edge[0]][0] - answer[edge[1]][0];
+		var ay = answer[edge[0]][1] - answer[edge[1]][1];
+		var ad = ax * ax + ay * ay;
+		var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+		var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+		var pd = px * px + py * py;
+		if(!ProblemTools.checkEpsilonValue(problem,ad,pd)) {
+			++failCount;
+		}
+	}
+	return failCount;
+};
+ProblemTools.intersect = function(a,b,c,d) {
+	var ax = a[0];
+	var ay = a[1];
+	var bx = b[0];
+	var by = b[1];
+	var cx = c[0];
+	var cy = c[1];
+	var dx = d[0];
+	var dy = d[1];
+	var s = (ax - bx) * (cy - ay) - (ay - by) * (cx - ax);
+	var t = (ax - bx) * (dy - ay) - (ay - by) * (dx - ax);
+	if(s * t >= 0) {
+		return false;
+	}
+	var s = (cx - dx) * (ay - cy) - (cy - dy) * (ax - cx);
+	var t = (cx - dx) * (by - cy) - (cy - dy) * (bx - cx);
+	if(s * t >= 0) {
+		return false;
+	}
+	return true;
 };
 var Reflect = function() { };
 Reflect.__name__ = true;

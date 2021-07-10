@@ -51,6 +51,8 @@ class Main
 	static var fitDown   :Bool;
 	static var randomDown:Bool;
 	static var requestCount:Int;
+	static var bestEval:Float;
+	static var bestAnswer:Array<Array<Int>>;
 	
 	static function main() 
 	{
@@ -70,6 +72,10 @@ class Main
 		Browser.document.getElementById("random_auto_button"    ).addEventListener("mousedown", () -> { randomDown = autoDown = true; });
 		Browser.document.getElementById("random_fit_auto_button").addEventListener("mousedown", () -> { randomDown = fitDown = autoDown = true; });
 		Browser.document.getElementById("reload_button").addEventListener("mousedown", () -> { readProblem(problemIndex); });
+		Browser.document.getElementById("best_button").addEventListener("mousedown", () -> {
+			answer = [for (a in bestAnswer)[for (i in a) i]];
+			drawAnswer();
+		});
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
@@ -105,7 +111,6 @@ class Main
 						drawSelectedPoints();
 					}
 
-					
 				case KeyboardEvent.DOM_VK_LEFT:
 					rotate(15);
 					e.preventDefault();
@@ -180,7 +185,6 @@ class Main
 				answer[i][1] = Math.round(a[i][1]);
 			}
 			drawAnswer();
-			updateScore();
 		}
 		catch(e)
 		{
@@ -288,8 +292,9 @@ class Main
 				}	
 				if (autoDown)
 				{
-					for (i in 0...100000)
+					for (i in 0...50000)
 					{
+						if (i % 10 == 0) { updateBest(); } 
 						var count      = [for (_ in answer) 0];
 						var velocities = [for (_ in answer)[0.0, 0.0]];
 						var e = problem.epsilon;
@@ -329,6 +334,7 @@ class Main
 	 							answer[i][1] = Math.round(answer[i][1] + (v[1] / (c + 1)) + (Math.random() - 0.5));
 							}
 						}
+						
 					}
 				}
 			}
@@ -341,7 +347,17 @@ class Main
 	{
 		readProblem(problemCombo.selectedIndex);
 	}
-	
+	static function updateBest():Void
+	{
+		var dislike = ProblemTools.dislike(problem, answer);
+		var fail = ProblemTools.failCount(problem, answer);
+		var eval = fail * 1000 + dislike;
+		if (eval < bestEval)
+		{
+			bestEval = eval;
+			bestAnswer = [for (a in answer) [for (i in a) i]];
+		}
+	}
 	static function onMouseUp():Void
 	{
 		if (selectedPoints.length >= 0)
@@ -401,27 +417,18 @@ class Main
 	
 	static function outputAnswer():Void 
 	{
-		updateScore();
 		answerText.value = Json.stringify({vertices:answer});
 	}
 	static function updateScore():Void
 	{
-		var dislike = 0.0;
-		for (hole in problem.hole)
-		{
-			var min = Math.POSITIVE_INFINITY;
-			var hx = hole[0];
-			var hy = hole[1];
-			for (a in answer)
-			{
-				var dx = hx - a[0];
-				var dy = hy - a[1];
-				var value = dx * dx + dy * dy;
-				if (value < min) { min = value; }
-			}
-			dislike += min;
-		}
+		updateBest();
+		var dislike = ProblemTools.dislike(problem, answer);
+		var fail = ProblemTools.failCount(problem, answer);
+		var eval = fail * 1000 + dislike;
 		Browser.document.getElementById("dislike").textContent = "" + dislike; 
+		Browser.document.getElementById("fail").textContent = "" + fail; 
+		Browser.document.getElementById("eval").textContent = "" + eval; 
+		Browser.document.getElementById("best").textContent = "" + bestEval; 
 		requestValidate();
 	}
 	static function requestValidate():Void
@@ -565,6 +572,7 @@ class Main
 	
 	static function readProblem(index:Int):Void
 	{
+		bestEval = Math.POSITIVE_INFINITY;
 		untyped selectedPoints.length = 0;
 		problem = problems[index];
 		left = right = problem.hole[0][0];
@@ -692,5 +700,6 @@ class Main
 			first = false;
 		}
 		answerGraphics.endFill();
+		updateScore();
 	}
 }
