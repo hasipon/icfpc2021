@@ -75,6 +75,9 @@ func main(){
 	var problemId = flag.String("problem-id", "", "problem id")
 	var problemFile = flag.String("problem-file", "", "problem file")
 	var poseFile = flag.String("pose-file", "", "pose file")
+	var solutions = flag.String("solutions", "solutions", "solutions directory")
+	var batch = flag.Bool("batch", false, "batch mode")
+	var submit = flag.Bool("submit", false, "auto submit (batch mode)")
 	flag.Parse()
 	if *server != "" {
 		fmt.Println("server mode")
@@ -111,7 +114,9 @@ func main(){
 			err := http.ListenAndServe(*server, nil)
 			log.Print(err)
 		}
-	} else {
+	} else if *batch {
+		batchMode(*solutions, *submit)
+	} else{
 		cli(*problemFile, *problemId, *poseFile)
 	}
 
