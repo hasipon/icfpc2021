@@ -109,19 +109,19 @@ class Main
 
 					
 				case KeyboardEvent.DOM_VK_LEFT:
-					rotate(5);
-					e.preventDefault();
-					
-				case KeyboardEvent.DOM_VK_RIGHT:
-					rotate(-5);
-					e.preventDefault();
-					
-				case KeyboardEvent.DOM_VK_UP:
 					rotate(15);
 					e.preventDefault();
 					
-				case KeyboardEvent.DOM_VK_DOWN:
+				case KeyboardEvent.DOM_VK_RIGHT:
 					rotate(-15);
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_UP:
+					rotate(90);
+					e.preventDefault();
+					
+				case KeyboardEvent.DOM_VK_DOWN:
+					rotate(-90);
 					e.preventDefault();
 					
 				case KeyboardEvent.DOM_VK_Z:
@@ -234,7 +234,7 @@ class Main
 	{
 		if (fitDown || autoDown || randomDown)
 		{
-			for (_ in 0...20)
+			for (_ in 0...3)
 			{
 				if (randomDown)
 				{
@@ -290,11 +290,11 @@ class Main
 				}	
 				if (autoDown)
 				{
-					for (i in 0...50)
+					for (i in 0...100000)
 					{
 						var count      = [for (_ in answer) 0];
 						var velocities = [for (_ in answer)[0.0, 0.0]];
-						var e = problem.epsilon / 1000000;
+						var e = problem.epsilon;
 						var matched = true;
 						for (edge in problem.figure.edges)
 						{
@@ -305,7 +305,9 @@ class Main
 							var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
 							var pd = px * px + py * py;
 							
-							if (Math.abs(ad / pd - 1) <= e) 
+							if (
+								if (ad < pd) -(1000000 * ad) <= (e - 1000000) * pd else (1000000 * ad) <= (e + 1000000) * pd
+							) 
 							{
 							}
 							else 
@@ -577,7 +579,7 @@ class Main
 	static function drawAnswer():Void
 	{
 		answerGraphics.clear();
-		var e = problem.epsilon / 1000000;
+		var e = problem.epsilon;
 		for (edge in problem.figure.edges)
 		{
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
@@ -589,7 +591,9 @@ class Main
 			
 			answerGraphics.lineStyle(
 				2,
-				if (Math.abs(ad / pd - 1) <= e) 
+				if (
+					if (ad < pd) -(1000000 * ad) <= (e - 1000000) * pd else (1000000 * ad) <= (e + 1000000) * pd
+				)
 				{
 					0x00CC00;
 				}
