@@ -53,7 +53,6 @@ pub fn get_unmatched(problem:&Problem, answer:&Vec<Point>)->i64 {
 
 pub fn get_not_included(problem:&Problem, answer:&Vec<Point>) -> i64 {
     let mut result = 0;
-    let mut h0 = problem.hole[problem.hole.len() - 1].clone();
 
     // point 
     for a in answer {
@@ -63,6 +62,7 @@ pub fn get_not_included(problem:&Problem, answer:&Vec<Point>) -> i64 {
     }
 
     // edge
+    let mut h0 = problem.hole[problem.hole.len() - 1].clone();
     for h1 in &problem.hole {
         for edge in &problem.edges {
             if intersects(
@@ -75,6 +75,17 @@ pub fn get_not_included(problem:&Problem, answer:&Vec<Point>) -> i64 {
             }
         }
         h0 = h1.clone();
+    }
+    result
+}
+pub fn get_not_included_point(problem:&Problem, answer:&Vec<Point>) -> i64 {
+    let mut result = 0;
+
+    // point 
+    for a in answer {
+        if !includes(problem, a) {
+            result += 1;
+        }
     }
     result
 }
