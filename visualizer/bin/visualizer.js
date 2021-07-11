@@ -1135,6 +1135,9 @@ ProblemTools.dislike = function(problem,answer) {
 ProblemTools.failCount = function(problem,answer) {
 	var failCount = 0;
 	var h0 = problem.hole[problem.hole.length - 1];
+	var failedPoint = -1;
+	var failedEdge0 = -1;
+	var failedEdge1 = -1;
 	var _g = 0;
 	var _g1 = problem.hole;
 	while(_g < _g1.length) {
@@ -1146,6 +1149,26 @@ ProblemTools.failCount = function(problem,answer) {
 			var edge = _g3[_g2];
 			++_g2;
 			if(ProblemTools.intersect(h0,h1,answer[edge[0]],answer[edge[1]])) {
+				if(problem.isWallhack) {
+					if(failedPoint != -1) {
+						if(failedPoint == edge[0] || failedPoint == edge[1]) {
+							continue;
+						}
+					} else if(failedEdge0 == -1) {
+						failedEdge0 = edge[0];
+						failedEdge1 = edge[1];
+						continue;
+					} else {
+						if(failedEdge0 == edge[0] || failedEdge0 == edge[1]) {
+							failedPoint = failedEdge0;
+							continue;
+						}
+						if(failedEdge1 == edge[0] || failedEdge1 == edge[1]) {
+							failedPoint = failedEdge1;
+							continue;
+						}
+					}
+				}
 				failCount += 4;
 			}
 		}

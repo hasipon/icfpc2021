@@ -1,4 +1,5 @@
 package ;
+import haxe.ds.Map;
 
 class ProblemTools 
 {
@@ -53,6 +54,10 @@ class ProblemTools
 	{
 		var failCount = 0;
 		var h0 = problem.hole[problem.hole.length - 1];
+		var failedPoint = -1;
+		var failedEdge0 = -1;
+		var failedEdge1 = -1;
+		
 		for (h1 in problem.hole)
 		{
 			for (edge in problem.figure.edges)
@@ -65,6 +70,41 @@ class ProblemTools
 						answer[edge[1]] 
 					)
 				) {
+					if (problem.isWallhack)
+					{
+						if (failedPoint != -1)
+						{
+							if (
+								failedPoint == edge[0] || 
+								failedPoint == edge[1]
+							)
+							{
+								continue;
+							}
+						}
+						else
+						{
+							if (failedEdge0 == -1)
+							{
+								failedEdge0 = edge[0];
+								failedEdge1 = edge[1];
+								continue;
+							}
+							else
+							{
+								if (failedEdge0 == edge[0] || failedEdge0 == edge[1])
+								{
+									failedPoint = failedEdge0;
+									continue;
+								}
+								if (failedEdge1 == edge[0] || failedEdge1 == edge[1])
+								{
+									failedPoint = failedEdge1;
+									continue;
+								}
+							}
+						}
+					}
 					failCount += 4;
 				}
 			}
