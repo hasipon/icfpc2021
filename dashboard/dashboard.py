@@ -5,6 +5,7 @@ import os
 import subprocess
 import pathlib
 import shutil
+import sqlite3
 from typing import *
 from flask import Flask, request, render_template, abort
 
@@ -32,7 +33,7 @@ def gen_problem_svg(name: str, problem_detail: Dict):
     bonus_r = max(maxx, maxy) / 20
     return render_template(
         'thumbnail.jinja2',
-        bonus_colors={"GLOBALIST": "olive", "BREAK_A_LEG": "blue", "WALLHACK": "orange"},
+        bonus_colors={"GLOBALIST": "olive", "BREAK_A_LEG": "blue", "WALLHACK": "orange", "SUPERFLEX": "cyan"},
         bonus_r=bonus_r,
         name=name,
         bonuses=problem_detail["bonuses"],
