@@ -145,6 +145,7 @@ func main() {
 	var allFlag = flag.Bool("all", false, "convert all")
 	var dbpath = flag.String("db", "", "sqlitedb path")
 	var initdb = flag.Bool("initdb", false, "init db")
+	var solutionsToDB = flag.Bool("solutions-to-db", false, "insert solution from solution folder")
 	flag.Parse()
 	if *dbpath != "" {
 		conn, err := sqlx.Open("sqlite3", *dbpath)
@@ -155,6 +156,10 @@ func main() {
 
 		if *initdb {
 			defaultDB.Init()
+		}
+
+		if *solutionsToDB {
+			registerSolutionInDirectory(*solutions)
 		}
 	}
 

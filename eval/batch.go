@@ -256,6 +256,45 @@ func batchSubmission(solutionsDir string) {
 	}
 }
 
+// solutionsディレクトリにあるファイルたちをDBに登録します
+func registerSolutionInDirectory(solutionsDir string) {
+	if !defaultDB.Ok() {
+		return
+	}
+
+	dirEntries, err := os.ReadDir(solutionsDir)
+	if err != nil {
+		log.Println("ReadDir failed", err)
+		return
+	}
+
+	for _, entry := range dirEntries {
+		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+
+		sp := strings.Split(entry.Name(), "-")
+
+		if !strings.HasPrefix(sp[len(sp)-1], "dislike") {
+			log.Println("Invalid name", entry.Name())
+			continue
+		}
+
+		problemID := sp[0]
+		solutionName := strings.Join(sp[1:len(sp)], "-")
+		ans, err := ioutil.ReadFile(path.Join(solutionsDir, entry.Name()))
+		if err != nil {
+			log.Println("Read Solution failed", err)
+			continue
+		}
+
+		_, err = defaultDB.RegisterSolution(solutionName, problemID, ans)
+		if err != nil {
+			log.Println("Register Solution failed", err)
+		}
+	}
+}
+
 func batchMode(solutionsDir string, submit bool) {
 	if defaultDB.Ok() {
 		go batchEvalDB()
