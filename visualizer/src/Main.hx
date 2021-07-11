@@ -321,6 +321,7 @@ class Main
 					for (i in 0...50000)
 					{
 						if (i % 10 == 0) { updateBest(); } 
+						if (isGrobalist && problem.checkGlobalEpsilon(answer)) { break; }
 						var count      = [for (_ in answer) 0];
 						var velocities = [for (_ in answer)[0.0, 0.0]];
 						var e = problem.epsilon;
@@ -334,7 +335,9 @@ class Main
 							var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
 							var pd = px * px + py * py;
 							
-							if (!problem.checkEpsilonValue(ad, pd)) 
+							if (
+								if (isGrobalist) ad != pd else !problem.checkEpsilon(ad, pd)
+							) 
 							{
 								count[edge[0]] += 1; 
 								count[edge[1]] += 1; 
@@ -454,6 +457,7 @@ class Main
 				{
 					case GLOBALIST:
 					case BREAK_A_LEG:
+					case WALLHACK:
 				}
 				bonuses.push(b);
 			}
@@ -572,7 +576,7 @@ class Main
 						var py = problem.figure.vertices[selectedPoint][1] - problem.figure.vertices[point][1];
 						var pd = px * px + py * py;
 						
-						if (!problem.checkEpsilonValue(ad, pd))
+						if (!problem.checkEpsilon(ad, pd))
 						{
 							fail = true;
 						}
@@ -679,6 +683,7 @@ class Main
 			{
 				case BonusKind.GLOBALIST  :0xFFFF00;
 				case BonusKind.BREAK_A_LEG:0x0000FF;
+				case BonusKind.WALLHACK   :0x0FF9900;
 			}
 			problemGraphics.beginFill(color);
 			var x = (bonus.position[0] - left) * scale;
@@ -738,8 +743,9 @@ class Main
 			{
 				switch (bonus.bonus)
 				{
-					case GLOBALIST: isGrobalist = true;
-					case BREAK_A_LEG:
+					case BonusKind.GLOBALIST: isGrobalist = true;
+					case BonusKind.BREAK_A_LEG:
+					case BonusKind.WALLHACK   :
 				}
 			}
 		}
@@ -760,29 +766,53 @@ class Main
 			
 			answerGraphics.lineStyle(
 				2,
-				if (problem.checkEpsilonValue(ad, pd)) 
+				if (isGrobalist)
 				{
-					0x00CC00;
+					if (ad == pd) { 0x00CC00; }
+					else if (ad > pd) 
+					{
+						var rate = (ad / pd).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							rate.lerp(0.5, 0.9),
+							rate.lerp(0.5, 0.0),
+							0
+						);
+						color.toRgbInt();
+					}
+					else 
+					{
+						var rate = (pd / ad).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							0,
+							rate.lerp(0.5, 0.0),
+							rate.lerp(0.5, 0.9)
+						);
+						color.toRgbInt();
+					}
 				}
-				else if (ad > pd) 
+				else
 				{
-					var rate = (ad / pd).inverseLerp(1, 4).clamp();
-					var color = new RgbColor(
-						rate.lerp(0.6, 0.9),
-						rate.lerp(0.4, 0.0),
-						0
-					);
-					color.toRgbInt();
-				}
-				else 
-				{
-					var rate = (pd / ad).inverseLerp(1, 4).clamp();
-					var color = new RgbColor(
-						0,
-						rate.lerp(0.4, 0.0),
-						rate.lerp(0.6, 0.9)
-					);
-					color.toRgbInt();
+					if (problem.checkEpsilon(ad, pd)) { 0x00CC00; }
+					else if (ad > pd) 
+					{
+						var rate = (ad / pd).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							rate.lerp(0.6, 0.9),
+							rate.lerp(0.4, 0.0),
+							0
+						);
+						color.toRgbInt();
+					}
+					else 
+					{
+						var rate = (pd / ad).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							0,
+							rate.lerp(0.4, 0.0),
+							rate.lerp(0.6, 0.9)
+						);
+						color.toRgbInt();
+					}
 				}
 			);
 			var x = (answer[edge[0]][0] - left) * scale;
