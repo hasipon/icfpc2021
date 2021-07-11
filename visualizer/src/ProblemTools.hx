@@ -58,6 +58,18 @@ class ProblemTools
 		var failedEdge0 = -1;
 		var failedEdge1 = -1;
 		
+		for (i => point in answer)
+		{
+			if (!includesPoint(problem, point))
+			{
+				if (problem.isWallhack && failedPoint == -1)
+				{
+					failedPoint = i;
+					continue;
+				}
+				failCount += 2;
+			}
+		}
 		for (h1 in problem.hole)
 		{
 			for (edge in problem.figure.edges)
@@ -105,7 +117,7 @@ class ProblemTools
 							}
 						}
 					}
-					failCount += 4;
+					failCount += 2;
 				}
 			}
 			h0 = h1;
@@ -172,7 +184,7 @@ class ProblemTools
 		return fail * 200 + dislike + (fail / 5) * dislike;
 	}
 	
-	public static function checkPoint(
+	public static function includesPoint(
 		problem:Problem, point:Array<Int>):Bool
 	{
 		var x = point[0];
