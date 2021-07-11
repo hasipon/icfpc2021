@@ -27,7 +27,7 @@ type SQLiteDB struct {
 const schema = `
 CREATE TABLE IF NOT EXISTS m_problem_setting
 (
-    problem_id       text,
+    problem_id       int,
     use_bonus        text default '',
     unlock_bonus_key text default '',
     PRIMARY KEY (problem_id)
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS solution
 (
     id           text,
     json         text default '',
-    problem_id   text default '',
+    problem_id   int,
     valid        int,
     dislike      real,
     dislike_s    text default '',
@@ -50,11 +50,11 @@ CREATE TABLE IF NOT EXISTS solution
 );
 `
 const indexes = `
-CREATE INDEX IF NOT EXISTS ON SOLUTION_DISLIKE solution(dislike);
+CREATE INDEX IF NOT EXISTS SOLUTION_DISLIKE ON solution(dislike);
 `
 
 type ProblemSetting struct {
-	ProblemId      string   `db:"problem_id" json:"problem_id,omitempty"`
+	ProblemID      int      `db:"problem_id" json:"problem_id,omitempty"`
 	UseBonus       string   `db:"use_bonus" json:"use_bonus,omitempty"`               // この問題で使うボーナスの設定
 	UnlockBonusKey BonusKey `db:"unlock_bonus_key" json:"unlock_bonus_key,omitempty"` // この問題でアンロックする予定のBonusKey
 }
@@ -62,7 +62,7 @@ type ProblemSetting struct {
 type Solution struct {
 	ID          string    `db:"id" json:"id,omitempty"`
 	Json        string    `db:"json" json:"json,omitempty"`
-	ProblemID   string    `db:"problem_id" json:"problem_id,omitempty"`
+	ProblemID   int       `db:"problem_id" json:"problem_id,omitempty"`
 	Valid       int       `db:"valid" json:"valid,omitempty"`
 	Dislike     float64   `db:"dislike" json:"dislike,omitempty"`
 	DislikeS    string    `db:"dislike_s" json:"dislike_s,omitempty"`
@@ -74,12 +74,8 @@ type Solution struct {
 }
 
 // GenBonusKey bonus_key (ボーナスを使う問題ID_ボーナス名) を作る
-func GenBonusKey(problemID string, bonusName string) BonusKey {
-	problemIDInt, err := strconv.Atoi(problemID)
-	if err != nil {
-		panic(err)
-	}
-	return BonusKey(fmt.Sprintf("%04d_%s", problemIDInt, bonusName))
+func GenBonusKey(problemID int, bonusName string) BonusKey {
+	return BonusKey(fmt.Sprintf("%04d_%s", problemID, bonusName))
 }
 
 func (db SQLiteDB) Ok() bool {
@@ -155,7 +151,7 @@ func (db SQLiteDB) Migrate() error {
 	return tx.Commit()
 }
 
-func (db SQLiteDB) RegisterSolution(name, problemID string, poseBytes []byte) (*Solution, error) {
+func (db SQLiteDB) RegisterSolution(name string, problemID int, poseBytes []byte) (*Solution, error) {
 	useBonus := ""
 	var pose Pose
 	if err := json.Unmarshal(poseBytes, &pose); err != nil {
@@ -170,7 +166,7 @@ func (db SQLiteDB) RegisterSolution(name, problemID string, poseBytes []byte) (*
 
 	now := time.Now()
 	solution := &Solution{
-		ID:        problemID + "-" + name,
+		ID:        fmt.Sprint(problemID) + "-" + name,
 		ProblemID: problemID,
 		Json:      string(poseBytes),
 		UseBonus:  useBonus,
@@ -255,7 +251,7 @@ WHERE id = :id`,
 	return err
 }
 
-func (db SQLiteDB) FindBestSolution(problemID string) (*Solution, error) {
+func (db SQLiteDB) FindBestSolution(problemID int) (*Solution, error) {
 	solution := new(Solution)
 	setting, err := db.GetProblemSetting(problemID)
 	if err == sql.ErrNoRows {
@@ -275,7 +271,7 @@ func (db SQLiteDB) FindBestSolution(problemID string) (*Solution, error) {
 	return nil, err
 }
 
-func (db SQLiteDB) GetProblemSetting(problemID string) (*ProblemSetting, error) {
+func (db SQLiteDB) GetProblemSetting(problemID int) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE problem_id = ?", problemID).StructScan(s)
 	return s, err
@@ -300,8 +296,8 @@ func (db SQLiteDB) GetWhichProblemUnlocksTheBonus(key BonusKey) (*ProblemSetting
 	return s, err
 }
 
-func (db SQLiteDB) GetAllProblemIDsInSubmission() ([]string, error) {
-	var problemIDs []string
+func (db SQLiteDB) GetAllProblemIDsInSubmission() ([]int, error) {
+	var problemIDs []int
 	err := db.Select(&problemIDs, "SELECT DISTINCT problem_id FROM solution")
 	return problemIDs, err
 }
