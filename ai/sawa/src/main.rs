@@ -7,6 +7,7 @@ use serde_json::json;
 mod data;
 mod solve;
 mod util;
+mod operation;
 use data::*;
 use solve::solve;
 

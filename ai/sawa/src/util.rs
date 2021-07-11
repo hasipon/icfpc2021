@@ -1,6 +1,6 @@
 
 use crate::data::*;
-use rand::Rng;
+
 use std::iter::Iterator;
 
 pub fn get_dislike(problem:&Problem, answer:&Vec<Point>) -> i64 {
@@ -21,24 +21,7 @@ pub fn get_d(a:&Point, b:&Point) -> i64 {
     let y = a.1 - b.1;
     x * x + y * y
 }
-pub fn get_intersected(problem:&Problem, answer:&Vec<Point>) -> i64 {
-    let mut result = 0;
-    let mut h0 = problem.hole[problem.hole.len() - 1];
-    for h1 in &problem.hole {
-        for edge in &problem.edges {
-            if intersects(
-                &h0, 
-                h1, 
-                &answer[edge.0],
-                &answer[edge.1] 
-            ) {
-                result += 1;
-            }
-        }
-        h0 = h1.clone();
-    }
-    result
-}
+
 
 pub fn intersects(a:&Point, b:&Point, c:&Point, d:&Point) -> bool {
     let ax = a.0; let ay = a.1;
@@ -68,106 +51,76 @@ pub fn get_unmatched(problem:&Problem, answer:&Vec<Point>)->i64 {
     result
 }
 
+pub fn get_not_included(problem:&Problem, answer:&Vec<Point>) -> i64 {
+    let mut result = 0;
+    let mut h0 = problem.hole[problem.hole.len() - 1];
+
+    // point 
+    for a in answer {
+        if !includes(problem, a) {
+            result += 1;
+        }
+    }
+
+    // edge
+    for h1 in &problem.hole {
+        for edge in &problem.edges {
+            if intersects(
+                &h0, 
+                h1, 
+                &answer[edge.0],
+                &answer[edge.1] 
+            ) {
+                result += 1;
+            }
+        }
+        h0 = h1.clone();
+    }
+    result
+}
+
+pub fn includes(problem:&Problem, point:&Point) -> bool {
+    let x = point.0;
+    let y = point.1;
+    let mut count = 0;
+    let mut h0 = problem.hole[problem.hole.len() - 1];
+    for h1 in &problem.hole {
+        let mut x0 = h0.0 - x;
+        let mut y0 = h0.1 - y;
+        let mut x1 = h1.0 - x;
+        let mut y1 = h1.1 - y;
+        
+        let cv = x0 * x1 + y0 * y1;
+        let sv = x0 * y1 - x1 * y0;
+        
+        if sv == 0 && cv <= 0 {
+            return true;
+        }
+        
+        if y0 < y1 {
+            let tmp = x0;
+            x0 = x1;
+            x1 = tmp;
+            let tmp = y0;
+            y0 = y1;
+            y1 = tmp;
+        }
+            
+        if y1 <= 0 && 0 < y0 {
+            let a = x0 * (y1 - y0);
+            let b = y0 * (x1 - x0);
+            if b < a {
+                count += 1;
+            }
+        }
+        h0 = h1.clone();
+    }
+    return count % 2 != 0;
+}
+
 pub fn check_epsilon(problem:&Problem, ad:i64, pd:i64) -> bool {
     let e = problem.epsilon;
     if ad < pd { -(1000000 * ad) <= (e - 1000000) * pd } else { (1000000 * ad) <= (e + 1000000) * pd }
-}
-
-pub fn pull<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i64, rng: &mut R) {
-    for _ in 0..repeat
-    {
-        let mut count      = Vec::new();
-        let mut velocities = Vec::new();
-        for _ in 0..answer.len() {
-            count.push(0);
-            velocities.push((0.0, 0.0));
-        }
-        let mut matched = true;
-        for (ei, edge) in problem.edges.iter().enumerate()
-        {
-            let ad = get_d(&answer[edge.0], &answer[edge.1]);
-            let pd = problem.distances[ei];
-            
-            if !check_epsilon(problem, ad, pd) {
-                count[edge.0] += 1; 
-                count[edge.1] += 1; 
-                let adf = ad as f64;
-                let pdf = pd as f64;
-                let v = (adf.sqrt() - pdf.sqrt()) / 5.0;
-                let ax = (answer[edge.0].0 - answer[edge.1].0) as f64;
-                let ay = (answer[edge.0].1 - answer[edge.1].1) as f64;
-                let d = ay.atan2(ax);
-                velocities[edge.0].0 -= v * d.cos();
-                velocities[edge.0].1 -= v * d.sin();
-                velocities[edge.1].0 += v * d.cos();
-                velocities[edge.1].1 += v * d.sin();
-                matched = false;
-            }
-        }
-        if matched { break; }
-        for i in 0..answer.len()
-        {
-            let v = velocities[i];
-            let c = count[i];
-            if c != 0 {
-                if c == 1 && rng.gen_bool(0.1)  { continue; }
-                let a0:f64 = answer[i].0 as f64 + (v.0 / (c + 1) as f64) + rng.gen_range(-0.5, 0.5);
-                let a1:f64 = answer[i].1 as f64 + (v.1 / (c + 1) as f64) + rng.gen_range(-0.5, 0.5);
-                answer[i] = Point(a0.round() as i64, a1.round() as i64);
-            }
-        }
-    }
-}
-
-pub fn fit<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i64, rng: &mut R) {
-    for _ in 0..repeat
-    {
-        for hole in &problem.hole {
-            let mut min = i64::MAX;
-            let mut target = 0;
-            for i in 0..answer.len() {
-                let d = get_d(&answer[i], hole);
-                if 
-                    d < min &&
-                    (d == 0 || d + 20 < min || rng.gen_bool(0.5))
-                {
-                    min = d;
-                    target = i;
-                }
-            }
-            if min > 0 {
-                let v = (min as f64).sqrt();
-                let mut a = answer[target];
-                let dx = (a.0 - hole.0) as f64;
-                let dy = (a.1 - hole.1) as f64;
-                let d = dy.atan2(dx);
-                answer[target] = Point(
-                    (a.0 as f64 - v * d.cos()).round() as i64,
-                    (a.1 as f64 - v * d.sin()).round() as i64
-                );
-            }
-        }
-    }
-}
-
-pub fn random<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i64, rng: &mut R) {
-    for i in 0..repeat {
-        for hole in &problem.hole {
-            let i = rng.gen_range(0, answer.len());
-            
-            let a = answer[i];
-            let dx = (a.0 - hole.0) as f64;
-            let dy = (a.1 - hole.1) as f64;
-            if dx != 0.0 || dy != 0.0 {
-                let v = (dx * dx + dy * dy).sqrt();
-                let d = dy.atan2(dx);
-                answer[i] = Point(
-                    ((a.0 as f64 - v * d.cos()) * rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0) + rng.gen_range(-0.5, 0.5)).round() as i64,
-                    ((a.1 as f64 - v * d.sin()) * rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0) + rng.gen_range(-0.5, 0.5)).round() as i64
-                );
-            }
-        }
-    }
 }
 
 pub fn get_center(points:&Vec<Point>) -> Point {
@@ -182,38 +135,4 @@ pub fn get_center(points:&Vec<Point>) -> Point {
         if bottom < point.1 { bottom = point.1; }
     }
     Point((left + right) / 2, (top + bottom) / 2)
-}
-
-pub fn translate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
-    let center = get_center(answer);
-    
-    let dx = rng.gen_range(problem.center.0.min(center.0), problem.center.0.max(center.0) + 1) - center.0;
-    let dy = rng.gen_range(problem.center.1.min(center.1), problem.center.1.max(center.1) + 1) - center.1;
-    for a in answer {
-        a.0 += dx;
-        a.1 += dy;
-    }
-}
-pub fn inverse_x(problem:&Problem, answer:&mut Vec<Point>) {
-    for a in answer {
-        a.0 = problem.center.0 * 2 - a.0;
-    }
-}
-
-pub fn inverse_y(problem:&Problem, answer:&mut Vec<Point>) {
-    for a in answer {
-        a.1 = problem.center.1 * 2 - a.1;
-    }
-}
-
-pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale: f64) {
-    let d = rng.gen_range(-std::f64::consts::PI, std::f64::consts::PI) * scale;
-    let sin = d.sin();
-    let cos = d.cos();
-    for a in answer {
-        let x = (a.0 - problem.center.0) as f64;
-        let y = (a.1 - problem.center.1) as f64;
-        a.0 = (x * cos - y * sin) as i64 + problem.center.0;
-        a.1 = (x * sin + y * cos) as i64 + problem.center.1;
-    }
 }

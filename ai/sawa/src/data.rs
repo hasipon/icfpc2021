@@ -35,24 +35,28 @@ pub struct Answer {
 pub struct State {
     pub answer:Vec<Point>,
     pub dislike:i64,
-    pub intersected:i64,
+    pub not_included:i64,
     pub unmatched:i64,
 }
 
 impl State {
     pub fn new(problem:&Problem, answer:Vec<Point>) -> State {
         State {
-            dislike    : get_dislike(problem, &answer),
-            intersected: get_intersected(problem, &answer),
-            unmatched  : get_unmatched(problem, &answer),
+            dislike     : get_dislike(problem, &answer),
+            unmatched   : get_unmatched(problem, &answer),
+            not_included: get_not_included(problem, &answer),
             answer:  answer,
         }
     }
     pub fn is_valid(&self) -> bool {
-        self.intersected == 0 && self.unmatched == 0
+        self.unmatched == 0 && 
+        self.not_included == 0
+
     }
     pub fn get_score(&self) -> i64 {
-        self.dislike + self.intersected * 1000 + self.unmatched * 300
+        self.dislike 
+            + self.not_included * 1000
+            + self.unmatched * 50
     }
 }
 
