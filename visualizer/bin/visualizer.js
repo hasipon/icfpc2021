@@ -222,21 +222,24 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:189:",e);
+		console.log("src/Main.hx:194:",e);
 	}
 };
 Main.fetchProblem = function() {
 	Main.problems = JSON.parse(haxe_Resource.getString("problems"));
-	Main.start();
-	var _g = 0;
-	var _g1 = Main.problems.length;
-	while(_g < _g1) {
-		var index = _g++;
+	var _g_current = 0;
+	var _g_array = Main.problems;
+	while(_g_current < _g_array.length) {
+		var _g1_value = _g_array[_g_current];
+		var _g1_key = _g_current++;
+		var index = _g1_key;
+		var problem = _g1_value;
 		var element = window.document.createElement("option");
 		element.setAttribute("value","" + (index + 1));
 		element.innerHTML = "" + (index + 1);
 		Main.problemCombo.appendChild(element);
 	}
+	Main.start();
 };
 Main.start = function() {
 	var background = new PIXI.Graphics();
@@ -432,7 +435,7 @@ Main.selectProblem = function(e) {
 };
 Main.updateBest = function() {
 	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
-	var fail = ProblemTools.failCount(Main.problem,Main.answer);
+	var fail = ProblemTools.failCount(Main.problem,Main.answer,Main.isGrobalist);
 	var $eval = ProblemTools.eval(dislike,fail);
 	if($eval < Main.bestEval) {
 		Main.bestEval = $eval;
@@ -509,12 +512,29 @@ Main.drawSelectedPoints = function() {
 	}
 };
 Main.outputAnswer = function() {
-	Main.answerText.value = JSON.stringify({ vertices : Main.answer});
+	var bonuses = [];
+	var _g = 0;
+	var _g1 = Main.availableBonuses;
+	while(_g < _g1.length) {
+		var bonus = _g1[_g];
+		++_g;
+		if(bonus.element.checked) {
+			var b = { bonus : bonus.bonus, problem : bonus.from};
+			switch(bonus.bonus) {
+			case "BREAK_A_LEG":
+				break;
+			case "GLOBALIST":
+				break;
+			}
+			bonuses.push(b);
+		}
+	}
+	Main.answerText.value = JSON.stringify({ vertices : Main.answer, bonuses : bonuses});
 };
 Main.updateScore = function() {
 	Main.updateBest();
 	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
-	var fail = ProblemTools.failCount(Main.problem,Main.answer);
+	var fail = ProblemTools.failCount(Main.problem,Main.answer,Main.isGrobalist);
 	var $eval = ProblemTools.eval(dislike,fail);
 	window.document.getElementById("dislike").textContent = "" + dislike;
 	window.document.getElementById("fail").textContent = "" + fail;
@@ -768,8 +788,60 @@ Main.readProblem = function(index) {
 		++_g;
 		Main.answer.push([point[0],point[1]]);
 	}
+	var bonusElement = window.document.getElementById("bonus");
+	bonusElement.innerHTML = "";
+	Main.availableBonuses = [];
+	var _g12_current = 0;
+	var _g12_array = Main.problems;
+	while(_g12_current < _g12_array.length) {
+		var _g13_value = _g12_array[_g12_current];
+		var _g13_key = _g12_current++;
+		var i = _g13_key;
+		var p = _g13_value;
+		var _g = 0;
+		var _g1 = p.bonuses;
+		while(_g < _g1.length) {
+			var bonus = _g1[_g];
+			++_g;
+			if(bonus.problem == Main.problemIndex + 1) {
+				var element = window.document.createElement("input");
+				element.setAttribute("type","checkbox");
+				element.setAttribute("id","bonus" + Main.availableBonuses.length);
+				element.addEventListener("input",function() {
+					Main.updateBonuses();
+					Main.drawAnswer();
+					Main.outputAnswer();
+				});
+				var label = window.document.createElement("label");
+				label.setAttribute("for","bonus" + Main.availableBonuses.length);
+				label.textContent = bonus.bonus + " from " + (i + 1);
+				bonusElement.appendChild(element);
+				bonusElement.appendChild(label);
+				Main.availableBonuses.push({ bonus : bonus.bonus, from : i + 1, element : element});
+			}
+		}
+	}
+	Main.updateBonuses();
 	Main.drawAnswer();
 	Main.outputAnswer();
+};
+Main.updateBonuses = function() {
+	Main.isGrobalist = false;
+	var _g = 0;
+	var _g1 = Main.availableBonuses;
+	while(_g < _g1.length) {
+		var bonus = _g1[_g];
+		++_g;
+		if(bonus.element.checked) {
+			switch(bonus.bonus) {
+			case "BREAK_A_LEG":
+				break;
+			case "GLOBALIST":
+				Main.isGrobalist = true;
+				break;
+			}
+		}
+	}
 };
 Main.drawAnswer = function() {
 	Main.answerGraphics.clear();
@@ -899,7 +971,7 @@ ProblemTools.dislike = function(problem,answer) {
 	}
 	return dislike;
 };
-ProblemTools.failCount = function(problem,answer) {
+ProblemTools.failCount = function(problem,answer,isGrobalist) {
 	var failCount = 0;
 	var h0 = problem.hole[problem.hole.length - 1];
 	var _g = 0;
@@ -918,19 +990,39 @@ ProblemTools.failCount = function(problem,answer) {
 		}
 		h0 = h1;
 	}
-	var _g = 0;
-	var _g1 = problem.figure.edges;
-	while(_g < _g1.length) {
-		var edge = _g1[_g];
-		++_g;
-		var ax = answer[edge[0]][0] - answer[edge[1]][0];
-		var ay = answer[edge[0]][1] - answer[edge[1]][1];
-		var ad = ax * ax + ay * ay;
-		var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-		var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-		var pd = px * px + py * py;
+	if(isGrobalist) {
+		var ad = 0;
+		var pd = 0;
+		var _g = 0;
+		var _g1 = problem.figure.edges;
+		while(_g < _g1.length) {
+			var edge = _g1[_g];
+			++_g;
+			var ax = answer[edge[0]][0] - answer[edge[1]][0];
+			var ay = answer[edge[0]][1] - answer[edge[1]][1];
+			ad += ax * ax + ay * ay;
+			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+			pd += px * px + py * py;
+		}
 		if(!ProblemTools.checkEpsilonValue(problem,ad,pd)) {
-			++failCount;
+			failCount += 10;
+		}
+	} else {
+		var _g = 0;
+		var _g1 = problem.figure.edges;
+		while(_g < _g1.length) {
+			var edge = _g1[_g];
+			++_g;
+			var ax = answer[edge[0]][0] - answer[edge[1]][0];
+			var ay = answer[edge[0]][1] - answer[edge[1]][1];
+			var ad = ax * ax + ay * ay;
+			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+			var pd = px * px + py * py;
+			if(!ProblemTools.checkEpsilonValue(problem,ad,pd)) {
+				++failCount;
+			}
 		}
 	}
 	return failCount;

@@ -32,7 +32,8 @@ class ProblemTools
 	}
 	public static function failCount(
 		problem:Problem,
-		answer:Array<Array<Int>>
+		answer:Array<Array<Int>>,
+		isGrobalist
 	):Int
 	{
 		var failCount = 0;
@@ -55,19 +56,40 @@ class ProblemTools
 			h0 = h1;
 		}
 		
-		for (edge in problem.figure.edges)
+		if (isGrobalist)
 		{
-			var ax = answer[edge[0]][0] - answer[edge[1]][0];
-			var ay = answer[edge[0]][1] - answer[edge[1]][1];
-			var ad = ax * ax + ay * ay;
-			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
-			
+			var ad = 0;
+			var pd = 0;
+			for (edge in problem.figure.edges)
+			{
+				var ax = answer[edge[0]][0] - answer[edge[1]][0];
+				var ay = answer[edge[0]][1] - answer[edge[1]][1];
+				ad += ax * ax + ay * ay;
+				var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+				var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+				pd += px * px + py * py;
+			}
 			if (!checkEpsilonValue(problem, ad, pd)) {
-				failCount += 1;
+				failCount += 10;
 			}
 		}
+		else
+		{
+			for (edge in problem.figure.edges)
+			{
+				var ax = answer[edge[0]][0] - answer[edge[1]][0];
+				var ay = answer[edge[0]][1] - answer[edge[1]][1];
+				var ad = ax * ax + ay * ay;
+				var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+				var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+				var pd = px * px + py * py;
+				
+				if (!checkEpsilonValue(problem, ad, pd)) {
+					failCount += 1;
+				}
+			}
+		}
+		
 		return failCount;
 	}
 	

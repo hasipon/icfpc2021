@@ -8,11 +8,12 @@ typedef Problem =
 		edges: Array<Point>,
 		vertices: Array<Point>,
 	},
-	bonuses: Array<{
-		bonus   :BonusKind,
-		problem :Int,
-		position:Array<Int>,
-	}>
+	bonuses: Array<Bonus>
 }
 
+typedef Bonus = {
+	bonus   :BonusKind,
+	problem :Int,
+	position:Point,
+}
 typedef Point = Array<Int>;
