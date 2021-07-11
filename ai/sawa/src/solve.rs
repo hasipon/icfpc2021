@@ -118,7 +118,7 @@ pub fn solve(source:&ProblemSource) -> SolveResult {
                 if rng.gen_bool(0.01) { fit           (&problem.bonuses, &mut vertecies, &mut rng, 1.0); }
                 if rng.gen_bool(0.1 ) { random_small  (&mut vertecies, 1, &mut rng, &locked_points); }
 
-                pull(&problem, &mut vertecies, 40, &mut rng, &locked_points);
+                pull(&problem, &mut vertecies, 15, &mut rng, &locked_points);
                 if rng.gen_bool(0.5) && get_unmatched(&problem, &mut vertecies) == 0 {
                     search_include(&problem, &mut vertecies, &mut rng, &locked_points);
                 }
