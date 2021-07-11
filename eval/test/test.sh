@@ -1,6 +1,10 @@
 set -eu
 ./eval --problem-id 1 --pose-file test/1_sample | grep "valid"
 echo "OK"
+./eval --problem-id 2 --pose-file test/2_invalid.solution | grep "invalid edge"
+echo "OK"
+./eval --problem-id 3 --pose-file test/3_invalid.solution | grep "invalid edge"
+echo "OK"
 ./eval --problem-id 3 --pose-file test/3_out_vertex | grep  "out of the hole"
 echo "OK"
 ./eval --problem-id 3 --pose-file test/3_outof_edge | grep  "invalid edge"
