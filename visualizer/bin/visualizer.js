@@ -1069,7 +1069,7 @@ Main.drawAnswer = function() {
 		++_g;
 		var x = (point[0] - Main.left) * Main.scale;
 		var y = (point[1] - Main.top) * Main.scale;
-		var color = ProblemTools.checkPoint(Main.problem,point) ? 52224 : 34850;
+		var color = ProblemTools.includesPoint(Main.problem,point) ? 52224 : 34850;
 		Main.answerGraphics.beginFill(color);
 		Main.answerGraphics.drawCircle(x,y,4);
 		Main.answerGraphics.endFill();
@@ -1135,6 +1135,24 @@ ProblemTools.dislike = function(problem,answer) {
 ProblemTools.failCount = function(problem,answer) {
 	var failCount = 0;
 	var h0 = problem.hole[problem.hole.length - 1];
+	var failedPoint = -1;
+	var failedEdge0 = -1;
+	var failedEdge1 = -1;
+	var _g_current = 0;
+	var _g_array = answer;
+	while(_g_current < _g_array.length) {
+		var _g1_value = _g_array[_g_current];
+		var _g1_key = _g_current++;
+		var i = _g1_key;
+		var point = _g1_value;
+		if(!ProblemTools.includesPoint(problem,point)) {
+			if(problem.isWallhack && failedPoint == -1) {
+				failedPoint = i;
+				continue;
+			}
+			failCount += 2;
+		}
+	}
 	var _g = 0;
 	var _g1 = problem.hole;
 	while(_g < _g1.length) {
@@ -1146,7 +1164,27 @@ ProblemTools.failCount = function(problem,answer) {
 			var edge = _g3[_g2];
 			++_g2;
 			if(ProblemTools.intersect(h0,h1,answer[edge[0]],answer[edge[1]])) {
-				failCount += 4;
+				if(problem.isWallhack) {
+					if(failedPoint != -1) {
+						if(failedPoint == edge[0] || failedPoint == edge[1]) {
+							continue;
+						}
+					} else if(failedEdge0 == -1) {
+						failedEdge0 = edge[0];
+						failedEdge1 = edge[1];
+						continue;
+					} else {
+						if(failedEdge0 == edge[0] || failedEdge0 == edge[1]) {
+							failedPoint = failedEdge0;
+							continue;
+						}
+						if(failedEdge1 == edge[0] || failedEdge1 == edge[1]) {
+							failedPoint = failedEdge1;
+							continue;
+						}
+					}
+				}
+				failCount += 2;
 			}
 		}
 		h0 = h1;
@@ -1213,7 +1251,7 @@ ProblemTools.intersect = function(a,b,c,d) {
 ProblemTools.eval = function(dislike,fail) {
 	return fail * 200 + dislike + fail / 5 * dislike;
 };
-ProblemTools.checkPoint = function(problem,point) {
+ProblemTools.includesPoint = function(problem,point) {
 	var x = point[0];
 	var y = point[1];
 	var count = 0;

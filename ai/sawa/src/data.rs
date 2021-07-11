@@ -2,8 +2,16 @@ use serde::{Deserialize, Serialize};
 use crate::util::*;
 use std::cmp::Ordering;
 
-#[derive(Serialize, Deserialize, Clone)]
 pub struct Problem {
+    pub hole: Vec<Point>,
+    pub epsilon: i64,
+    pub edges: Vec<(usize, usize)>,
+    pub distances: Vec<i64>,
+    pub center:Point,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProblemSource {
     pub hole: Vec<Point>,
     pub epsilon: i64,
     pub figure: Figure,
@@ -21,12 +29,6 @@ pub struct Point(pub i64, pub i64);
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Answer {
     pub vertices:Vec<Point>,
-}
-
-pub struct SolveResult {
-    pub answer:Answer,
-    pub dislike:i64,
-    pub valid  :bool,
 }
 
 #[derive(Clone, Eq)]

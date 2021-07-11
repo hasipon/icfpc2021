@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -29,6 +31,44 @@ func init() {
 
 var lastFetchTime = time.Time{}
 var latestDislike = map[string]*Int{}
+
+func batchMode(solutionsDir string, submit bool) {
+	if defaultDB.Ok() {
+		go batchEvalDB()
+	}
+	if submit {
+		go batchSubmission()
+	}
+	batchEvalDir(solutionsDir)
+}
+
+var errNoBonusUsed = fmt.Errorf("no bonus used")
+var errDifferentBonus = fmt.Errorf("different bonus used")
+
+func replaceBonusProblemID(poseJson []byte, bonusName, problemID string) ([]byte, error) {
+	probId, err := strconv.Atoi(problemID)
+	if err != nil {
+		return nil, err
+	}
+
+	var pose Pose
+	err = json.Unmarshal(poseJson, &pose)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pose.Bonuses) == 0 {
+		return nil, errNoBonusUsed
+	}
+
+	if pose.Bonuses[0].Bonus != bonusName {
+		return nil, errDifferentBonus
+	}
+
+	pose.Bonuses[0].Problem = probId
+	result, err := json.Marshal(pose)
+	return result, err
+}
 
 func fetchProblemsJson() {
 	if 30*time.Second < time.Since(lastFetchTime) {
@@ -89,6 +129,12 @@ func (s *SubmitResponse) isSubmissionRateLimit() bool {
 	return strings.HasPrefix(s.Error, "Submission rate limit exceeded")
 }
 
+func (s *SubmitResponse) rateLimitSecond() int {
+	value := 0
+	fmt.Sscanf(s.Error, "Submission rate limit exceeded, please wait %d seconds before trying again", &value)
+	return value
+}
+
 func waitPoseValidation(problem, poseID string) bool {
 	time.Sleep(5 * time.Second)
 
@@ -135,18 +181,20 @@ func waitPoseValidation(problem, poseID string) bool {
 	return result.State == "VALID"
 }
 
-func submitSolution(problem, filePath string) (*SubmitResponse, error) {
-	file, err := os.Open(filePath)
+func submitSolutionFile(problem, filePath string) (*SubmitResponse, error) {
+	fileBody, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Println("os.Open err:", err)
 		return nil, err
 	}
-	defer file.Close()
+	return submitSolution(problem, fileBody)
+}
 
+func submitSolution(problem string, jsonBytes []byte) (*SubmitResponse, error) {
 	url := contestUrl + "/api/problems/" + problem + "/solutions"
 	bearer := "Bearer " + os.Getenv("YOUR_API_TOKEN")
 
-	req, err := http.NewRequest("POST", url, file)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonBytes))
 	if err != nil {
 		log.Println("NewRequest err:", err)
 		return nil, err
@@ -180,79 +228,82 @@ func submitSolution(problem, filePath string) (*SubmitResponse, error) {
 	return result, nil
 }
 
-func batchSubmission(solutionsDir string) {
+func batchSubmission() {
 	if os.Getenv("YOUR_API_TOKEN") == "" {
 		log.Fatal("YOUR_API_TOKEN not set")
 	}
+
+	rateLimitTime := map[string]time.Time{}
 
 	for {
 		fetchProblemsJson()
 		updateDislikes()
 
-		dirEntries, err := os.ReadDir(solutionsDir)
+		problemIds, err := defaultDB.GetAllProblemIDsInSubmission()
 		if err != nil {
-			log.Println("ReadDir", err)
+			log.Println("GetAllProblemIDsInSubmission err", err)
 			time.Sleep(30 * time.Second)
 			continue
 		}
 
-		ratelimit := false
-
-		for _, entry := range dirEntries {
-			if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+		for _, problemID := range problemIds {
+			if 0 < time.Until(rateLimitTime[problemID]) {
 				continue
 			}
 
-			sp := strings.Split(entry.Name(), "-")
-			if len(sp) == 0 {
-				log.Println("Invalid Name:", entry.Name())
+			solution, err := defaultDB.FindBestSolution(problemID)
+			if err != nil {
+				log.Println("FindBestSolution err", err, problemID)
 				continue
 			}
 
-			if !strings.HasPrefix(sp[len(sp)-1], "dislike") {
-				log.Println("Invalid name", entry.Name())
-				continue
+			poseBytes := []byte(solution.Json)
+
+			// どの問題でこのボーナスをアンロックするべきか調べて
+			// ボーナスをアンロックする問題番号の差し替え
+			if solution.UseBonus != "" {
+				setting, err := defaultDB.GetWhichProblemUnlocksTheBonus(GenBonusKey(solution.ProblemID, solution.UseBonus))
+				if err != nil {
+					log.Println("GetWhichProblemUnlocksTheBonus err", err)
+					continue
+				}
+
+				poseBytes, err = replaceBonusProblemID(poseBytes, solution.UseBonus, setting.ProblemId)
+				if err != nil {
+					log.Println("replaceBonusProblemID err", err)
+					continue
+				}
 			}
 
 			dislike := new(Int)
-			_, ok := dislike.SetString(strings.TrimPrefix(sp[len(sp)-1], "dislike"), 10)
-			if !ok {
-				log.Println("dislike parse failed", entry.Name())
-				continue
-			}
+			dislike.SetString(solution.DislikeS, 10)
 
-			if latestDislike[sp[0]] == nil || dislike.Cmp(latestDislike[sp[0]]) == -1 { // dislike < latest
-				result, err := submitSolution(sp[0], path.Join(solutionsDir, entry.Name()))
+			// TODO: dislikeで比較するのは誤り
+			// 最終提出時にはRateLimitのときちゃんと待ってるしサブミットし続ければいいかも..
+			if latestDislike[problemID] == nil || dislike.Cmp(latestDislike[problemID]) == -1 { // dislike < latest
+				log.Println("Submitting", problemID, solution.ID, solution.UseBonus, solution.UnlockBonus)
+
+				result, err := submitSolution(problemID, poseBytes)
 				if err != nil {
-					log.Fatal("submission error")
+					log.Println("submission error")
+					continue
 				}
 
 				if result.Error == "" {
-					latestDislike[sp[0]] = dislike
-
-					go func() {
-						prob := sp[0]
-						id := result.ID
-						if waitPoseValidation(prob, id) {
-							log.Println("Submission accepted", prob, id)
-						} else {
-							log.Fatal("Invalid submission")
-						}
-					}()
+					latestDislike[problemID] = dislike
 				} else if result.isSubmissionRateLimit() {
 					log.Println(result.Error)
-					ratelimit = true
+					sec := result.rateLimitSecond()
+					rateLimitTime[problemID] = time.Now().Add(time.Second * time.Duration(sec))
+					log.Println("RateLimit updated. problem ", problemID, " duration", time.Until(rateLimitTime[problemID]))
 				} else {
-					log.Fatal(result.Error)
+					log.Println("submission error", result.Error)
+					continue
 				}
 			}
 		}
 
-		if ratelimit {
-			time.Sleep(60 * time.Second)
-		} else {
-			time.Sleep(10 * time.Second)
-		}
+		time.Sleep(30 * time.Second)
 	}
 }
 
@@ -295,14 +346,7 @@ func registerSolutionInDirectory(solutionsDir string) {
 	}
 }
 
-func batchMode(solutionsDir string, submit bool) {
-	if defaultDB.Ok() {
-		go batchEvalDB()
-	}
-	if submit {
-		go batchSubmission(solutionsDir)
-	}
-
+func batchEvalDir(solutionsDir string) {
 	queueDir := path.Join(solutionsDir, "queue")
 	for {
 		dirEntries, err := os.ReadDir(queueDir)

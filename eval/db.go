@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS solution
 );
 `
 const indexes = `
-CREATE INDEX IF NOT EXISTS ON SOLUTION_DISLIKE account(dislike);
+CREATE INDEX IF NOT EXISTS ON SOLUTION_DISLIKE solution(dislike);
 `
 
 type ProblemSetting struct {
@@ -80,10 +80,6 @@ func GenBonusKey(problemID string, bonusName string) BonusKey {
 		panic(err)
 	}
 	return BonusKey(fmt.Sprintf("%04d_%s", problemIDInt, bonusName))
-}
-
-func (ps *ProblemSetting) IsBonusUseOk(bonusName string) bool {
-	return ps.UseBonus == bonusName
 }
 
 func (db SQLiteDB) Ok() bool {
@@ -260,25 +256,39 @@ WHERE id = :id`,
 }
 
 func (db SQLiteDB) FindBestSolution(problemID string) (*Solution, error) {
-	setting, err := db.GetProblemSetting(problemID)
-	if err != nil {
-		return nil, err
-	}
-
 	solution := new(Solution)
-	err = db.QueryRowx(
-		// TODO unlock bonus check
-		"SELECT * FROM solution WHERE valid = 1 AND (use_bonus = '' OR use_bonus = ?) ORDER BY dislike DESC LIMIT 1",
-		setting.UseBonus).StructScan(solution)
-
-	return solution, err
+	setting, err := db.GetProblemSetting(problemID)
+	if err == sql.ErrNoRows {
+		// No setting
+		err = db.QueryRowx(
+			"SELECT * FROM solution WHERE problem_id = ? AND valid = 1 AND use_bonus = '' ORDER BY dislike ASC LIMIT 1",
+			problemID).StructScan(solution)
+		return solution, err
+	}
+	if err == nil {
+		// Use setting
+		err = db.QueryRowx(
+			"SELECT * FROM solution WHERE problem_id = ? AND valid = 1 AND (use_bonus = '' OR use_bonus = ?) AND unlock_bonus = ? ORDER BY dislike ASC LIMIT 1",
+			problemID, setting.UseBonus, setting.UnlockBonusKey).StructScan(solution)
+		return solution, err
+	}
+	return nil, err
 }
 
 func (db SQLiteDB) GetProblemSetting(problemID string) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE problem_id = ?", problemID).StructScan(s)
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
+	return s, err
+}
+
+func (db SQLiteDB) GetWhichProblemUnlocksTheBonus(key BonusKey) (*ProblemSetting, error) {
+	s := &ProblemSetting{}
+	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE unlock_bonus_key = ? LIMIT 1", key).StructScan(s)
+	return s, err
+}
+
+func (db SQLiteDB) GetAllProblemIDsInSubmission() ([]string, error) {
+	var problemIDs []string
+	err := db.Select(&problemIDs, "SELECT DISTINCT problem_id FROM solution")
+	return problemIDs, err
 }

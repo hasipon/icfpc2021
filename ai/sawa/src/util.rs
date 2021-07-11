@@ -1,6 +1,7 @@
 
 use crate::data::*;
 use rand::Rng;
+use std::iter::Iterator;
 
 pub fn get_dislike(problem:&Problem, answer:&Vec<Point>) -> i64 {
     let mut result = 0;
@@ -24,7 +25,7 @@ pub fn get_intersected(problem:&Problem, answer:&Vec<Point>) -> i64 {
     let mut result = 0;
     let mut h0 = problem.hole[problem.hole.len() - 1];
     for h1 in &problem.hole {
-        for edge in &problem.figure.edges {
+        for edge in &problem.edges {
             if intersects(
                 &h0, 
                 h1, 
@@ -56,10 +57,10 @@ pub fn intersects(a:&Point, b:&Point, c:&Point, d:&Point) -> bool {
 
 pub fn get_unmatched(problem:&Problem, answer:&Vec<Point>)->i64 {
     let mut result = 0;
-    for edge in &problem.figure.edges
+    for (ei, edge) in problem.edges.iter().enumerate()
     {
         let ad = get_d(&answer[edge.0], &answer[edge.1]);
-        let pd = get_d(&problem.figure.vertices[edge.0], &problem.figure.vertices[edge.1]);
+        let pd = problem.distances[ei];
         if !check_epsilon(problem, ad, pd) {
             result += 1;
         }
@@ -82,10 +83,10 @@ pub fn pull<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i6
             velocities.push((0.0, 0.0));
         }
         let mut matched = true;
-        for edge in &problem.figure.edges
+        for (ei, edge) in problem.edges.iter().enumerate()
         {
             let ad = get_d(&answer[edge.0], &answer[edge.1]);
-            let pd = get_d(&problem.figure.vertices[edge.0], &problem.figure.vertices[edge.1]);
+            let pd = problem.distances[ei];
             
             if !check_epsilon(problem, ad, pd) {
                 count[edge.0] += 1; 
@@ -166,5 +167,53 @@ pub fn random<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:
                 );
             }
         }
+    }
+}
+
+pub fn get_center(points:&Vec<Point>) -> Point {
+    let mut left   = i64::MAX;
+    let mut right  = i64::MIN;
+    let mut top    = i64::MAX;
+    let mut bottom = i64::MIN;
+    for point in points {
+        if left   > point.0 { left   = point.0; }
+        if right  < point.0 { right  = point.0; }
+        if top    > point.1 { top    = point.1; }
+        if bottom < point.1 { bottom = point.1; }
+    }
+    Point((left + right) / 2, (top + bottom) / 2)
+}
+
+pub fn translate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
+    let center = get_center(answer);
+    
+    let dx = rng.gen_range(problem.center.0.min(center.0), problem.center.0.max(center.0) + 1) - center.0;
+    let dy = rng.gen_range(problem.center.1.min(center.1), problem.center.1.max(center.1) + 1) - center.1;
+    for a in answer {
+        a.0 += dx;
+        a.1 += dy;
+    }
+}
+pub fn inverse_x(problem:&Problem, answer:&mut Vec<Point>) {
+    for a in answer {
+        a.0 = problem.center.0 * 2 - a.0;
+    }
+}
+
+pub fn inverse_y(problem:&Problem, answer:&mut Vec<Point>) {
+    for a in answer {
+        a.1 = problem.center.1 * 2 - a.1;
+    }
+}
+
+pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale: f64) {
+    let d = rng.gen_range(-std::f64::consts::PI, std::f64::consts::PI) * scale;
+    let sin = d.sin();
+    let cos = d.cos();
+    for a in answer {
+        let x = (a.0 - problem.center.0) as f64;
+        let y = (a.1 - problem.center.1) as f64;
+        a.0 = (x * cos - y * sin) as i64 + problem.center.0;
+        a.1 = (x * sin + y * cos) as i64 + problem.center.1;
     }
 }

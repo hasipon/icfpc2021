@@ -203,11 +203,17 @@ func main() {
 				if os.IsNotExist(err) {
 					os.WriteFile(filePath, body, 0644)
 				}
+				if defaultDB.Ok() {
+					_, err = defaultDB.RegisterSolution(fmt.Sprintf("eval-dislike%v", result), id, body)
+					if err != nil {
+						log.Println("RegisterSolution err", err)
+					}
+				}
 			}
 
+			w.WriteHeader(200)
 			_, _ = w.Write([]byte(fmt.Sprintf("{\"dislike\": %s, \"valid\": %t, \"msg\": \"%s\"}",
 				result, valid, msg)))
-			w.WriteHeader(200)
 		})
 		for {
 			err := http.ListenAndServe(*server, nil)
