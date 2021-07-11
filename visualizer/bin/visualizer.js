@@ -222,7 +222,7 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:194:",e);
+		console.log("src/Main.hx:195:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -359,7 +359,7 @@ Main.onEnterFrame = function(f) {
 					if(i2 % 10 == 0) {
 						Main.updateBest();
 					}
-					if(Main.isGrobalist && ProblemTools.checkGlobalEpsilon(Main.problem,Main.answer)) {
+					if(Main.problem.isGlobalist && ProblemTools.checkGlobalEpsilon(Main.problem,Main.answer)) {
 						break;
 					}
 					var _g7 = [];
@@ -382,18 +382,18 @@ Main.onEnterFrame = function(f) {
 					var velocities = _g10;
 					var e = Main.problem.epsilon;
 					var matched = true;
-					var _g13 = 0;
-					var _g14 = Main.problem.figure.edges;
-					while(_g13 < _g14.length) {
-						var edge = _g14[_g13];
-						++_g13;
+					var _g6_current = 0;
+					var _g6_array = Main.problem.figure.edges;
+					while(_g6_current < _g6_array.length) {
+						var _g7_value = _g6_array[_g6_current];
+						var _g7_key = _g6_current++;
+						var ei = _g7_key;
+						var edge = _g7_value;
 						var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
 						var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
 						var ad = ax * ax + ay * ay;
-						var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
-						var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
-						var pd = px * px + py * py;
-						if(Main.isGrobalist ? ad != pd : !ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
+						var pd = Main.problem.distances[ei];
+						if(Main.problem.isGlobalist ? ad != pd : !ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
 							count[edge[0]] += 1;
 							count[edge[1]] += 1;
 							var v1 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
@@ -408,10 +408,10 @@ Main.onEnterFrame = function(f) {
 					if(matched) {
 						break;
 					}
-					var _g15 = 0;
-					var _g16 = Main.answer.length;
-					while(_g15 < _g16) {
-						var i3 = _g15++;
+					var _g13 = 0;
+					var _g14 = Main.answer.length;
+					while(_g13 < _g14) {
+						var i3 = _g13++;
 						if(shouldFix && fixedMap_h[i3]) {
 							continue;
 						}
@@ -438,7 +438,7 @@ Main.selectProblem = function(e) {
 };
 Main.updateBest = function() {
 	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
-	var fail = ProblemTools.failCount(Main.problem,Main.answer,Main.isGrobalist);
+	var fail = ProblemTools.failCount(Main.problem,Main.answer);
 	var $eval = ProblemTools.eval(dislike,fail);
 	if($eval < Main.bestEval) {
 		Main.bestEval = $eval;
@@ -515,6 +515,9 @@ Main.drawSelectedPoints = function() {
 	}
 };
 Main.outputAnswer = function() {
+	Main.answerText.value = Main.getAnswer();
+};
+Main.getAnswer = function() {
 	var bonuses = [];
 	var _g = 0;
 	var _g1 = Main.availableBonuses;
@@ -534,12 +537,12 @@ Main.outputAnswer = function() {
 			bonuses.push(b);
 		}
 	}
-	Main.answerText.value = JSON.stringify({ vertices : Main.answer, bonuses : bonuses});
+	return JSON.stringify({ vertices : Main.answer, bonuses : bonuses});
 };
 Main.updateScore = function() {
 	Main.updateBest();
 	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
-	var fail = ProblemTools.failCount(Main.problem,Main.answer,Main.isGrobalist);
+	var fail = ProblemTools.failCount(Main.problem,Main.answer);
 	var $eval = ProblemTools.eval(dislike,fail);
 	window.document.getElementById("dislike").textContent = "" + dislike;
 	window.document.getElementById("fail").textContent = "" + fail;
@@ -557,7 +560,7 @@ Main.requestValidate = function() {
 	};
 	h.onError = function(e) {
 	};
-	h.setPostData(JSON.stringify({ vertices : Main.answer}));
+	h.setPostData(Main.getAnswer());
 	h.request(true);
 };
 Main.onMouseDown = function(e) {
@@ -614,17 +617,19 @@ Main.onMouseDown = function(e) {
 		var selectedPoint = Main.selectedPoints[0];
 		var sx = Main.answer[selectedPoint][0];
 		var sy = Main.answer[selectedPoint][1];
-		var points = [];
-		var _g = 0;
-		var _g1 = Main.problem.figure.edges;
-		while(_g < _g1.length) {
-			var edge = _g1[_g];
-			++_g;
+		var points = new haxe_ds_IntMap();
+		var _g2_current = 0;
+		var _g2_array = Main.problem.figure.edges;
+		while(_g2_current < _g2_array.length) {
+			var _g3_value = _g2_array[_g2_current];
+			var _g3_key = _g2_current++;
+			var ei = _g3_key;
+			var edge = _g3_value;
 			if(edge[0] == selectedPoint) {
-				points.push(edge[1]);
+				points.h[ei] = edge[1];
 			}
 			if(edge[1] == selectedPoint) {
-				points.push(edge[0]);
+				points.h[ei] = edge[0];
 			}
 		}
 		var l = sx - 300 < Main.left ? Main.left : sx - 300;
@@ -640,16 +645,15 @@ Main.onMouseDown = function(e) {
 			while(_g2 < _g3) {
 				var y = _g2++;
 				var fail = false;
-				var _g4 = 0;
-				while(_g4 < points.length) {
-					var point = points[_g4];
-					++_g4;
+				var _g4 = new haxe_iterators_MapKeyValueIterator(points);
+				while(_g4.hasNext()) {
+					var _g5 = _g4.next();
+					var ei = _g5.key;
+					var point = _g5.value;
 					var ax = Main.answer[point][0] - x;
 					var ay = Main.answer[point][1] - y;
 					var ad = ax * ax + ay * ay;
-					var px = Main.problem.figure.vertices[selectedPoint][0] - Main.problem.figure.vertices[point][0];
-					var py = Main.problem.figure.vertices[selectedPoint][1] - Main.problem.figure.vertices[point][1];
-					var pd = px * px + py * py;
+					var pd = Main.problem.distances[ei];
 					if(!ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
 						fail = true;
 					}
@@ -688,12 +692,54 @@ Main.onMouseMove = function(e) {
 Main.readProblem = function(index) {
 	Main.bestEval = Infinity;
 	Main.selectedPoints.length = 0;
-	Main.problem = Main.problems[index];
+	Main.problemIndex = index;
+	var source = Main.problems[index];
+	Main.answer = [];
+	var _g = 0;
+	var _g1 = source.figure.vertices;
+	while(_g < _g1.length) {
+		var point = _g1[_g];
+		++_g;
+		Main.answer.push([point[0],point[1]]);
+	}
+	var bonusElement = window.document.getElementById("bonus");
+	bonusElement.innerHTML = "";
+	Main.availableBonuses = [];
+	var _g2_current = 0;
+	var _g2_array = Main.problems;
+	while(_g2_current < _g2_array.length) {
+		var _g3_value = _g2_array[_g2_current];
+		var _g3_key = _g2_current++;
+		var i = _g3_key;
+		var p = _g3_value;
+		var _g = 0;
+		var _g1 = p.bonuses;
+		while(_g < _g1.length) {
+			var bonus = _g1[_g];
+			++_g;
+			if(bonus.problem == Main.problemIndex + 1) {
+				var element = window.document.createElement("input");
+				element.setAttribute("type","checkbox");
+				element.setAttribute("id","bonus" + Main.availableBonuses.length);
+				element.addEventListener("input",function() {
+					Main.updateBonuses();
+					Main.drawAnswer();
+					Main.outputAnswer();
+				});
+				var label = window.document.createElement("label");
+				label.setAttribute("for","bonus" + Main.availableBonuses.length);
+				label.textContent = bonus.bonus + " from " + (i + 1);
+				bonusElement.appendChild(element);
+				bonusElement.appendChild(label);
+				Main.availableBonuses.push({ bonus : bonus.bonus, from : i + 1, element : element});
+			}
+		}
+	}
+	Main.updateBonuses();
 	Main.left = Main.right = Main.problem.hole[0][0];
 	Main.top = Main.bottom = Main.problem.hole[0][1];
-	Main.problemIndex = index;
 	var _g = 0;
-	var _g1 = Main.problem.hole;
+	var _g1 = source.hole;
 	while(_g < _g1.length) {
 		var point = _g1[_g];
 		++_g;
@@ -711,7 +757,7 @@ Main.readProblem = function(index) {
 		}
 	}
 	var _g = 0;
-	var _g1 = Main.problem.figure.vertices;
+	var _g1 = source.figure.vertices;
 	while(_g < _g1.length) {
 		var point = _g1[_g];
 		++_g;
@@ -788,53 +834,23 @@ Main.readProblem = function(index) {
 		var y = (bonus.position[1] - Main.top) * Main.scale;
 		Main.problemGraphics.drawCircle(x,y,6);
 	}
-	Main.answer = [];
-	var _g = 0;
-	var _g1 = Main.problem.figure.vertices;
-	while(_g < _g1.length) {
-		var point = _g1[_g];
-		++_g;
-		Main.answer.push([point[0],point[1]]);
-	}
-	var bonusElement = window.document.getElementById("bonus");
-	bonusElement.innerHTML = "";
-	Main.availableBonuses = [];
-	var _g12_current = 0;
-	var _g12_array = Main.problems;
-	while(_g12_current < _g12_array.length) {
-		var _g13_value = _g12_array[_g12_current];
-		var _g13_key = _g12_current++;
-		var i = _g13_key;
-		var p = _g13_value;
-		var _g = 0;
-		var _g1 = p.bonuses;
-		while(_g < _g1.length) {
-			var bonus = _g1[_g];
-			++_g;
-			if(bonus.problem == Main.problemIndex + 1) {
-				var element = window.document.createElement("input");
-				element.setAttribute("type","checkbox");
-				element.setAttribute("id","bonus" + Main.availableBonuses.length);
-				element.addEventListener("input",function() {
-					Main.updateBonuses();
-					Main.drawAnswer();
-					Main.outputAnswer();
-				});
-				var label = window.document.createElement("label");
-				label.setAttribute("for","bonus" + Main.availableBonuses.length);
-				label.textContent = bonus.bonus + " from " + (i + 1);
-				bonusElement.appendChild(element);
-				bonusElement.appendChild(label);
-				Main.availableBonuses.push({ bonus : bonus.bonus, from : i + 1, element : element});
-			}
-		}
-	}
-	Main.updateBonuses();
 	Main.drawAnswer();
 	Main.outputAnswer();
 };
 Main.updateBonuses = function() {
-	Main.isGrobalist = false;
+	var source = Main.problems[Main.problemIndex];
+	Main.answer.length = source.figure.vertices.length;
+	var source1 = source.hole;
+	var source2 = source.epsilon;
+	var _g = [];
+	var _g1 = 0;
+	var _g2 = source.figure.edges;
+	while(_g1 < _g2.length) {
+		var e = _g2[_g1];
+		++_g1;
+		_g.push(e);
+	}
+	Main.problem = { hole : source1, epsilon : source2, figure : { edges : _g}, bonuses : source.bonuses, distances : [], breakALeg : haxe_ds_Option.None, isGlobalist : false, isWallhack : false};
 	var _g = 0;
 	var _g1 = Main.availableBonuses;
 	while(_g < _g1.length) {
@@ -845,31 +861,41 @@ Main.updateBonuses = function() {
 			case "BREAK_A_LEG":
 				break;
 			case "GLOBALIST":
-				Main.isGrobalist = true;
+				Main.problem.isGlobalist = true;
 				break;
 			case "WALLHACK":
+				Main.problem.isWallhack = true;
 				break;
 			}
 		}
+	}
+	var _g = 0;
+	var _g1 = source.figure.edges;
+	while(_g < _g1.length) {
+		var edge = _g1[_g];
+		++_g;
+		var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+		var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+		Main.problem.distances.push(px * px + py * py);
 	}
 };
 Main.drawAnswer = function() {
 	Main.answerGraphics.clear();
 	var e = Main.problem.epsilon;
-	var _g = 0;
-	var _g1 = Main.problem.figure.edges;
-	while(_g < _g1.length) {
-		var edge = _g1[_g];
-		++_g;
+	var _g_current = 0;
+	var _g_array = Main.problem.figure.edges;
+	while(_g_current < _g_array.length) {
+		var _g1_value = _g_array[_g_current];
+		var _g1_key = _g_current++;
+		var ei = _g1_key;
+		var edge = _g1_value;
 		var ax = Main.answer[edge[0]][0] - Main.answer[edge[1]][0];
 		var ay = Main.answer[edge[0]][1] - Main.answer[edge[1]][1];
 		var ad = ax * ax + ay * ay;
-		var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
-		var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
-		var pd = px * px + py * py;
+		var pd = Main.problem.distances[ei];
 		var tmp = Main.answerGraphics;
 		var tmp1;
-		if(Main.isGrobalist) {
+		if(Main.problem.isGlobalist) {
 			if(ad == pd) {
 				tmp1 = 52224;
 			} else if(ad > pd) {
@@ -1013,17 +1039,17 @@ ProblemTools.checkEpsilon = function(problem,ad,pd) {
 ProblemTools.checkGlobalEpsilon = function(problem,answer) {
 	var value = 0.0;
 	var e = problem.epsilon * problem.figure.edges.length / 1000000;
-	var _g = 0;
-	var _g1 = problem.figure.edges;
-	while(_g < _g1.length) {
-		var edge = _g1[_g];
-		++_g;
+	var _g_current = 0;
+	var _g_array = problem.figure.edges;
+	while(_g_current < _g_array.length) {
+		var _g1_value = _g_array[_g_current];
+		var _g1_key = _g_current++;
+		var ei = _g1_key;
+		var edge = _g1_value;
 		var ax = answer[edge[0]][0] - answer[edge[1]][0];
 		var ay = answer[edge[0]][1] - answer[edge[1]][1];
 		var ad = ax * ax + ay * ay;
-		var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-		var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-		var pd = px * px + py * py;
+		var pd = problem.distances[ei];
 		value += Math.abs(ad / pd - 1);
 	}
 	return value <= e;
@@ -1053,7 +1079,7 @@ ProblemTools.dislike = function(problem,answer) {
 	}
 	return dislike;
 };
-ProblemTools.failCount = function(problem,answer,isGrobalist) {
+ProblemTools.failCount = function(problem,answer) {
 	var failCount = 0;
 	var h0 = problem.hole[problem.hole.length - 1];
 	var _g = 0;
@@ -1072,37 +1098,37 @@ ProblemTools.failCount = function(problem,answer,isGrobalist) {
 		}
 		h0 = h1;
 	}
-	if(isGrobalist) {
+	if(problem.isGlobalist) {
 		var value = 0.0;
 		var e = problem.epsilon * problem.figure.edges.length / 1000000;
-		var _g = 0;
-		var _g1 = problem.figure.edges;
-		while(_g < _g1.length) {
-			var edge = _g1[_g];
-			++_g;
+		var _g2_current = 0;
+		var _g2_array = problem.figure.edges;
+		while(_g2_current < _g2_array.length) {
+			var _g3_value = _g2_array[_g2_current];
+			var _g3_key = _g2_current++;
+			var ei = _g3_key;
+			var edge = _g3_value;
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
 			var ad = ax * ax + ay * ay;
-			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
+			var pd = problem.distances[ei];
 			value += Math.abs(ad / pd - 1);
 		}
 		if(value > e) {
-			failCount += Math.ceil((value - e) / problem.epsilon / 1000000);
+			failCount += Math.ceil((value - e) / problem.epsilon / 1000000) + 2;
 		}
 	} else {
-		var _g = 0;
-		var _g1 = problem.figure.edges;
-		while(_g < _g1.length) {
-			var edge = _g1[_g];
-			++_g;
+		var _g2_current = 0;
+		var _g2_array = problem.figure.edges;
+		while(_g2_current < _g2_array.length) {
+			var _g3_value = _g2_array[_g2_current];
+			var _g3_key = _g2_current++;
+			var ei = _g3_key;
+			var edge = _g3_value;
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
 			var ad = ax * ax + ay * ay;
-			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
+			var pd = problem.distances[ei];
 			if(!ProblemTools.checkEpsilon(problem,ad,pd)) {
 				++failCount;
 			}
@@ -1184,6 +1210,12 @@ StringTools.hex = function(n,digits) {
 		while(s.length < digits) s = "0" + s;
 	}
 	return s;
+};
+var haxe_IMap = function() { };
+haxe_IMap.__name__ = true;
+haxe_IMap.__isInterface__ = true;
+haxe_IMap.prototype = {
+	__class__: haxe_IMap
 };
 var haxe_Exception = function(message,previous,native) {
 	Error.call(this,message);
@@ -1427,6 +1459,26 @@ haxe_crypto_BaseCode.prototype = {
 	}
 	,__class__: haxe_crypto_BaseCode
 };
+var haxe_ds_IntMap = function() {
+	this.h = { };
+};
+haxe_ds_IntMap.__name__ = true;
+haxe_ds_IntMap.__interfaces__ = [haxe_IMap];
+haxe_ds_IntMap.prototype = {
+	get: function(key) {
+		return this.h[key];
+	}
+	,keys: function() {
+		var a = [];
+		for( var key in this.h ) if(this.h.hasOwnProperty(key)) a.push(key | 0);
+		return new haxe_iterators_ArrayIterator(a);
+	}
+	,__class__: haxe_ds_IntMap
+};
+var haxe_ds_Option = $hxEnums["haxe.ds.Option"] = { __ename__ : true, __constructs__ : ["Some","None"]
+	,Some: ($_=function(v) { return {_hx_index:0,v:v,__enum__:"haxe.ds.Option",toString:$estr}; },$_.__params__ = ["v"],$_)
+	,None: {_hx_index:1,__enum__:"haxe.ds.Option",toString:$estr}
+};
 var haxe_http_HttpBase = function(url) {
 	this.url = url;
 	this.headers = [];
@@ -1626,6 +1678,21 @@ haxe_iterators_ArrayIterator.prototype = {
 		return this.array[this.current++];
 	}
 	,__class__: haxe_iterators_ArrayIterator
+};
+var haxe_iterators_MapKeyValueIterator = function(map) {
+	this.map = map;
+	this.keys = map.keys();
+};
+haxe_iterators_MapKeyValueIterator.__name__ = true;
+haxe_iterators_MapKeyValueIterator.prototype = {
+	hasNext: function() {
+		return this.keys.hasNext();
+	}
+	,next: function() {
+		var key = this.keys.next();
+		return { value : this.map.get(key), key : key};
+	}
+	,__class__: haxe_iterators_MapKeyValueIterator
 };
 var js_Boot = function() { };
 js_Boot.__name__ = true;

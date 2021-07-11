@@ -19,13 +19,15 @@ import pixi.interaction.InteractionEvent;
 import tweenxcore.color.RgbColor;
 using tweenxcore.Tools;
 using ProblemTools;
+import Problem.ProblemSource;
+import haxe.ds.Option;
 
 typedef AvailableBonus = {bonus:BonusKind, from:Int, element:InputElement};
 class Main 
 {
 	static var canvas:CanvasElement;
 	static var pixi:Application;
-	static var problems:Array<Problem>;
+	static var problems:Array<ProblemSource>;
 	static var availableBonuses:Array<AvailableBonus>;
 	
 	static var left  :Int;
@@ -55,7 +57,6 @@ class Main
 	static var requestCount:Int;
 	static var bestEval:Float;
 	static var bestAnswer:Array<Array<Int>>;
-	static var isGrobalist:Bool;
 	
 	static function main() 
 	{
@@ -321,22 +322,20 @@ class Main
 					for (i in 0...50000)
 					{
 						if (i % 10 == 0) { updateBest(); } 
-						if (isGrobalist && problem.checkGlobalEpsilon(answer)) { break; }
+						if (problem.isGlobalist && problem.checkGlobalEpsilon(answer)) { break; }
 						var count      = [for (_ in answer) 0];
 						var velocities = [for (_ in answer)[0.0, 0.0]];
 						var e = problem.epsilon;
 						var matched = true;
-						for (edge in problem.figure.edges)
+						for (ei => edge in problem.figure.edges)
 						{
 							var ax = answer[edge[0]][0] - answer[edge[1]][0];
 							var ay = answer[edge[0]][1] - answer[edge[1]][1];
 							var ad = ax * ax + ay * ay;
-							var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-							var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-							var pd = px * px + py * py;
-							
+							var pd = problem.distances[ei];
+				
 							if (
-								if (isGrobalist) ad != pd else !problem.checkEpsilon(ad, pd)
+								if (problem.isGlobalist) ad != pd else !problem.checkEpsilon(ad, pd)
 							) 
 							{
 								count[edge[0]] += 1; 
@@ -380,7 +379,7 @@ class Main
 	static function updateBest():Void
 	{
 		var dislike = ProblemTools.dislike(problem, answer);
-		var fail = ProblemTools.failCount(problem, answer, isGrobalist);
+		var fail = ProblemTools.failCount(problem, answer);
 		var eval = ProblemTools.eval(dislike, fail);
 		if (eval < bestEval)
 		{
@@ -447,6 +446,10 @@ class Main
 	
 	static function outputAnswer():Void 
 	{
+		answerText.value = getAnswer();
+	}
+	static function getAnswer():String
+	{
 		var bonuses:Array<Dynamic> = [];
 		for (bonus in availableBonuses)
 		{
@@ -462,13 +465,13 @@ class Main
 				bonuses.push(b);
 			}
 		}
-		answerText.value = Json.stringify({vertices:answer, bonuses: bonuses});
+		return Json.stringify({vertices:answer, bonuses: bonuses});
 	}
 	static function updateScore():Void
 	{
 		updateBest();
 		var dislike = ProblemTools.dislike(problem, answer);
-		var fail = ProblemTools.failCount(problem, answer, isGrobalist);
+		var fail = ProblemTools.failCount(problem, answer);
 		var eval = ProblemTools.eval(dislike, fail);
 		Browser.document.getElementById("dislike").textContent = "" + dislike; 
 		Browser.document.getElementById("fail").textContent = "" + fail; 
@@ -489,7 +492,7 @@ class Main
 			}
 		}
 		h.onError = function(e) {}
-		h.setPostData(Json.stringify({vertices:answer}));
+		h.setPostData(getAnswer());
 		h.request(true);
 	}	
 	static function onMouseDown(e:InteractionEvent):Void
@@ -552,11 +555,11 @@ class Main
 			var selectedPoint = selectedPoints[0];
 			var sx = answer[selectedPoint][0];
 			var sy = answer[selectedPoint][1];
-			var points = [];
-			for (edge in problem.figure.edges)
+			var points:Map<Int, Int> = [];
+			for (ei => edge in problem.figure.edges)
 			{
-				if (edge[0] == selectedPoint) points.push(edge[1]);
-				if (edge[1] == selectedPoint) points.push(edge[0]);
+				if (edge[0] == selectedPoint) points.set(ei, edge[1]);
+				if (edge[1] == selectedPoint) points.set(ei, edge[0]);
 			}
 			var l = if (sx - 300 < left  ) left   else sx - 300;
 			var r = if (right < sx + 300 ) right  else sx + 300;
@@ -567,15 +570,13 @@ class Main
 				for (y in t...b)
 				{
 					var fail = false;
-					for (point in points)
+					for (ei => point in points)
 					{
 						var ax = answer[point][0] - x;
 						var ay = answer[point][1] - y;
 						var ad = ax * ax + ay * ay;
-						var px = problem.figure.vertices[selectedPoint][0] - problem.figure.vertices[point][0];
-						var py = problem.figure.vertices[selectedPoint][1] - problem.figure.vertices[point][1];
-						var pd = px * px + py * py;
-						
+						var pd = problem.distances[ei];
+				
 						if (!problem.checkEpsilon(ad, pd))
 						{
 							fail = true;
@@ -620,19 +621,56 @@ class Main
 	{
 		bestEval = Math.POSITIVE_INFINITY;
 		untyped selectedPoints.length = 0;
-		problem = problems[index];
+		problemIndex = index;
+		var source = problems[index];
+		answer = [];
+		for (point in source.figure.vertices)
+		{
+			answer.push([point[0], point[1]]);
+		}
+		var bonusElement = Browser.document.getElementById("bonus");
+		bonusElement.innerHTML = "";
+		availableBonuses = [];
+		for (i => p in problems)
+		{
+			for (bonus in p.bonuses)
+			{
+				if (bonus.problem == problemIndex + 1)
+				{
+					var element:InputElement = cast Browser.document.createElement('input');
+					element.setAttribute("type", "checkbox");
+					element.setAttribute("id", "bonus" + availableBonuses.length);
+					element.addEventListener("input", () -> {
+						updateBonuses();
+						drawAnswer();
+						outputAnswer();
+					});
+					var label = Browser.document.createElement('label');
+					label.setAttribute("for", "bonus" + availableBonuses.length);
+					label.textContent = bonus.bonus + " from " + (i + 1);
+					bonusElement.appendChild(element);
+					bonusElement.appendChild(label);
+					
+					availableBonuses.push({
+						bonus: bonus.bonus,
+						from: i + 1,
+						element: element
+					});
+				}
+			}
+		}
+		updateBonuses();
+		
 		left = right = problem.hole[0][0];
 		top = bottom = problem.hole[0][1];
-		problemIndex = index;
-		
-		for (point in problem.hole)
+		for (point in source.hole)
 		{
 			if (left   > point[0]) left   = point[0];
 			if (right  < point[0]) right  = point[0];
 			if (top    > point[1]) top    = point[1];
 			if (bottom < point[1]) bottom = point[1];
 		}
-		for (point in problem.figure.vertices)
+		for (point in source.figure.vertices)
 		{
 			if (left   > point[0]) left   = point[0];
 			if (right  < point[0]) right  = point[0];
@@ -691,63 +729,43 @@ class Main
 			problemGraphics.drawCircle(x, y, 6);
 		}
 		
-		answer = [];
-		for (point in problem.figure.vertices)
-		{
-			answer.push([point[0], point[1]]);
-		}
 		
-		var bonusElement = Browser.document.getElementById("bonus");
-		bonusElement.innerHTML = "";
-		availableBonuses = [];
-		
-		for (i => p in problems)
-		{
-			for (bonus in p.bonuses)
-			{
-				if (bonus.problem == problemIndex + 1)
-				{
-					var element:InputElement = cast Browser.document.createElement('input');
-					element.setAttribute("type", "checkbox");
-					element.setAttribute("id", "bonus" + availableBonuses.length);
-					element.addEventListener("input", () -> {
-						updateBonuses();
-						drawAnswer();
-						outputAnswer();
-					});
-					var label = Browser.document.createElement('label');
-					label.setAttribute("for", "bonus" + availableBonuses.length);
-					label.textContent = bonus.bonus + " from " + (i + 1);
-					bonusElement.appendChild(element);
-					bonusElement.appendChild(label);
-					
-					availableBonuses.push({
-						bonus: bonus.bonus,
-						from: i + 1,
-						element: element
-					});
-				}
-			}
-		}
-			
-		updateBonuses();
 		drawAnswer();
 		outputAnswer();
 	}
 	static function updateBonuses():Void
 	{
-		isGrobalist = false;
+		var source:ProblemSource = problems[problemIndex];
+		untyped answer.length = source.figure.vertices.length;
+		problem = {
+			hole: source.hole,
+			epsilon: source.epsilon,
+			figure: {
+				edges: [for (e in source.figure.edges) e],
+			},
+			bonuses:source.bonuses,
+			distances:[],
+			breakALeg: Option.None,
+			isGlobalist: false,
+			isWallhack : false,
+		};
 		for (bonus in availableBonuses)
 		{
 			if (bonus.element.checked)
 			{
 				switch (bonus.bonus)
 				{
-					case BonusKind.GLOBALIST: isGrobalist = true;
+					case BonusKind.GLOBALIST  : problem.isGlobalist = true;
 					case BonusKind.BREAK_A_LEG:
-					case BonusKind.WALLHACK   :
+					case BonusKind.WALLHACK   : problem.isWallhack = true;
 				}
 			}
+		}
+		for (edge in source.figure.edges) 
+		{
+			var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+			var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+			problem.distances.push(px * px + py * py);
 		}
 	}
 	
@@ -755,18 +773,16 @@ class Main
 	{
 		answerGraphics.clear();
 		var e = problem.epsilon;
-		for (edge in problem.figure.edges)
+		for (ei => edge in problem.figure.edges)
 		{
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
 			var ad = ax * ax + ay * ay;
-			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
+			var pd = problem.distances[ei];
 			
 			answerGraphics.lineStyle(
 				2,
-				if (isGrobalist)
+				if (problem.isGlobalist)
 				{
 					if (ad == pd) { 0x00CC00; }
 					else if (ad > pd) 

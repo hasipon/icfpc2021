@@ -12,14 +12,12 @@ class ProblemTools
 	{
 		var value = 0.0;
 		var e = (problem.epsilon * problem.figure.edges.length) / 1000000;
-		for (edge in problem.figure.edges)
+		for (ei => edge in problem.figure.edges)
 		{
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
 			var ad = ax * ax + ay * ay;
-			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
+			var pd = problem.distances[ei];
 			value += Math.abs(ad / pd - 1);
 		}
 		return value <= e;
@@ -50,8 +48,7 @@ class ProblemTools
 	}
 	public static function failCount(
 		problem:Problem,
-		answer:Array<Array<Int>>,
-		isGrobalist
+		answer:Array<Array<Int>>
 	):Int
 	{
 		var failCount = 0;
@@ -74,34 +71,30 @@ class ProblemTools
 			h0 = h1;
 		}
 		
-		if (isGrobalist)
+		if (problem.isGlobalist)
 		{
 			var value = 0.0;
 			var e = (problem.epsilon * problem.figure.edges.length) / 1000000;
-			for (edge in problem.figure.edges)
+			for (ei => edge in problem.figure.edges)
 			{
 				var ax = answer[edge[0]][0] - answer[edge[1]][0];
 				var ay = answer[edge[0]][1] - answer[edge[1]][1];
 				var ad = ax * ax + ay * ay;
-				var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-				var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-				var pd = px * px + py * py;
+				var pd = problem.distances[ei];
 				value += Math.abs(ad / pd - 1);
 			}
 			if (value > e) {
-				failCount += Math.ceil((value - e) / problem.epsilon / 1000000);
+				failCount += Math.ceil((value - e) / problem.epsilon / 1000000) + 2;
 			}
 		}
 		else
 		{
-			for (edge in problem.figure.edges)
+			for (ei => edge in problem.figure.edges)
 			{
 				var ax = answer[edge[0]][0] - answer[edge[1]][0];
 				var ay = answer[edge[0]][1] - answer[edge[1]][1];
 				var ad = ax * ax + ay * ay;
-				var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-				var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-				var pd = px * px + py * py;
+				var pd = problem.distances[ei];
 				
 				if (!checkEpsilon(problem, ad, pd)) {
 					failCount += 1;
