@@ -141,6 +141,7 @@ class ProblemTools
 		}
 		else
 		{
+			var flex = problem.isSuperFlex;
 			for (ei => edge in problem.figure.edges)
 			{
 				var ax = answer[edge[0]][0] - answer[edge[1]][0];
@@ -149,6 +150,11 @@ class ProblemTools
 				var pd = problem.distances[ei];
 				
 				if (!checkEpsilon(problem, ad, pd)) {
+					if (flex)
+					{
+						flex = false;
+						continue;
+					}
 					failCount += 1;
 				}
 			}

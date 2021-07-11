@@ -1225,6 +1225,7 @@ ProblemTools.failCount = function(problem,answer) {
 			failCount += Math.ceil((value - e) / problem.epsilon / 1000000) + 2;
 		}
 	} else {
+		var flex = problem.isSuperFlex;
 		var _g2_current = 0;
 		var _g2_array = problem.figure.edges;
 		while(_g2_current < _g2_array.length) {
@@ -1237,6 +1238,10 @@ ProblemTools.failCount = function(problem,answer) {
 			var ad = ax * ax + ay * ay;
 			var pd = problem.distances[ei];
 			if(!ProblemTools.checkEpsilon(problem,ad,pd)) {
+				if(flex) {
+					flex = false;
+					continue;
+				}
 				++failCount;
 			}
 		}
