@@ -110,10 +110,13 @@ void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd,
   if(!pruneEps(p, pose, used, floyd)){
     return;
   }
-  if(maxi == holeId && holeId >= p.holes.size()){
-    maxi = max(maxi, max);
+  if(maxi == holeId || holeId >= p.holes.size()){
+    maxi = max(maxi, holeId);
+    cout << maxi <<endl;
     drushUp(p, pose, used, floyd, nextTo);
-    return;
+    if(holeId >= p.holes.size()){
+      return;
+    }
   }
   if(last != -1){
     FOR(next, nextTo[last]){
