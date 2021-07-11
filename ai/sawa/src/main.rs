@@ -16,7 +16,7 @@ fn main()  -> std::io::Result<()>  {
         4, 11, 12,13,15,16,17,18,20,21,22,23,24,25,26,34,35,38,39,41,43,
         46,49,51,52,53,54,55,59,63,70,72,73,76
     ];
-    for i in 1..89 {
+    for i in 1..106 {
         if cleared.contains(&i) { continue; }
         let target = format!("{}", i);
         println!("{}", target);
@@ -31,9 +31,9 @@ fn main()  -> std::io::Result<()>  {
         println!("{}", meta);
         println!("{}", answer);
         if result.is_valid() {
-            let mut file = File::create(format!("out/{}-sawa-auto6.json", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto11.json", target))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto6.meta", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto11.meta", target))?;
             write!(file, "{}", meta);
         }
     }

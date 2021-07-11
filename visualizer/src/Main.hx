@@ -6,6 +6,7 @@ import haxe.Resource;
 import js.Browser;
 import js.html.CanvasElement;
 import js.html.Event;
+import js.html.InputElement;
 import js.html.KeyboardEvent;
 import js.html.SelectElement;
 import js.html.TextAreaElement;
@@ -18,12 +19,17 @@ import pixi.interaction.InteractionEvent;
 import tweenxcore.color.RgbColor;
 using tweenxcore.Tools;
 using ProblemTools;
+import Problem.ProblemSource;
+import haxe.ds.Option;
 
+typedef AvailableBonus = {bonus:BonusKind, from:Int, element:InputElement};
 class Main 
 {
 	static var canvas:CanvasElement;
 	static var pixi:Application;
-	static var problems:Array<Problem>;
+	static var problems:Array<ProblemSource>;
+	static var availableBonuses:Array<AvailableBonus>;
+	
 	static var left  :Int;
 	static var right :Int;
 	static var top   :Int;
@@ -193,14 +199,15 @@ class Main
 	static function fetchProblem()
 	{
 		problems = Json.parse(Resource.getString("problems"));
-		start();
-		for (index in 0...problems.length)
+		for (index => problem in problems)
 		{
 			var element = Browser.document.createElement('option');
 			element.setAttribute("value", "" + (index + 1));
 			element.innerHTML = "" + (index + 1);
 			problemCombo.appendChild(element);
 		}
+		
+		start();
 	}
 	static function start():Void
 	{
@@ -315,20 +322,21 @@ class Main
 					for (i in 0...50000)
 					{
 						if (i % 10 == 0) { updateBest(); } 
+						if (problem.isGlobalist && problem.checkGlobalEpsilon(answer)) { break; }
 						var count      = [for (_ in answer) 0];
 						var velocities = [for (_ in answer)[0.0, 0.0]];
 						var e = problem.epsilon;
 						var matched = true;
-						for (edge in problem.figure.edges)
+						for (ei => edge in problem.figure.edges)
 						{
 							var ax = answer[edge[0]][0] - answer[edge[1]][0];
 							var ay = answer[edge[0]][1] - answer[edge[1]][1];
 							var ad = ax * ax + ay * ay;
-							var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-							var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-							var pd = px * px + py * py;
-							
-							if (!problem.checkEpsilonValue(ad, pd)) 
+							var pd = problem.distances[ei];
+				
+							if (
+								if (problem.isGlobalist) ad != pd else !problem.checkEpsilon(ad, pd)
+							) 
 							{
 								count[edge[0]] += 1; 
 								count[edge[1]] += 1; 
@@ -438,7 +446,27 @@ class Main
 	
 	static function outputAnswer():Void 
 	{
-		answerText.value = Json.stringify({vertices:answer});
+		answerText.value = getAnswer();
+	}
+	static function getAnswer():String
+	{
+		var bonuses:Array<Dynamic> = [];
+		for (bonus in availableBonuses)
+		{
+			var b:Dynamic = { bonus:bonus.bonus , problem:bonus.from }
+			switch (bonus.bonus)
+			{
+				case BonusKind.GLOBALIST  : if (bonus.element.checked) bonuses.push(b);
+				case BonusKind.BREAK_A_LEG: 
+					var edge = problems[problemIndex].figure.edges[Std.parseInt(bonus.element.value)];
+					if (edge != null) {
+						b.edge = edge;
+						bonuses.push(b);
+					}
+				case BonusKind.WALLHACK   : if (bonus.element.checked) bonuses.push(b);
+			}
+		}
+		return Json.stringify({vertices:answer, bonuses: bonuses});
 	}
 	static function updateScore():Void
 	{
@@ -450,6 +478,7 @@ class Main
 		Browser.document.getElementById("fail").textContent = "" + fail; 
 		Browser.document.getElementById("eval").textContent = "" + eval; 
 		Browser.document.getElementById("best").textContent = "" + bestEval; 
+		
 		requestValidate();
 	}
 	static function requestValidate():Void
@@ -464,7 +493,7 @@ class Main
 			}
 		}
 		h.onError = function(e) {}
-		h.setPostData(Json.stringify({vertices:answer}));
+		h.setPostData(getAnswer());
 		h.request(true);
 	}	
 	static function onMouseDown(e:InteractionEvent):Void
@@ -527,11 +556,11 @@ class Main
 			var selectedPoint = selectedPoints[0];
 			var sx = answer[selectedPoint][0];
 			var sy = answer[selectedPoint][1];
-			var points = [];
-			for (edge in problem.figure.edges)
+			var points:Map<Int, Int> = [];
+			for (ei => edge in problem.figure.edges)
 			{
-				if (edge[0] == selectedPoint) points.push(edge[1]);
-				if (edge[1] == selectedPoint) points.push(edge[0]);
+				if (edge[0] == selectedPoint) points.set(ei, edge[1]);
+				if (edge[1] == selectedPoint) points.set(ei, edge[0]);
 			}
 			var l = if (sx - 300 < left  ) left   else sx - 300;
 			var r = if (right < sx + 300 ) right  else sx + 300;
@@ -542,16 +571,14 @@ class Main
 				for (y in t...b)
 				{
 					var fail = false;
-					for (point in points)
+					for (ei => point in points)
 					{
 						var ax = answer[point][0] - x;
 						var ay = answer[point][1] - y;
 						var ad = ax * ax + ay * ay;
-						var px = problem.figure.vertices[selectedPoint][0] - problem.figure.vertices[point][0];
-						var py = problem.figure.vertices[selectedPoint][1] - problem.figure.vertices[point][1];
-						var pd = px * px + py * py;
-						
-						if (!problem.checkEpsilonValue(ad, pd))
+						var pd = problem.distances[ei];
+				
+						if (!problem.checkEpsilon(ad, pd))
 						{
 							fail = true;
 						}
@@ -595,19 +622,61 @@ class Main
 	{
 		bestEval = Math.POSITIVE_INFINITY;
 		untyped selectedPoints.length = 0;
-		problem = problems[index];
+		problemIndex = index;
+		var source = problems[index];
+		answer = [];
+		for (point in source.figure.vertices)
+		{
+			answer.push([point[0], point[1]]);
+		}
+		var bonusElement = Browser.document.getElementById("bonus");
+		bonusElement.innerHTML = "";
+		availableBonuses = [];
+		for (i => p in problems)
+		{
+			for (bonus in p.bonuses)
+			{
+				if (bonus.problem == problemIndex + 1)
+				{
+					var element:InputElement = cast Browser.document.createElement('input');
+					switch (bonus.bonus)
+					{
+						case BonusKind.WALLHACK   :element.setAttribute("type", "checkbox");
+						case BonusKind.BREAK_A_LEG:element.setAttribute("type", "number");
+						case BonusKind.GLOBALIST  :element.setAttribute("type", "checkbox");
+					}
+					element.setAttribute("id", "bonus" + availableBonuses.length);
+					element.addEventListener("input", () -> {
+						updateBonuses();
+						drawAnswer();
+						outputAnswer();
+					});
+					var label = Browser.document.createElement('label');
+					label.setAttribute("for", "bonus" + availableBonuses.length);
+					label.textContent = bonus.bonus + " from " + (i + 1);
+					bonusElement.appendChild(element);
+					bonusElement.appendChild(label);
+					
+					availableBonuses.push({
+						bonus: bonus.bonus,
+						from: i + 1,
+						element: element
+					});
+				}
+			}
+		}
+		updateBonuses();
+		
 		left = right = problem.hole[0][0];
 		top = bottom = problem.hole[0][1];
-		problemIndex = index;
-		
-		for (point in problem.hole)
+		for (point in source.hole)
 		{
 			if (left   > point[0]) left   = point[0];
 			if (right  < point[0]) right  = point[0];
 			if (top    > point[1]) top    = point[1];
 			if (bottom < point[1]) bottom = point[1];
 		}
-		for (point in problem.figure.vertices)
+		for (point in source.figure.vertices)
 		{
 			if (left   > point[0]) left   = point[0];
 			if (right  < point[0]) right  = point[0];
@@ -658,6 +727,7 @@ class Main
 			{
 				case BonusKind.GLOBALIST  :0xFFFF00;
 				case BonusKind.BREAK_A_LEG:0x0000FF;
+				case BonusKind.WALLHACK   :0x0FF9900;
 			}
 			problemGraphics.beginFill(color);
 			var x = (bonus.position[0] - left) * scale;
@@ -665,53 +735,125 @@ class Main
 			problemGraphics.drawCircle(x, y, 6);
 		}
 		
-		answer = [];
-		for (point in problem.figure.vertices)
-		{
-			answer.push([point[0], point[1]]);
-		}
+		
 		drawAnswer();
 		outputAnswer();
+	}
+	static function updateBonuses():Void
+	{
+		var source:ProblemSource = problems[problemIndex];
+		untyped answer.length = source.figure.vertices.length;
+		problem = {
+			hole: source.hole,
+			epsilon: source.epsilon,
+			figure: {
+				edges: [],
+			},
+			bonuses:source.bonuses,
+			distances:[],
+			breakALeg: Option.None,
+			isGlobalist: false,
+			isWallhack : false,
+		};
+		for (bonus in availableBonuses)
+		{
+			switch (bonus.bonus)
+			{
+				case BonusKind.GLOBALIST  : if (bonus.element.checked    ) problem.isGlobalist = true;
+				case BonusKind.BREAK_A_LEG: if (bonus.element.value != "") problem.breakALeg = Option.Some(Std.parseInt(bonus.element.value));
+				case BonusKind.WALLHACK   : if (bonus.element.checked    ) problem.isWallhack = true;
+			}
+		}
+		trace(problem.breakALeg);
+		for (ei => edge in source.figure.edges) 
+		{
+			switch (problem.breakALeg)
+			{
+				case Option.Some(value) if (value == ei):
+					answer.push([
+						Math.round((source.figure.vertices[edge[0]][0] + source.figure.vertices[edge[1]][0]) / 2),
+						Math.round((source.figure.vertices[edge[0]][1] + source.figure.vertices[edge[1]][1]) / 2)
+					]);
+					var e = [edge[0], answer.length - 1];
+					
+					var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+					var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+					var pd = (px * px + py * py) / 4;
+					problem.distances.push(pd);
+					problem.figure.edges.push([edge[0], answer.length - 1]);
+					
+					problem.distances.push(pd);
+					problem.figure.edges.push([edge[1], answer.length - 1]);
+					
+				case _:
+					var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+					var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+					problem.distances.push(px * px + py * py);
+					problem.figure.edges.push(edge);
+			}
+		}
 	}
 	
 	static function drawAnswer():Void
 	{
 		answerGraphics.clear();
 		var e = problem.epsilon;
-		for (edge in problem.figure.edges)
+		for (ei => edge in problem.figure.edges)
 		{
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
 			var ad = ax * ax + ay * ay;
-			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
+			var pd = problem.distances[ei];
 			
 			answerGraphics.lineStyle(
 				2,
-				if (problem.checkEpsilonValue(ad, pd)) 
+				if (problem.isGlobalist)
 				{
-					0x00CC00;
+					if (ad == pd) { 0x00CC00; }
+					else if (ad > pd) 
+					{
+						var rate = (ad / pd).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							rate.lerp(0.5, 0.9),
+							rate.lerp(0.5, 0.0),
+							0
+						);
+						color.toRgbInt();
+					}
+					else 
+					{
+						var rate = (pd / ad).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							0,
+							rate.lerp(0.5, 0.0),
+							rate.lerp(0.5, 0.9)
+						);
+						color.toRgbInt();
+					}
 				}
-				else if (ad > pd) 
+				else
 				{
-					var rate = (ad / pd).inverseLerp(1, 4).clamp();
-					var color = new RgbColor(
-						rate.lerp(0.6, 0.9),
-						rate.lerp(0.4, 0.0),
-						0
-					);
-					color.toRgbInt();
-				}
-				else 
-				{
-					var rate = (pd / ad).inverseLerp(1, 4).clamp();
-					var color = new RgbColor(
-						0,
-						rate.lerp(0.4, 0.0),
-						rate.lerp(0.6, 0.9)
-					);
-					color.toRgbInt();
+					if (problem.checkEpsilon(ad, pd)) { 0x00CC00; }
+					else if (ad > pd) 
+					{
+						var rate = (ad / pd).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							rate.lerp(0.6, 0.9),
+							rate.lerp(0.4, 0.0),
+							0
+						);
+						color.toRgbInt();
+					}
+					else 
+					{
+						var rate = (pd / ad).inverseLerp(1, 4).clamp();
+						var color = new RgbColor(
+							0,
+							rate.lerp(0.4, 0.0),
+							rate.lerp(0.6, 0.9)
+						);
+						color.toRgbInt();
+					}
 				}
 			);
 			var x = (answer[edge[0]][0] - left) * scale;

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 )
 
@@ -14,8 +15,9 @@ type Figure struct {
 
 type Problem struct {
 	Hole [][]*Int `json:"hole"`
-	Epsilon Int `json:"epsilon"`
+	Epsilon *Int `json:"epsilon"`
 	Figure Figure `json:"figure"`
+	WallHacked bool
 }
 
 type Point = []*Int
@@ -98,8 +100,15 @@ func distance(a []*Int, b[]*Int) *Int{
 	return &sum
 }
 
+type Bonus struct {
+	Bonus string `json:"bonus"`
+	Problem int `json:"problem"`
+	Edge []int `json:"edge"`
+}
+
 type Pose struct {
 	Vertices [][]*Int `json:"vertices"`
+	Bonuses []*Bonus
 }
 
 func dislike(problem *Problem, pose *Pose) *Int {
@@ -168,49 +177,87 @@ func include(problem *Problem, p Point) bool {
 	return cnt % 2 == 1
 }
 
+func applyBonus(problem *Problem, pose *Pose) *Problem{
+	originEdgeNum := len(problem.Figure.Edges)
+	for _, b := range pose.Bonuses {
+		if b.Bonus == "BREAK_A_LEG" {
+			target := make(map[int]bool)
+			v1 := problem.Figure.Vertices[b.Edge[0]]
+			v2 := problem.Figure.Vertices[b.Edge[1]]
+			target[b.Edge[0]] = true
+			target[b.Edge[1]] = true
+			mid := Point{
+				new(Int).Div(new(Int).Add(v1[0], v2[0]), new(Int).SetInt64(2)),
+				new(Int).Div(new(Int).Add(v1[1], v2[1]), new(Int).SetInt64(2)),
+			}
+			newVertexId := len(problem.Figure.Vertices)
+			problem.Figure.Vertices = append(problem.Figure.Vertices, mid)
+			newEdges := [][]int{
+				[]int{b.Edge[0], newVertexId},
+				[]int{newVertexId, b.Edge[1]},
+			}
+			for _, e := range problem.Figure.Edges {
+				if target[e[0]] && target[e[1]] {
+					continue
+				}
+				newEdges = append(newEdges, e)
+			}
+			problem.Figure.Edges = newEdges
+		} else if b.Bonus == "GLOBALIST"{
+			problem.Epsilon = problem.Epsilon.Mul(problem.Epsilon,
+				new(Int).SetInt64(int64(originEdgeNum)))
+		} else if b.Bonus == "WALLHACK" {
+			problem.WallHacked = true
+		} else {
+			log.Printf("Unknown bounus: %s", b.Bonus)
+		}
+	}
+	return problem
+}
+
 func validate(problem *Problem, pose *Pose) (bool, string) {
+	if len(pose.Bonuses) > 1 {
+		return false, "too many bonuses"
+	}
+
 	origV := problem.Figure.Vertices
 	nowV := pose.Vertices
 	if len(origV) != len(nowV) {
 		return false, "mismatch length"
 	}
-	for _, e := range problem.Figure.Edges {
-		i := e[0]
-		j := e[1]
-		origD := distance(origV[i], origV[j])
-		nowD := distance(nowV[i], nowV[j])
-		var diff *Int
-		if nowD.Cmp(origD) >= 0 {
-			diff = new(Int).Sub(nowD, origD)
-		} else {
-			diff = new(Int).Sub(origD, nowD)
-		}
-		diff = diff.Mul(diff, new(Int).SetInt64(1000000))
-		eps := new(Int).Mul(&problem.Epsilon, origD)
-		result := diff.Cmp(eps)
-		if result > 0 {
-			return false, fmt.Sprintf("Edge between (%d, " +
-				"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
-		}
-		for ii, _ := range problem.Hole {
-			h := problem.Hole
-			jj := (ii+1) % len(h)
-			if intersect([]Point{h[ii], h[jj], nowV[i], nowV[j]}){
-				return false, fmt.Sprintf("Edge between (%d, " +
-					"%d) intersects: hole(%d, %d)", i, j, ii, jj)
-			}
 
-		}
-	}
+	outsideVerticesCnt := make(map[int]bool)
+
 	for i, p := range pose.Vertices {
 		if !include(problem, p) {
-			return false, fmt.Sprintf("point %d(0-based) is out of hole", i)
+			outsideVerticesCnt[i] = true
 		}
 	}
+
+	numOfAllowOutVertex := 0
+	if problem.WallHacked {
+		numOfAllowOutVertex++
+	}
+
+	if len(outsideVerticesCnt) > numOfAllowOutVertex {
+		ids := ""
+		cnt := 0
+		for k, _ := range outsideVerticesCnt {
+			ids += fmt.Sprintf("%d,", k)
+			cnt++
+			if cnt > numOfAllowOutVertex {
+				break
+			}
+		}
+		return false, fmt.Sprintf("vertex(%s)(0-based) is out of the hole", ids)
+	}
+
 	holePointsInd := make(map[string]int)
 	for i, h := range problem.Hole {
 		holePointsInd[h[0].String()+","+h[1].String()] = i
 	}
+
+	outEdges := [][]int{}
 
 	for _, e := range problem.Figure.Edges {
 		v1 := pose.Vertices[e[0]]
@@ -235,44 +282,112 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 			v[0] = v[0].Mul(v[0], two)
 			v[1] = v[1].Mul(v[1], two)
 		}
-		midInc:= include(problem, mid)
+		midInc := include(problem, mid)
 		for _, v := range problem.Hole {
 			v[0] = v[0].Div(v[0], two)
 			v[1] = v[1].Div(v[1], two)
 		}
-		if !midInc{
-			return false, fmt.Sprintf("edge(%d, %d)(0-based) is out of hole", e[0], e[1])
+		if !midInc {
+			outEdges = append(outEdges, e)
 		}
 
 		/*
-		first := 0
-		for now := ind1+1;  now != ind2; now++{
-			if now == len(problem.Hole) {
-				now = 0
+			first := 0
+			for now := ind1+1;  now != ind2; now++{
+				if now == len(problem.Hole) {
+					now = 0
+				}
+				first |= ccw(v1, v2, problem.Hole[now])
 			}
-			first |= ccw(v1, v2, problem.Hole[now])
-		}
-		second := 0
-		for now := ind2+1;  now != ind1; now++{
-			if now == len(problem.Hole) {
-				now = 0
+			second := 0
+			for now := ind2+1;  now != ind1; now++{
+				if now == len(problem.Hole) {
+					now = 0
+				}
+				second |= ccw(v1, v2, problem.Hole[now])
 			}
-			second |= ccw(v1, v2, problem.Hole[now])
-		}
-		log.Println("first == ", first)
-		log.Println("second == ", second)
-		if (first & LEFT) != 0 && (first &RIGHT) != 0 {
-			return false, "bug1"
-		}
-		if (second & LEFT) != 0 && (second &RIGHT) != 0 {
-			return false, "bug2"
-		}
-		all := (first & second)
-		if (all & LEFT) != 0 || (all &RIGHT) != 0 {
-			return false, "edge is out of hole"
-		}
-		 */
+			log.Println("first == ", first)
+			log.Println("second == ", second)
+			if (first & LEFT) != 0 && (first &RIGHT) != 0 {
+				return false, "bug1"
+			}
+			if (second & LEFT) != 0 && (second &RIGHT) != 0 {
+				return false, "bug2"
+			}
+			all := (first & second)
+			if (all & LEFT) != 0 || (all &RIGHT) != 0 {
+				return false, "edge is out of hole"
+			}
+		*/
 	}
-	return true, "OK"
+
+	for _, e := range problem.Figure.Edges {
+		i := e[0]
+		j := e[1]
+		origD := distance(origV[i], origV[j])
+		nowD := distance(nowV[i], nowV[j])
+		var diff *Int
+		if nowD.Cmp(origD) >= 0 {
+			diff = new(Int).Sub(nowD, origD)
+		} else {
+			diff = new(Int).Sub(origD, nowD)
+		}
+		diff = diff.Mul(diff, new(Int).SetInt64(1000000))
+		eps := new(Int).Mul(problem.Epsilon, origD)
+		result := diff.Cmp(eps)
+		if result > 0 {
+			return false, fmt.Sprintf("Edge between (%d, "+
+				"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
+		}
+		for ii, _ := range problem.Hole {
+			h := problem.Hole
+			jj := (ii + 1) % len(h)
+			if intersect([]Point{h[ii], h[jj], nowV[i], nowV[j]}) {
+				outEdges = append(outEdges, e)
+			}
+
+		}
+	}
+	if problem.WallHacked {
+		if len(outsideVerticesCnt) == 1 {
+			hackedVertex := -1
+			for k, _ := range outsideVerticesCnt {
+				hackedVertex = k
+				for _, e := range outEdges {
+					if e[0] != k && e[1] != k {
+						return false, fmt.Sprintf("Invalid edge between (%d, "+
+							"%d)", e[0], e[1])
+					}
+				}
+			}
+			return true, fmt.Sprintf("OK: hacked vertex is %d(0-based)", hackedVertex)
+		} else {
+			cnt := make(map[int]int)
+			for _, e := range outEdges {
+				cnt[e[0]]++
+				cnt[e[1]]++
+			}
+			found := false
+			hackedVertex := -1
+			for k, v := range cnt {
+				if v == len(outEdges) {
+					found = true
+					hackedVertex = k
+				}
+			}
+			if !found {
+				return false, fmt.Sprintf("Too many Invalid edges")
+			} else {
+				return true, fmt.Sprintf("OK: hacked vertex is %d(0-based)", hackedVertex)
+			}
+		}
+	} else {
+		if len(outEdges) == 0 {
+			return true, "OK"
+		} else {
+			return false, fmt.Sprintf("invalid edge(%d, %d)(0-based)", outEdges[0][0],
+				outEdges[0][1])
+		}
+	}
 }
 

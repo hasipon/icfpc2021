@@ -2,11 +2,27 @@ package ;
 
 class ProblemTools 
 {
-	public static function checkEpsilonValue(problem:Problem, ad:Float, pd:Float):Bool 
+	public static function checkEpsilon(problem:Problem, ad:Float, pd:Float):Bool 
 	{
 		var e = problem.epsilon;
 		return if (ad < pd) -(1000000 * ad) <= (e - 1000000) * pd else (1000000 * ad) <= (e + 1000000) * pd;
 	}
+	
+	public static function checkGlobalEpsilon(problem:Problem, answer:Array<Array<Int>>):Bool
+	{
+		var value = 0.0;
+		var e = (problem.epsilon * problem.figure.edges.length) / 1000000;
+		for (ei => edge in problem.figure.edges)
+		{
+			var ax = answer[edge[0]][0] - answer[edge[1]][0];
+			var ay = answer[edge[0]][1] - answer[edge[1]][1];
+			var ad = ax * ax + ay * ay;
+			var pd = problem.distances[ei];
+			value += Math.abs(ad / pd - 1);
+		}
+		return value <= e;
+	}
+	
 	
 	public static function dislike(
 		problem:Problem,
@@ -55,19 +71,37 @@ class ProblemTools
 			h0 = h1;
 		}
 		
-		for (edge in problem.figure.edges)
+		if (problem.isGlobalist)
 		{
-			var ax = answer[edge[0]][0] - answer[edge[1]][0];
-			var ay = answer[edge[0]][1] - answer[edge[1]][1];
-			var ad = ax * ax + ay * ay;
-			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
-			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-			var pd = px * px + py * py;
-			
-			if (!checkEpsilonValue(problem, ad, pd)) {
-				failCount += 1;
+			var value = 0.0;
+			var e = (problem.epsilon * problem.figure.edges.length) / 1000000;
+			for (ei => edge in problem.figure.edges)
+			{
+				var ax = answer[edge[0]][0] - answer[edge[1]][0];
+				var ay = answer[edge[0]][1] - answer[edge[1]][1];
+				var ad = ax * ax + ay * ay;
+				var pd = problem.distances[ei];
+				value += Math.abs(ad / pd - 1);
+			}
+			if (value > e) {
+				failCount += Math.ceil((value - e) / problem.epsilon / 1000000) + 2;
 			}
 		}
+		else
+		{
+			for (ei => edge in problem.figure.edges)
+			{
+				var ax = answer[edge[0]][0] - answer[edge[1]][0];
+				var ay = answer[edge[0]][1] - answer[edge[1]][1];
+				var ad = ax * ax + ay * ay;
+				var pd = problem.distances[ei];
+				
+				if (!checkEpsilon(problem, ad, pd)) {
+					failCount += 1;
+				}
+			}
+		}
+		
 		return failCount;
 	}
 	
