@@ -15,7 +15,7 @@ fn main()  -> std::io::Result<()>  {
     let arg:Vec<String> = args().collect();
     let cleared = vec![
         4, 11, 12,13,15,16,17,18,20,21,22,23,24,25,26,34,35,38,39,41,43,
-        46,49,51,52,53,54,55,59,63,70,72,73,76
+        46,47,49,51,52,53,54,55,59,63,70,72,73,76
     ];
     for i in 1..80 {
         if cleared.contains(&i) { continue; }
@@ -31,9 +31,9 @@ fn main()  -> std::io::Result<()>  {
         println!("{}", meta);
         println!("{}", answer);
         if result.is_valid() {
-            let mut file = File::create(format!("out/{}-sawa-auto27.json", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto31.json", target))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto27.meta", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto31.meta", target))?;
             write!(file, "{}", meta);
         }
     }

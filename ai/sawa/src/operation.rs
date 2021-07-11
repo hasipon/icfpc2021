@@ -67,7 +67,7 @@ pub fn pull<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i6
                 count[edge.1] += 1; 
                 let adf = ad as f64;
                 let pdf = pd as f64;
-                let v = (adf.sqrt() - pdf.sqrt()) / 5.0;
+                let v = (adf.sqrt() - pdf.sqrt()) / 3.5;
                 let ax = (answer[edge.0].0 - answer[edge.1].0) as f64;
                 let ay = (answer[edge.0].1 - answer[edge.1].1) as f64;
                 let d = ay.atan2(ax);
@@ -144,7 +144,7 @@ pub fn random<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:
     }
 }
 
-pub fn try_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
+pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
    for a in answer {
         a.0 = problem.left  .max(a.0);
         a.0 = problem.right .min(a.0);
@@ -172,5 +172,52 @@ pub fn try_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rn
             a.0 = x;
             a.1 = y;
         }
+   }
+}
+
+pub fn search_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
+    for ai in 0..answer.len() {
+        let a = answer[ai].clone();
+        if rng.gen_bool(0.5) && includes(problem, &a) { continue; }
+        let mut p = a.clone();
+        let mut related_edges = Vec::new();
+
+        for (ei, edge) in problem.edges.iter().enumerate() {
+            if edge.0 == ai { related_edges.push((ei, answer[edge.1].clone())); } 
+            if edge.1 == ai { related_edges.push((ei, answer[edge.0].clone())); } 
+        }
+        for _ in 0..5 {
+            p.0 = rng.gen_range(problem.left, problem.right );
+            p.1 = rng.gen_range(problem.top , problem.bottom);
+            
+            let mut success = false;
+            for _ in 0..6 {
+                let mut failed = false;
+                for (ei, point) in &related_edges {
+                    let ad = get_d(&p, point);
+                    let pd = problem.distances[*ei as usize];
+                    let v = ((ad as f64).sqrt() - (pd as f64).sqrt()) * 0.85;
+                    if check_epsilon(problem, ad, pd) { continue; }
+                    failed = true;
+                    let ax = (p.0 - point.0) as f64;
+                    let ay = (p.1 - point.1) as f64;
+                    let d = ay.atan2(ax);
+                    p.0 -= (v * d.cos() + rng.gen_range(-0.5, 0.5)).round() as i64;
+                    p.1 -= (v * d.sin() + rng.gen_range(-0.5, 0.5)).round() as i64;
+                }
+
+                if !failed {
+                    success = true;
+                    break;
+                }
+            }
+
+            if success && includes(problem, &p) {
+                answer[ai].0 = p.0;
+                answer[ai].1 = p.1;
+                break;
+            }
+        }
+        
    }
 }

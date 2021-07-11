@@ -81,10 +81,14 @@ pub fn solve(source:&ProblemSource) -> State {
                 if rng.gen_bool(0.2 * scale) { rotate(&problem, &mut vertecies, &mut rng, scale); }
                 
 
-                if rng.gen_bool(0.5) { try_include(&problem, &mut vertecies, &mut rng); }
-                if rng.gen_bool(0.7) { fit        (&problem, &mut vertecies, &mut rng, scale); }
+                if rng.gen_bool(0.5) { random_include(&problem, &mut vertecies, &mut rng); }
+                if rng.gen_bool(0.7) { fit           (&problem, &mut vertecies, &mut rng, scale); }
 
                 pull(&problem, &mut vertecies, 40, &mut rng);
+                if rng.gen_bool(0.5) && get_unmatched(&problem, &mut vertecies) == 0 {
+                    let prev = get_not_included_point(&problem, &mut vertecies);
+                    search_include(&problem, &mut vertecies, &mut rng);
+                }
                 
                 let next = State::new(&problem, vertecies);
                 if 
