@@ -48,6 +48,18 @@ CREATE TABLE IF NOT EXISTS solution
     updated_at   timestamp,
     PRIMARY KEY (id)
 );
+
+CREATE TABLE IF NOT EXISTS submission
+(
+    problem_id   int,
+    json         text,
+    dislike      float,
+    dislike_s    text,
+    use_bonus    text,
+    unlock_bonus text,
+    updated_at   timestamp,
+    PRIMARY KEY (problem_id)
+);
 `
 const indexes = `
 CREATE INDEX IF NOT EXISTS SOLUTION_DISLIKE ON solution(dislike);
@@ -70,6 +82,16 @@ type Solution struct {
 	UnlockBonus string    `db:"unlock_bonus" json:"unlock_bonus,omitempty"`
 	EvalMessage string    `db:"eval_message" json:"eval_message,omitempty"`
 	CreatedAt   time.Time `db:"created_at" json:"created_at,omitempty"`
+	UpdatedAt   time.Time `db:"updated_at" json:"updated_at,omitempty"`
+}
+
+type Submission struct {
+	ProblemID   int       `db:"problem_id" json:"problem_id,omitempty"`
+	Json        string    `db:"json" json:"json,omitempty"`
+	Dislike     float64   `db:"dislike" json:"dislike,omitempty"`
+	DislikeS    string    `db:"dislike_s" json:"dislike_s,omitempty"`
+	UseBonus    string    `db:"use_bonus" json:"use_bonus,omitempty"`
+	UnlockBonus string    `db:"unlock_bonus" json:"unlock_bonus,omitempty"`
 	UpdatedAt   time.Time `db:"updated_at" json:"updated_at,omitempty"`
 }
 
@@ -300,4 +322,32 @@ func (db SQLiteDB) GetAllProblemIDsInSubmission() ([]int, error) {
 	var problemIDs []int
 	err := db.Select(&problemIDs, "SELECT DISTINCT problem_id FROM solution")
 	return problemIDs, err
+}
+
+func (db SQLiteDB) GetSubmission(problemID int) (*Submission, error) {
+	submission := new(Submission)
+	err := db.QueryRowx("SELECT * FROM submission WHERE problem_id = ?", problemID).StructScan(submission)
+	return submission, err
+}
+
+func (db SQLiteDB) ReplaceSubmission(submission *Submission) error {
+	submission.UpdatedAt = time.Now()
+	_, err := db.NamedExec(`REPLACE INTO submission (
+    problem_id,
+    json,
+    dislike,
+    dislike_s,
+    use_bonus,
+    unlock_bonus,
+	updated_at
+) VALUES (
+    :problem_id,
+    :json,
+    :dislike,
+    :dislike_s,
+    :use_bonus,
+    :unlock_bonus,
+	:updated_at
+)`, submission)
+	return err
 }

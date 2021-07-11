@@ -280,32 +280,56 @@ func batchSubmission() {
 			dislike := new(Int)
 			dislike.SetString(solution.DislikeS, 10)
 
-			// TODO: dislikeで比較するのは誤り
-			// 最終提出時にはRateLimitのときちゃんと待ってるしサブミットし続ければいいかも..
-			if latestDislike[problemID] == nil || dislike.Cmp(latestDislike[problemID]) == -1 { // dislike < latest
-				log.Println("Submitting", problemID, solution.ID, solution.UseBonus, solution.UnlockBonus)
-
-				result, err := submitSolution(problemID, poseBytes)
-				if err != nil {
-					log.Println("submission error")
-					continue
-				}
-
-				if result.Error == "" {
-					latestDislike[problemID] = dislike
-				} else if result.isSubmissionRateLimit() {
-					log.Println(result.Error)
-					sec := result.rateLimitSecond()
-					rateLimitTime[problemID] = time.Now().Add(time.Second * time.Duration(sec))
-					log.Println("RateLimit updated. problem ", problemID, " duration", time.Until(rateLimitTime[problemID]))
+			submission, err := defaultDB.GetSubmission(problemID)
+			if err != nil {
+				if err == sql.ErrNoRows {
 				} else {
-					log.Println("submission error", result.Error)
+					log.Println("GetSubmission err", err)
 					continue
 				}
 			}
+
+			if submission != nil && submission.Json == string(poseBytes) {
+				// 同じサブミットはしない
+				continue
+			}
+
+			submission = &Submission{
+				ProblemID:   problemID,
+				Json:        string(poseBytes),
+				Dislike:     solution.Dislike,
+				DislikeS:    solution.DislikeS,
+				UseBonus:    solution.UseBonus,
+				UnlockBonus: solution.UnlockBonus,
+			}
+
+			log.Println("Submitting", problemID, solution.ID, solution.UseBonus, solution.UnlockBonus)
+
+			result, err := submitSolution(problemID, poseBytes)
+			if err != nil {
+				log.Println("submission error")
+				continue
+			}
+
+			if result.Error == "" {
+				err = defaultDB.ReplaceSubmission(submission)
+				if err != nil {
+					log.Println("ReplaceSubmission error", err)
+				}
+			} else if result.isSubmissionRateLimit() {
+				log.Println(result.Error)
+				sec := result.rateLimitSecond()
+				rateLimitTime[problemID] = time.Now().Add(time.Second * time.Duration(sec))
+				log.Println("RateLimit updated. problem ", problemID, " duration", time.Until(rateLimitTime[problemID]))
+			} else {
+				log.Println("submission error", result.Error)
+				continue
+			}
+
+			time.Sleep(time.Second)
 		}
 
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
