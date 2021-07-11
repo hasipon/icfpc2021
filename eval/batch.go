@@ -251,6 +251,12 @@ func batchSubmission() {
 				continue
 			}
 
+			_, err := defaultDB.GetProblemSetting(problemID)
+			if err == sql.ErrNoRows {
+				// Insert Empty Setting
+				_ = defaultDB.InsertProblemSetting(&ProblemSetting{ProblemId: problemID})
+			}
+
 			solution, err := defaultDB.FindBestSolution(problemID)
 			if err != nil {
 				log.Println("FindBestSolution err", err, problemID)
