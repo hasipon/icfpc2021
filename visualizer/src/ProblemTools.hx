@@ -131,4 +131,49 @@ class ProblemTools
 	{
 		return fail * 200 + dislike + (fail / 5) * dislike;
 	}
+	
+	public static function checkPoint(
+		problem:Problem, point:Array<Int>):Bool
+	{
+		var x = point[0];
+		var y = point[1];
+		var count = 0;
+		var h0 = problem.hole[problem.hole.length - 1];
+		for (h1 in problem.hole)
+		{
+			var x0 = h0[0] - x;
+			var y0 = h0[1] - y;
+			var x1 = h1[0] - x;
+			var y1 = h1[1] - y;
+			
+			var cv = x0 * x1 + y0 * y1;
+			var sv = x0 * y1 - x1 * y0;
+			
+			if (sv == 0 && cv <= 0)
+			{
+				return true;
+			}
+			
+			if (y0 < y1)
+			{
+				var tmp = x0;
+				x0 = x1;
+				x1 = tmp;
+				tmp = y0;
+				y0 = y1;
+				y1 = tmp;
+			}
+				
+			if (y1 <= 0 && 0 < y0)
+			{
+				var a = x0 * (y1 - y0);
+				var b = y0 * (x1 - x0);
+				if(b < a){
+                    ++count;
+                }
+			}
+			h0 = h1;
+		}
+		return  count % 2 != 0;
+	}
 }
