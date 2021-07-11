@@ -335,7 +335,7 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 		if problem.Globalist {
 			nowDf, _ := new(big.Float).SetInt(nowD).Float64()
 			origDf, _ := new(big.Float).SetInt(origD).Float64()
-			globalEpsSum += math.Abs(origDf/nowDf-1) * 1000000
+			globalEpsSum += math.Abs(nowDf/origDf-1) * 1000000
 		} else {
 			var diff *Int
 			if nowD.Cmp(origD) >= 0 {
