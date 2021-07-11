@@ -27,6 +27,7 @@ type Problem struct {
 	Bonuses         []ProblemBonus `json:"bonuses"`
 	WallHacked      bool
 	Globalist       bool
+	SuperFlex bool
 	OriginalEdgeNum int
 }
 
@@ -213,6 +214,8 @@ func applyBonus(problem *Problem, pose *Pose) *Problem {
 			problem.Globalist = true
 		} else if b.Bonus == "WALLHACK" {
 			problem.WallHacked = true
+		} else if b.Bonus == "SUPERFLEX"{
+			problem.SuperFlex = true
 		} else {
 			log.Printf("Unknown bounus: %s", b.Bonus)
 		}
@@ -352,6 +355,10 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 					found = true
 					hackedVertex = k
 				}
+				if problem.SuperFlex && v == len(outEdges) -1{
+					found = true
+					hackedVertex = k
+				}
 			}
 			if !found {
 				return false, fmt.Sprintf("Too many Invalid edges")
@@ -362,6 +369,9 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 	} else {
 		if len(outEdges) == 0 {
 			return true, "OK"
+		} else if len(outEdges) == 1 && problem.SuperFlex {
+			return true, fmt.Sprintf("OK, flex edge(%d, %d)(0-based)", outEdges[0][0],
+				outEdges[0][1])
 		} else {
 			return false, fmt.Sprintf("invalid edge(%d, %d)(0-based)", outEdges[0][0],
 				outEdges[0][1])
