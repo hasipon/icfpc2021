@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"sort"
 	"strconv"
 	"strings"
@@ -185,11 +184,11 @@ func (db SQLiteDB) Migrate() error {
 }
 
 func (db SQLiteDB) RegisterSolution(name string, problemID int, poseBytes []byte) (*Solution, error) {
-	useBonus := ""
 	var pose Pose
 	if err := json.Unmarshal(poseBytes, &pose); err != nil {
 		return nil, err
 	}
+	useBonus := ""
 	if 0 < len(pose.Bonuses) {
 		if 1 < len(pose.Bonuses) {
 			return nil, fmt.Errorf("TOO MANY BONUSES")
@@ -197,26 +196,29 @@ func (db SQLiteDB) RegisterSolution(name string, problemID int, poseBytes []byte
 		useBonus = pose.Bonuses[0].Bonus
 	}
 
-	// ボーナスの取得状況まで考えるとIDが重複してしまう可能性があるので分ける
-	hasher := fnv.New32()
-	hasher.Write(poseBytes)
-	sum := hasher.Sum32()
+	probBytes, err := getProblem(fmt.Sprint(problemID))
+	if err != nil {
+		return nil, err
+	}
 
 	bns := ""
 	if useBonus != "" {
-		bns = "-" + useBonus
+		bns += "-" + useBonus
+	}
+	for _, b := range obtainBonusKeys(probBytes, poseBytes) {
+		bns += "-" + fmt.Sprint(b)
 	}
 
 	now := time.Now()
 	solution := &Solution{
-		ID:        fmt.Sprint(problemID) + "-" + name + bns + "-sum" + fmt.Sprint(sum),
+		ID:        fmt.Sprint(problemID) + "-" + name + bns,
 		ProblemID: problemID,
 		Json:      string(poseBytes),
 		UseBonus:  useBonus,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	_, err := db.NamedExec(`
+	_, err = db.NamedExec(`
 INSERT INTO solution (
     id,
     json,
