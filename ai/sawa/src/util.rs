@@ -187,8 +187,8 @@ pub fn get_center(points:&Vec<Point>) -> Point {
 pub fn translate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
     let center = get_center(answer);
     
-    let dx = rng.gen_range(problem.center.0.min(center.0) - 10, problem.center.0.max(center.0) + 10) - center.0;
-    let dy = rng.gen_range(problem.center.1.min(center.1) - 10, problem.center.1.max(center.1) + 10) - center.1;
+    let dx = rng.gen_range(problem.center.0.min(center.0), problem.center.0.max(center.0) + 1) - center.0;
+    let dy = rng.gen_range(problem.center.1.min(center.1), problem.center.1.max(center.1) + 1) - center.1;
     for a in answer {
         a.0 += dx;
         a.1 += dy;
@@ -206,8 +206,8 @@ pub fn inverse_y(problem:&Problem, answer:&mut Vec<Point>) {
     }
 }
 
-pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
-    let d = rng.gen_range(0.0, std::f64::consts::PI * 2.0);
+pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale: f64) {
+    let d = rng.gen_range(-std::f64::consts::PI, std::f64::consts::PI) * scale;
     let sin = d.sin();
     let cos = d.cos();
     for a in answer {
