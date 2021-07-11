@@ -87,17 +87,56 @@ void drushUp(Problem &p, vp &pose, vector<bool> used, const vii &floyd, const vi
             Int nowD = distance(pose[from], newTo);
             Int diff = max(origD, nowD) - min(origD, nowD);
             if (diff * 1000000 > p.epsilon * origD) {
-              goto NEXT;
+              goto NEXT_MOVE;
+            }
+            if(!insidePolygon(newTo, p.holes)){
+              goto NEXT_MOVE;
             }
             ok = true;
           }
           if(ok){
             pose[to] = newTo;
             used[to] = true;
+            goto NEXT_EDGE;
           }
-          NEXT:;
+          NEXT_MOVE:;
         }
       }
+      NEXT_EDGE:;
+    }
+    FOR(e, p.figure.E) {
+      if (used[e.first] && used[e.second])
+        continue;
+      int from = e.first, to = e.second;
+      if (used[to])
+        swap(from, to);
+      for (int i = -magic; i < magic; i++) {
+        for (int j = -magic; j < magic; j++) {
+          Point newTo;
+          newTo.x = pose[to].x + i;
+          newTo.y = pose[to].y + j;
+          bool ok = false;
+          FOR(next, nextTo[to]) {
+            Int origD = distance(origV[from], origV[to]);
+            Int nowD = distance(pose[from], newTo);
+            Int diff = max(origD, nowD) - min(origD, nowD);
+            if (diff * 1000000 > p.epsilon * origD) {
+              goto NEXT_MOVE2;
+            }
+            if (!insidePolygon(newTo, p.holes)) {
+              goto NEXT_MOVE2;
+            }
+            ok = true;
+          }
+          if (ok) {
+            pose[to] = newTo;
+            used[to] = true;
+            goto NEXT_EDGE2;
+          }
+        NEXT_MOVE2:;
+        }
+      }
+    NEXT_EDGE2:;
     }
   }
 
@@ -110,7 +149,7 @@ void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd,
   if(!pruneEps(p, pose, used, floyd)){
     return;
   }
-  if(maxi == holeId || holeId >= p.holes.size()){
+  if(maxi <= holeId || holeId >= p.holes.size()){
     maxi = max(maxi, holeId);
     cout << maxi <<endl;
     drushUp(p, pose, used, floyd, nextTo);
@@ -136,6 +175,7 @@ void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd,
       dfs(p, holeId + 1, pose, used, floyd, nextTo, i, skipShareEdge - 1);
       used[i] = false;
     }
+    dfs(p, holeId + 1, pose, used, floyd, nextTo, -1, skipShareEdge - 1);
   }
 }
 
@@ -176,7 +216,6 @@ int main() {
   vector<bool> used(VN, false);
   rep(i, VN+1){
     cout << "skipShareEdge" << ' ' << i << endl;
-    maxi = 0;
     dfs(p, 0, pose, used, floyd, nextTo, -1, i);
   }
 
