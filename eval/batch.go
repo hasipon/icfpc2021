@@ -237,8 +237,8 @@ func batchSubmission() {
 			dislike.SetString(solution.DislikeS, 10)
 
 			if latestDislike[problemID] == nil || dislike.Cmp(latestDislike[problemID]) == -1 { // dislike < latest
-				log.Println("Submitting", problemID, solution.ID,
-					"Dislike", solution.Dislike, "Use", solution.UseBonus, "Unlock", solution.UnlockBonus)
+				log.Println("Submitting", problemID, solution.ID)
+				log.Printf("%#v", solution)
 
 				// TODO CONVERT BONUS PARAMETER
 				result, err := submitSolution(problemID, []byte(solution.Json))
