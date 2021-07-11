@@ -13,10 +13,17 @@ type Figure struct {
 	Vertices [][]*Int `json:"vertices"`
 }
 
+type ProblemBonus struct {
+	Bonus string `json:"bonus"`
+	Problem int `json:"problem"`
+	Position []*Int `json:"position"`
+}
+
 type Problem struct {
 	Hole [][]*Int `json:"hole"`
 	Epsilon *Int `json:"epsilon"`
 	Figure Figure `json:"figure"`
+	Bonuses []ProblemBonus `json:"bonuses"`
 	WallHacked bool
 }
 

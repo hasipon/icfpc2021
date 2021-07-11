@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -142,7 +143,21 @@ func main(){
 	var submit = flag.Bool("submit", false, "auto submit (batch mode)")
 	var convertFlag = flag.Bool("convert", false, "input convert")
 	var allFlag = flag.Bool("all", false, "convert all")
+	var dbpath = flag.String("db", "", "sqlitedb path")
+	var initdb = flag.Bool("initdb", false, "init db")
 	flag.Parse()
+	if *dbpath != "" {
+		conn, err := sqlx.Open("sqlite3", *dbpath)
+		if err != nil {
+			log.Fatal("failed to open database", err)
+		}
+		defaultDB = SQLiteDB{DB: conn}
+
+		if *initdb {
+			defaultDB.Init()
+		}
+	}
+
 	if *server != "" {
 		fmt.Println("server mode")
 		if *batch {
