@@ -66,9 +66,20 @@ CREATE INDEX IF NOT EXISTS SOLUTION_DISLIKE ON solution(dislike);
 `
 
 type ProblemSetting struct {
-	ProblemID      int      `db:"problem_id" json:"problem_id,omitempty"`
-	UseBonus       string   `db:"use_bonus" json:"use_bonus,omitempty"`               // この問題で使うボーナスの設定
-	UnlockBonusKey BonusKey `db:"unlock_bonus_key" json:"unlock_bonus_key,omitempty"` // この問題でアンロックする予定のBonusKey
+	ProblemID      int    `db:"problem_id" json:"problem_id,omitempty"`
+	UseBonus       string `db:"use_bonus" json:"use_bonus,omitempty"`               // この問題で使うボーナスの設定
+	UnlockBonusKey string `db:"unlock_bonus_key" json:"unlock_bonus_key,omitempty"` // この問題でアンロックする予定のBonusKey, カンマ区切りで複数
+}
+
+func (p *ProblemSetting) NormalizeUnlockBonusKey() {
+	keys := strings.Split(p.UnlockBonusKey, ",")
+	for i, key := range keys {
+		keys[i] = strings.TrimSpace(key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	p.UnlockBonusKey = strings.Join(keys, ",")
 }
 
 type Solution struct {
@@ -296,10 +307,15 @@ func (db SQLiteDB) FindBestSolution(problemID int) (*Solution, error) {
 func (db SQLiteDB) GetProblemSetting(problemID int) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE problem_id = ?", problemID).StructScan(s)
+	if err != nil {
+		return nil, err
+	}
+	s.NormalizeUnlockBonusKey()
 	return s, err
 }
 
 func (db SQLiteDB) InsertProblemSetting(setting *ProblemSetting) error {
+	setting.NormalizeUnlockBonusKey()
 	_, err := db.NamedExec(`INSERT INTO m_problem_setting (
 	problem_id,
 	use_bonus,
@@ -315,6 +331,10 @@ func (db SQLiteDB) InsertProblemSetting(setting *ProblemSetting) error {
 func (db SQLiteDB) GetWhichProblemUnlocksTheBonus(key BonusKey) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE unlock_bonus_key = ? LIMIT 1", key).StructScan(s)
+	if err != nil {
+		return nil, err
+	}
+	s.NormalizeUnlockBonusKey()
 	return s, err
 }
 
