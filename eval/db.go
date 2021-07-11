@@ -48,15 +48,38 @@ CREATE TABLE IF NOT EXISTS solution
     updated_at   timestamp,
     PRIMARY KEY (id)
 );
+
+CREATE TABLE IF NOT EXISTS submission
+(
+    problem_id   int,
+    json         text,
+    dislike      float,
+    dislike_s    text,
+    use_bonus    text,
+    unlock_bonus text,
+    updated_at   timestamp,
+    PRIMARY KEY (problem_id)
+);
 `
 const indexes = `
 CREATE INDEX IF NOT EXISTS SOLUTION_DISLIKE ON solution(dislike);
 `
 
 type ProblemSetting struct {
-	ProblemID      int      `db:"problem_id" json:"problem_id,omitempty"`
-	UseBonus       string   `db:"use_bonus" json:"use_bonus,omitempty"`               // この問題で使うボーナスの設定
-	UnlockBonusKey BonusKey `db:"unlock_bonus_key" json:"unlock_bonus_key,omitempty"` // この問題でアンロックする予定のBonusKey
+	ProblemID      int    `db:"problem_id" json:"problem_id,omitempty"`
+	UseBonus       string `db:"use_bonus" json:"use_bonus,omitempty"`               // この問題で使うボーナスの設定
+	UnlockBonusKey string `db:"unlock_bonus_key" json:"unlock_bonus_key,omitempty"` // この問題でアンロックする予定のBonusKey, カンマ区切りで複数
+}
+
+func (p *ProblemSetting) NormalizeUnlockBonusKey() {
+	keys := strings.Split(p.UnlockBonusKey, ",")
+	for i, key := range keys {
+		keys[i] = strings.TrimSpace(key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	p.UnlockBonusKey = strings.Join(keys, ",")
 }
 
 type Solution struct {
@@ -70,6 +93,16 @@ type Solution struct {
 	UnlockBonus string    `db:"unlock_bonus" json:"unlock_bonus,omitempty"`
 	EvalMessage string    `db:"eval_message" json:"eval_message,omitempty"`
 	CreatedAt   time.Time `db:"created_at" json:"created_at,omitempty"`
+	UpdatedAt   time.Time `db:"updated_at" json:"updated_at,omitempty"`
+}
+
+type Submission struct {
+	ProblemID   int       `db:"problem_id" json:"problem_id,omitempty"`
+	Json        string    `db:"json" json:"json,omitempty"`
+	Dislike     float64   `db:"dislike" json:"dislike,omitempty"`
+	DislikeS    string    `db:"dislike_s" json:"dislike_s,omitempty"`
+	UseBonus    string    `db:"use_bonus" json:"use_bonus,omitempty"`
+	UnlockBonus string    `db:"unlock_bonus" json:"unlock_bonus,omitempty"`
 	UpdatedAt   time.Time `db:"updated_at" json:"updated_at,omitempty"`
 }
 
@@ -254,6 +287,7 @@ WHERE id = :id`,
 func (db SQLiteDB) FindBestSolution(problemID int) (*Solution, error) {
 	solution := new(Solution)
 	setting, err := db.GetProblemSetting(problemID)
+	setting.NormalizeUnlockBonusKey()
 	if err == sql.ErrNoRows {
 		// No setting
 		err = db.QueryRowx(
@@ -263,9 +297,12 @@ func (db SQLiteDB) FindBestSolution(problemID int) (*Solution, error) {
 	}
 	if err == nil {
 		// Use setting
-		err = db.QueryRowx(
-			"SELECT * FROM solution WHERE problem_id = ? AND valid = 1 AND (use_bonus = '' OR use_bonus = ?) AND unlock_bonus = ? ORDER BY dislike ASC LIMIT 1",
-			problemID, setting.UseBonus, setting.UnlockBonusKey).StructScan(solution)
+		err = db.QueryRowx(`SELECT * FROM solution WHERE
+problem_id = ? AND valid = 1 AND (use_bonus = '' OR use_bonus = ?) AND unlock_bonus LIKE ?
+ORDER BY dislike ASC LIMIT 1`,
+			problemID,
+			setting.UseBonus,
+			"%"+setting.UnlockBonusKey+"%").StructScan(solution)
 		return solution, err
 	}
 	return nil, err
@@ -274,10 +311,15 @@ func (db SQLiteDB) FindBestSolution(problemID int) (*Solution, error) {
 func (db SQLiteDB) GetProblemSetting(problemID int) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE problem_id = ?", problemID).StructScan(s)
+	if err != nil {
+		return nil, err
+	}
+	s.NormalizeUnlockBonusKey()
 	return s, err
 }
 
 func (db SQLiteDB) InsertProblemSetting(setting *ProblemSetting) error {
+	setting.NormalizeUnlockBonusKey()
 	_, err := db.NamedExec(`INSERT INTO m_problem_setting (
 	problem_id,
 	use_bonus,
@@ -293,6 +335,10 @@ func (db SQLiteDB) InsertProblemSetting(setting *ProblemSetting) error {
 func (db SQLiteDB) GetWhichProblemUnlocksTheBonus(key BonusKey) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE unlock_bonus_key = ? LIMIT 1", key).StructScan(s)
+	if err != nil {
+		return nil, err
+	}
+	s.NormalizeUnlockBonusKey()
 	return s, err
 }
 
@@ -300,4 +346,32 @@ func (db SQLiteDB) GetAllProblemIDsInSubmission() ([]int, error) {
 	var problemIDs []int
 	err := db.Select(&problemIDs, "SELECT DISTINCT problem_id FROM solution")
 	return problemIDs, err
+}
+
+func (db SQLiteDB) GetSubmission(problemID int) (*Submission, error) {
+	submission := new(Submission)
+	err := db.QueryRowx("SELECT * FROM submission WHERE problem_id = ?", problemID).StructScan(submission)
+	return submission, err
+}
+
+func (db SQLiteDB) ReplaceSubmission(submission *Submission) error {
+	submission.UpdatedAt = time.Now()
+	_, err := db.NamedExec(`REPLACE INTO submission (
+    problem_id,
+    json,
+    dislike,
+    dislike_s,
+    use_bonus,
+    unlock_bonus,
+	updated_at
+) VALUES (
+    :problem_id,
+    :json,
+    :dislike,
+    :dislike_s,
+    :use_bonus,
+    :unlock_bonus,
+	:updated_at
+)`, submission)
+	return err
 }

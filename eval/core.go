@@ -109,14 +109,14 @@ func distance(a []*Int, b []*Int) *Int {
 }
 
 type Bonus struct {
-	Bonus   string `json:"bonus"`
-	Problem int    `json:"problem"`
-	Edge    []int  `json:"edge"`
+	Bonus   string `json:"bonus,omitempty"`
+	Problem int    `json:"problem,omitempty"`
+	Edge    []int  `json:"edge,omitempty"`
 }
 
 type Pose struct {
-	Vertices [][]*Int `json:"vertices"`
-	Bonuses  []*Bonus
+	Vertices [][]*Int `json:"vertices,omitempty"`
+	Bonuses  []*Bonus `json:"bonuses,omitempty"`
 }
 
 func dislike(problem *Problem, pose *Pose) *Int {
