@@ -31,12 +31,6 @@ pub struct Answer {
     pub vertices:Vec<Point>,
 }
 
-pub struct SolveResult {
-    pub answer:Answer,
-    pub dislike:i64,
-    pub valid  :bool,
-}
-
 #[derive(Clone, Eq)]
 pub struct State {
     pub answer:Vec<Point>,

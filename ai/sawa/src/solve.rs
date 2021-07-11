@@ -29,7 +29,12 @@ pub fn solve(source:&ProblemSource) -> State {
     let size = 1200;
     for i in 0..size {
         let mut vertecies = current.answer.clone();
-        if i > 3 { random(&problem, &mut vertecies, 1, &mut rng); }
+        if rng.gen_bool(0.2) { translate(&problem, &mut vertecies, &mut rng); }
+        if rng.gen_bool(0.2) { inverse_x(&problem, &mut vertecies); }
+        if rng.gen_bool(0.2) { inverse_y(&problem, &mut vertecies); }
+        if i > 50 { 
+            random(&problem, &mut vertecies, 1, &mut rng); 
+        }
         arr0.push(State::new(&problem, vertecies));
     }
 
@@ -46,9 +51,10 @@ pub fn solve(source:&ProblemSource) -> State {
                 if rng.gen_bool(0.1) || score == prev_score && rng.gen_bool(0.9) { 
                     random(&problem, &mut vertecies, 1, &mut rng); 
                 }
-                if rng.gen_bool(0.3) { translate(&problem, &mut vertecies, &mut rng); }
+                if rng.gen_bool(0.2) { translate(&problem, &mut vertecies, &mut rng); }
                 if rng.gen_bool(0.1) { inverse_x(&problem, &mut vertecies); }
                 if rng.gen_bool(0.1) { inverse_y(&problem, &mut vertecies); }
+                if rng.gen_bool(0.1) { rotate(&problem, &mut vertecies, &mut rng); }
                 if rng.gen_bool(0.6) { fit (&problem, &mut vertecies, 1, &mut rng); }
 
                 pull(&problem, &mut vertecies, 40, &mut rng);

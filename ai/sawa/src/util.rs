@@ -203,5 +203,17 @@ pub fn inverse_x(problem:&Problem, answer:&mut Vec<Point>) {
 pub fn inverse_y(problem:&Problem, answer:&mut Vec<Point>) {
     for a in answer {
         a.1 = problem.center.1 * 2 - a.1;
-    }    
+    }
+}
+
+pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
+    let d = rng.gen_range(0.0, std::f64::consts::PI * 2.0);
+    let sin = d.sin();
+    let cos = d.cos();
+    for a in answer {
+        let x = (a.0 - problem.center.0) as f64;
+        let y = (a.1 - problem.center.1) as f64;
+        a.0 = (x * cos - y * sin) as i64 + problem.center.0;
+        a.1 = (x * sin + y * cos) as i64 + problem.center.1;
+    }
 }
