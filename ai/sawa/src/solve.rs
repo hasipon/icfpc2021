@@ -4,6 +4,7 @@ use crate::util::*;
 use crate::operation::*;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
+use std::collections::HashSet;
 use std::mem;
 use serde_json::json;
 
@@ -11,6 +12,10 @@ pub fn solve(source:&ProblemSource) -> State {
     let mut distances = Vec::new();
     for edge in &source.figure.edges {
         distances.push(get_d(&source.figure.vertices[edge.0], &source.figure.vertices[edge.1]));
+    }
+    let mut bonuses = Vec::new();
+    for bonus in &source.bonuses {
+        bonuses.push(bonus.position.clone());
     }
 
     let mut left   = i64::MAX;
@@ -34,6 +39,7 @@ pub fn solve(source:&ProblemSource) -> State {
         top,
         bottom,
         distances,
+        bonuses
     };
     let current = State::new(&problem, source.figure.vertices.clone());
     let mut best = current.clone();
@@ -42,13 +48,15 @@ pub fn solve(source:&ProblemSource) -> State {
     let mut arr1 = Vec::new();
 
     let size = 1600;
+    let mut locked_points = HashSet::new();
+
     for i in 0..size {
         let mut vertecies = current.answer.clone();
-        if rng.gen_bool(0.2) { translate(&problem, &mut vertecies, &mut rng); }
-        if rng.gen_bool(0.2) { inverse_x(&problem, &mut vertecies); }
-        if rng.gen_bool(0.2) { inverse_y(&problem, &mut vertecies); }
+        if rng.gen_bool(0.2) { translate(&problem, &mut vertecies, &mut rng, &locked_points); }
+        if rng.gen_bool(0.2) { inverse_x(&problem, &mut vertecies, &locked_points); }
+        if rng.gen_bool(0.2) { inverse_y(&problem, &mut vertecies, &locked_points); }
         if i > 50 { 
-            random(&problem, &mut vertecies, 1, &mut rng); 
+            random(&problem, &mut vertecies, 1, &mut rng, &locked_points); 
         }
         arr0.push(State::new(&problem, vertecies));
     }
@@ -56,39 +64,61 @@ pub fn solve(source:&ProblemSource) -> State {
     let mut prev_score = 1200003;
     let mut prev_dislike = 1200003;
     let repeat = 180;
+
     for i in 0..repeat {
         arr0.sort();
         arr0.split_off(size);
         if arr1.len() > size / 5 { arr1.split_off(size / 5); }
         let scale = (repeat - i) as f64 / repeat as f64;
-
-        println!("{}: {} {} {}", i, arr0[0].is_valid(), arr0[0].dislike, arr0[0].get_score());
+        //println!("{}: {} {} {}", i, arr0[0].is_valid(), arr0[0].dislike, arr0[0].get_score());
 
         for current in &arr0 {
             for _ in 0..2 {
                 let score = current.get_score();
                 let dislike = current.dislike;
-                let fixed_points = HashSet::new(); 
-
+                
                 let mut vertecies = current.answer.clone();
-                if rng.gen_bool(0.3 * scale) || score == prev_score && dislike == prev_dislike && rng.gen_bool(1.0 * scale) { 
-                    random(&problem, &mut vertecies, 1, &mut rng); 
+
+                locked_points.clear();
+                if rng.gen_bool(0.5) {
+                    let rate = if rng.gen_bool(0.5) { 1.0 - scale * 0.2 } else { rng.gen_range(0.1, 1.0) };
+                    lock_points(
+                        &mut locked_points, 
+                        &problem.hole, 
+                        &vertecies, 
+                        &mut rng, 
+                        rate
+                    );
+                }
+                if rng.gen_bool(0.5) {
+                    let rate = if rng.gen_bool(0.5) { 1.0 - scale * 0.2 } else { rng.gen_range(0.1, 1.0) };
+                    lock_points(
+                        &mut locked_points, 
+                        &problem.bonuses, 
+                        &vertecies, 
+                        &mut rng, 
+                        rate
+                    );
                 }
 
-                if rng.gen_bool(0.3 * scale) { translate(&problem, &mut vertecies, &mut rng); }
-                else if rng.gen_bool(0.1) { translate_small(&mut vertecies, &mut rng, scale); }
-                if rng.gen_bool(0.2 * scale) { inverse_x(&problem, &mut vertecies); }
-                if rng.gen_bool(0.2 * scale) { inverse_y(&problem, &mut vertecies); }
-                if rng.gen_bool(0.2 * scale) { rotate(&problem, &mut vertecies, &mut rng, scale); }
+                if rng.gen_bool(0.3 * scale) || score == prev_score && dislike == prev_dislike && rng.gen_bool(1.0 * scale) { 
+                    random(&problem, &mut vertecies, 1, &mut rng, &locked_points); 
+                }
+
+                if rng.gen_bool(0.3 * scale) { translate(&problem, &mut vertecies, &mut rng, &locked_points); }
+                else if rng.gen_bool(0.1) { translate_small(&mut vertecies, &mut rng, scale, &locked_points); }
+                if rng.gen_bool(0.2 * scale) { inverse_x(&problem, &mut vertecies, &locked_points); }
+                if rng.gen_bool(0.2 * scale) { inverse_y(&problem, &mut vertecies, &locked_points); }
+                if rng.gen_bool(0.2 * scale) { rotate(&problem, &mut vertecies, &mut rng, scale, &locked_points); }
                 
 
-                if rng.gen_bool(0.5) { random_include(&problem, &mut vertecies, &mut rng); }
-                if rng.gen_bool(0.7) { fit           (&problem, &mut vertecies, &mut rng, scale); }
+                if rng.gen_bool(0.5) { random_include(&problem, &mut vertecies, &mut rng, &locked_points); }
+                if rng.gen_bool(0.7) { fit           (&problem.hole   , &mut vertecies, &mut rng, scale); }
+                if rng.gen_bool(0.2) { fit           (&problem.bonuses, &mut vertecies, &mut rng, scale); }
 
-                pull(&problem, &mut vertecies, 40, &mut rng);
+                pull(&problem, &mut vertecies, 40, &mut rng, &locked_points);
                 if rng.gen_bool(0.5) && get_unmatched(&problem, &mut vertecies) == 0 {
-                    let prev = get_not_included_point(&problem, &mut vertecies);
-                    search_include(&problem, &mut vertecies, &mut rng);
+                    search_include(&problem, &mut vertecies, &mut rng, &locked_points);
                 }
                 
                 let next = State::new(&problem, vertecies);

@@ -1,7 +1,9 @@
 
 use crate::data::*;
+use std::collections::HashSet;
 
 use std::iter::Iterator;
+use rand::{Rng, SeedableRng};
 
 pub fn get_dislike(problem:&Problem, answer:&Vec<Point>) -> i64 {
     let mut result = 0;
@@ -78,6 +80,20 @@ pub fn get_not_included(problem:&Problem, answer:&Vec<Point>) -> i64 {
     }
     result
 }
+
+pub fn get_bonus_count(problem:&Problem, answer:&Vec<Point>) -> i64 {
+    let mut result = 0;
+    // point 
+    for bonus in &problem.bonuses {
+        for a in answer {
+            if *a == *bonus {
+                result += 1;
+            }
+        }
+    }
+    result
+}
+
 pub fn get_not_included_point(problem:&Problem, answer:&Vec<Point>) -> i64 {
     let mut result = 0;
 
@@ -146,4 +162,17 @@ pub fn get_center(points:&Vec<Point>) -> Point {
         if bottom < point.1 { bottom = point.1; }
     }
     Point((left + right) / 2, (top + bottom) / 2)
+}
+
+pub fn lock_points<R: Rng + ?Sized>(locked_points:&mut HashSet<usize>, targets:&Vec<Point>, vertecies:&Vec<Point>, rng:&mut R, rate:f64) {
+    for hole in targets {
+        if rng.gen_bool(rate) {
+            for (pi, p) in vertecies.iter().enumerate() {
+                if hole == p {
+                    locked_points.insert(pi as usize);
+                    break;
+                }
+            }
+        }
+    }
 }

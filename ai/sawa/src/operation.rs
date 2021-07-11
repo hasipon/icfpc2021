@@ -2,44 +2,50 @@ use crate::data::*;
 use crate::util::*;
 use rand::Rng;
 use std::iter::Iterator;
+use std::collections::HashSet;
 
-pub fn translate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
+pub fn translate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, locked_points:&HashSet<usize>) {
     let center = get_center(answer);
     
     let dx = rng.gen_range(problem.center.0.min(center.0), problem.center.0.max(center.0) + 1) - center.0;
     let dy = rng.gen_range(problem.center.1.min(center.1), problem.center.1.max(center.1) + 1) - center.1;
-    for a in answer {
+    for (ai, a) in answer.iter_mut().enumerate() {
+        if locked_points.contains(&ai) { continue; }
         a.0 += dx;
         a.1 += dy;
     }
 }
 
-pub fn translate_small<R: Rng + ?Sized>(answer:&mut Vec<Point>, rng: &mut R, scale:f64) {
+pub fn translate_small<R: Rng + ?Sized>(answer:&mut Vec<Point>, rng: &mut R, scale:f64, locked_points:&HashSet<usize>) {
     let d = (scale * 20.0).ceil() as i64;
     let dx = rng.gen_range(-d, d);
     let dy = rng.gen_range(-d, d);
-    for a in answer {
+    for (ai, a) in answer.iter_mut().enumerate() {
+        if locked_points.contains(&ai) { continue; }
         a.0 += dx;
         a.1 += dy;
     }
 }
-pub fn inverse_x(problem:&Problem, answer:&mut Vec<Point>) {
-    for a in answer {
+pub fn inverse_x(problem:&Problem, answer:&mut Vec<Point>, locked_points:&HashSet<usize>) {
+    for (ai, a) in answer.iter_mut().enumerate() {
+        if locked_points.contains(&ai) { continue; }
         a.0 = problem.center.0 * 2 - a.0;
     }
 }
 
-pub fn inverse_y(problem:&Problem, answer:&mut Vec<Point>) {
-    for a in answer {
+pub fn inverse_y(problem:&Problem, answer:&mut Vec<Point>, locked_points:&HashSet<usize>) {
+    for (ai, a) in answer.iter_mut().enumerate() {
+        if locked_points.contains(&ai) { continue; }
         a.1 = problem.center.1 * 2 - a.1;
     }
 }
 
-pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale: f64) {
+pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale: f64, locked_points:&HashSet<usize>) {
     let d = rng.gen_range(-std::f64::consts::PI, std::f64::consts::PI) * scale;
     let sin = d.sin();
     let cos = d.cos();
-    for a in answer {
+    for (ai, a) in answer.iter_mut().enumerate() {
+        if locked_points.contains(&ai) { continue; }
         let x = (a.0 - problem.center.0) as f64;
         let y = (a.1 - problem.center.1) as f64;
         a.0 = (x * cos - y * sin) as i64 + problem.center.0;
@@ -47,7 +53,7 @@ pub fn rotate<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &m
     }
 }
 
-pub fn pull<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i64, rng: &mut R) {
+pub fn pull<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i64, rng: &mut R, locked_points:&HashSet<usize>) {
     for _ in 0..repeat
     {
         let mut count      = Vec::new();
@@ -81,6 +87,7 @@ pub fn pull<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i6
         if matched { break; }
         for i in 0..answer.len()
         {
+            if locked_points.contains(&i) { continue; }
             let v = velocities[i];
             let c = count[i];
             if c != 0 {
@@ -94,8 +101,8 @@ pub fn pull<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i6
     }
 }
 
-pub fn fit<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale:f64) {
-    for hole in &problem.hole {
+pub fn fit<R: Rng + ?Sized>(targets:&Vec<Point>, answer:&mut Vec<Point>, rng: &mut R, scale:f64) {
+    for hole in targets {
         if rng.gen_bool(scale) { continue; }
 
         let mut min = i64::MAX;
@@ -108,6 +115,7 @@ pub fn fit<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut 
             {
                 min = d;
                 target = i;
+                if min == 0 { break; }
             }
         }
         if min > 0 {
@@ -124,11 +132,12 @@ pub fn fit<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut 
     }
 }
 
-pub fn random<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i64, rng: &mut R) {
+pub fn random<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:i64, rng: &mut R, locked_points:&HashSet<usize>) {
     for i in 0..repeat {
         for hole in &problem.hole {
             let i = rng.gen_range(0, answer.len());
-            
+            if locked_points.contains(&i) { continue; }
+
             let a = &answer[i];
             let dx = (a.0 - hole.0) as f64;
             let dy = (a.1 - hole.1) as f64;
@@ -144,8 +153,10 @@ pub fn random<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:
     }
 }
 
-pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
-   for a in answer {
+pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, locked_points:&HashSet<usize>) {
+    for (ai, a) in answer.iter_mut().enumerate() {
+        if locked_points.contains(&ai) { continue; }
+
         a.0 = problem.left  .max(a.0);
         a.0 = problem.right .min(a.0);
         a.1 = problem.top   .max(a.1);
@@ -175,7 +186,7 @@ pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>,
    }
 }
 
-pub fn search_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R) {
+pub fn search_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, locked_points:&HashSet<usize>) {
     for ai in 0..answer.len() {
         let a = answer[ai].clone();
         if rng.gen_bool(0.5) && includes(problem, &a) { continue; }
@@ -217,7 +228,6 @@ pub fn search_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>,
                 answer[ai].1 = p.1;
                 break;
             }
-        }
-        
+        }        
    }
 }
