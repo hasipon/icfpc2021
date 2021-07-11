@@ -6,6 +6,7 @@ import haxe.Resource;
 import js.Browser;
 import js.html.CanvasElement;
 import js.html.Event;
+import js.html.InputElement;
 import js.html.KeyboardEvent;
 import js.html.SelectElement;
 import js.html.TextAreaElement;
@@ -19,11 +20,14 @@ import tweenxcore.color.RgbColor;
 using tweenxcore.Tools;
 using ProblemTools;
 
+typedef AvailableBonus = {bonus:BonusKind, from:Int, element:InputElement};
 class Main 
 {
 	static var canvas:CanvasElement;
 	static var pixi:Application;
 	static var problems:Array<Problem>;
+	static var availableBonuses:Array<AvailableBonus>;
+	
 	static var left  :Int;
 	static var right :Int;
 	static var top   :Int;
@@ -51,6 +55,7 @@ class Main
 	static var requestCount:Int;
 	static var bestEval:Float;
 	static var bestAnswer:Array<Array<Int>>;
+	static var isGrobalist:Bool;
 	
 	static function main() 
 	{
@@ -193,14 +198,15 @@ class Main
 	static function fetchProblem()
 	{
 		problems = Json.parse(Resource.getString("problems"));
-		start();
-		for (index in 0...problems.length)
+		for (index => problem in problems)
 		{
 			var element = Browser.document.createElement('option');
 			element.setAttribute("value", "" + (index + 1));
 			element.innerHTML = "" + (index + 1);
 			problemCombo.appendChild(element);
 		}
+		
+		start();
 	}
 	static function start():Void
 	{
@@ -371,7 +377,7 @@ class Main
 	static function updateBest():Void
 	{
 		var dislike = ProblemTools.dislike(problem, answer);
-		var fail = ProblemTools.failCount(problem, answer);
+		var fail = ProblemTools.failCount(problem, answer, isGrobalist);
 		var eval = ProblemTools.eval(dislike, fail);
 		if (eval < bestEval)
 		{
@@ -438,18 +444,33 @@ class Main
 	
 	static function outputAnswer():Void 
 	{
-		answerText.value = Json.stringify({vertices:answer});
+		var bonuses:Array<Dynamic> = [];
+		for (bonus in availableBonuses)
+		{
+			if (bonus.element.checked)
+			{
+				var b:Dynamic = { bonus:bonus.bonus , problem:bonus.from }
+				switch (bonus.bonus)
+				{
+					case GLOBALIST:
+					case BREAK_A_LEG:
+				}
+				bonuses.push(b);
+			}
+		}
+		answerText.value = Json.stringify({vertices:answer, bonuses: bonuses});
 	}
 	static function updateScore():Void
 	{
 		updateBest();
 		var dislike = ProblemTools.dislike(problem, answer);
-		var fail = ProblemTools.failCount(problem, answer);
+		var fail = ProblemTools.failCount(problem, answer, isGrobalist);
 		var eval = ProblemTools.eval(dislike, fail);
 		Browser.document.getElementById("dislike").textContent = "" + dislike; 
 		Browser.document.getElementById("fail").textContent = "" + fail; 
 		Browser.document.getElementById("eval").textContent = "" + eval; 
 		Browser.document.getElementById("best").textContent = "" + bestEval; 
+		
 		requestValidate();
 	}
 	static function requestValidate():Void
@@ -670,8 +691,58 @@ class Main
 		{
 			answer.push([point[0], point[1]]);
 		}
+		
+		var bonusElement = Browser.document.getElementById("bonus");
+		bonusElement.innerHTML = "";
+		availableBonuses = [];
+		
+		for (i => p in problems)
+		{
+			for (bonus in p.bonuses)
+			{
+				if (bonus.problem == problemIndex + 1)
+				{
+					var element:InputElement = cast Browser.document.createElement('input');
+					element.setAttribute("type", "checkbox");
+					element.setAttribute("id", "bonus" + availableBonuses.length);
+					element.addEventListener("input", () -> {
+						updateBonuses();
+						drawAnswer();
+						outputAnswer();
+					});
+					var label = Browser.document.createElement('label');
+					label.setAttribute("for", "bonus" + availableBonuses.length);
+					label.textContent = bonus.bonus + " from " + (i + 1);
+					bonusElement.appendChild(element);
+					bonusElement.appendChild(label);
+					
+					availableBonuses.push({
+						bonus: bonus.bonus,
+						from: i + 1,
+						element: element
+					});
+				}
+			}
+		}
+			
+		updateBonuses();
 		drawAnswer();
 		outputAnswer();
+	}
+	static function updateBonuses():Void
+	{
+		isGrobalist = false;
+		for (bonus in availableBonuses)
+		{
+			if (bonus.element.checked)
+			{
+				switch (bonus.bonus)
+				{
+					case GLOBALIST: isGrobalist = true;
+					case BREAK_A_LEG:
+				}
+			}
+		}
 	}
 	
 	static function drawAnswer():Void
