@@ -359,6 +359,9 @@ Main.onEnterFrame = function(f) {
 					if(i2 % 10 == 0) {
 						Main.updateBest();
 					}
+					if(Main.isGrobalist && ProblemTools.checkGlobalEpsilon(Main.problem,Main.answer)) {
+						break;
+					}
 					var _g7 = [];
 					var _g8 = 0;
 					var _g9 = Main.answer;
@@ -390,7 +393,7 @@ Main.onEnterFrame = function(f) {
 						var px = Main.problem.figure.vertices[edge[0]][0] - Main.problem.figure.vertices[edge[1]][0];
 						var py = Main.problem.figure.vertices[edge[0]][1] - Main.problem.figure.vertices[edge[1]][1];
 						var pd = px * px + py * py;
-						if(!ProblemTools.checkEpsilonValue(Main.problem,ad,pd)) {
+						if(Main.isGrobalist ? ad != pd : !ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
 							count[edge[0]] += 1;
 							count[edge[1]] += 1;
 							var v1 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
@@ -647,7 +650,7 @@ Main.onMouseDown = function(e) {
 					var px = Main.problem.figure.vertices[selectedPoint][0] - Main.problem.figure.vertices[point][0];
 					var py = Main.problem.figure.vertices[selectedPoint][1] - Main.problem.figure.vertices[point][1];
 					var pd = px * px + py * py;
-					if(!ProblemTools.checkEpsilonValue(Main.problem,ad,pd)) {
+					if(!ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
 						fail = true;
 					}
 				}
@@ -866,58 +869,112 @@ Main.drawAnswer = function() {
 		var pd = px * px + py * py;
 		var tmp = Main.answerGraphics;
 		var tmp1;
-		if(ProblemTools.checkEpsilonValue(Main.problem,ad,pd)) {
+		if(Main.isGrobalist) {
+			if(ad == pd) {
+				tmp1 = 52224;
+			} else if(ad > pd) {
+				var value = (ad / pd - 1) / 3;
+				var rate = value <= 0.0 ? 0.0 : 1.0 <= value ? 1.0 : value;
+				var color_r = 0.5 * (1 - rate) + 0.9 * rate;
+				var color_g = 0.5 * (1 - rate) + 0.0 * rate;
+				var color_b = 0;
+				var r = color_r;
+				var g = color_g;
+				var b = color_b;
+				if(r <= 0.0) {
+					r = 0.0;
+				} else if(1.0 <= r) {
+					r = 1.0;
+				}
+				if(g <= 0.0) {
+					g = 0.0;
+				} else if(1.0 <= g) {
+					g = 1.0;
+				}
+				if(b <= 0.0) {
+					b = 0.0;
+				} else if(1.0 <= b) {
+					b = 1.0;
+				}
+				tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+			} else {
+				var value1 = (pd / ad - 1) / 3;
+				var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
+				var color_r1 = 0;
+				var color_g1 = 0.5 * (1 - rate1) + 0.0 * rate1;
+				var color_b1 = 0.5 * (1 - rate1) + 0.9 * rate1;
+				var r1 = color_r1;
+				var g1 = color_g1;
+				var b1 = color_b1;
+				if(r1 <= 0.0) {
+					r1 = 0.0;
+				} else if(1.0 <= r1) {
+					r1 = 1.0;
+				}
+				if(g1 <= 0.0) {
+					g1 = 0.0;
+				} else if(1.0 <= g1) {
+					g1 = 1.0;
+				}
+				if(b1 <= 0.0) {
+					b1 = 0.0;
+				} else if(1.0 <= b1) {
+					b1 = 1.0;
+				}
+				tmp1 = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
+			}
+		} else if(ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
 			tmp1 = 52224;
 		} else if(ad > pd) {
-			var value = (ad / pd - 1) / 3;
-			var rate = value <= 0.0 ? 0.0 : 1.0 <= value ? 1.0 : value;
-			var color_r = 0.6 * (1 - rate) + 0.9 * rate;
-			var color_g = 0.4 * (1 - rate) + 0.0 * rate;
-			var color_b = 0;
-			var r = color_r;
-			var g = color_g;
-			var b = color_b;
-			if(r <= 0.0) {
-				r = 0.0;
-			} else if(1.0 <= r) {
-				r = 1.0;
+			var value2 = (ad / pd - 1) / 3;
+			var rate2 = value2 <= 0.0 ? 0.0 : 1.0 <= value2 ? 1.0 : value2;
+			var color_r2 = 0.6 * (1 - rate2) + 0.9 * rate2;
+			var color_g2 = 0.4 * (1 - rate2) + 0.0 * rate2;
+			var color_b2 = 0;
+			var r2 = color_r2;
+			var g2 = color_g2;
+			var b2 = color_b2;
+			if(r2 <= 0.0) {
+				r2 = 0.0;
+			} else if(1.0 <= r2) {
+				r2 = 1.0;
 			}
-			if(g <= 0.0) {
-				g = 0.0;
-			} else if(1.0 <= g) {
-				g = 1.0;
+			if(g2 <= 0.0) {
+				g2 = 0.0;
+			} else if(1.0 <= g2) {
+				g2 = 1.0;
 			}
-			if(b <= 0.0) {
-				b = 0.0;
-			} else if(1.0 <= b) {
-				b = 1.0;
+			if(b2 <= 0.0) {
+				b2 = 0.0;
+			} else if(1.0 <= b2) {
+				b2 = 1.0;
 			}
-			tmp1 = (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0);
+			tmp1 = (r2 * 255 | 0) << 16 | (g2 * 255 | 0) << 8 | (b2 * 255 | 0);
 		} else {
-			var value1 = (pd / ad - 1) / 3;
-			var rate1 = value1 <= 0.0 ? 0.0 : 1.0 <= value1 ? 1.0 : value1;
-			var color_r1 = 0;
-			var color_g1 = 0.4 * (1 - rate1) + 0.0 * rate1;
-			var color_b1 = 0.6 * (1 - rate1) + 0.9 * rate1;
-			var r1 = color_r1;
-			var g1 = color_g1;
-			var b1 = color_b1;
-			if(r1 <= 0.0) {
-				r1 = 0.0;
-			} else if(1.0 <= r1) {
-				r1 = 1.0;
+			var value3 = (pd / ad - 1) / 3;
+			var rate3 = value3 <= 0.0 ? 0.0 : 1.0 <= value3 ? 1.0 : value3;
+			var color_r3 = 0;
+			var color_g3 = 0.4 * (1 - rate3) + 0.0 * rate3;
+			var color_b3 = 0.6 * (1 - rate3) + 0.9 * rate3;
+			var r3 = color_r3;
+			var g3 = color_g3;
+			var b3 = color_b3;
+			if(r3 <= 0.0) {
+				r3 = 0.0;
+			} else if(1.0 <= r3) {
+				r3 = 1.0;
 			}
-			if(g1 <= 0.0) {
-				g1 = 0.0;
-			} else if(1.0 <= g1) {
-				g1 = 1.0;
+			if(g3 <= 0.0) {
+				g3 = 0.0;
+			} else if(1.0 <= g3) {
+				g3 = 1.0;
 			}
-			if(b1 <= 0.0) {
-				b1 = 0.0;
-			} else if(1.0 <= b1) {
-				b1 = 1.0;
+			if(b3 <= 0.0) {
+				b3 = 0.0;
+			} else if(1.0 <= b3) {
+				b3 = 1.0;
 			}
-			tmp1 = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
+			tmp1 = (r3 * 255 | 0) << 16 | (g3 * 255 | 0) << 8 | (b3 * 255 | 0);
 		}
 		tmp.lineStyle(2,tmp1);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
@@ -945,13 +1002,31 @@ Main.drawAnswer = function() {
 Math.__name__ = true;
 var ProblemTools = function() { };
 ProblemTools.__name__ = true;
-ProblemTools.checkEpsilonValue = function(problem,ad,pd) {
+ProblemTools.checkEpsilon = function(problem,ad,pd) {
 	var e = problem.epsilon;
 	if(ad < pd) {
 		return -(1000000 * ad) <= (e - 1000000) * pd;
 	} else {
 		return 1000000 * ad <= (e + 1000000) * pd;
 	}
+};
+ProblemTools.checkGlobalEpsilon = function(problem,answer) {
+	var value = 0.0;
+	var e = problem.epsilon * problem.figure.edges.length / 1000000;
+	var _g = 0;
+	var _g1 = problem.figure.edges;
+	while(_g < _g1.length) {
+		var edge = _g1[_g];
+		++_g;
+		var ax = answer[edge[0]][0] - answer[edge[1]][0];
+		var ay = answer[edge[0]][1] - answer[edge[1]][1];
+		var ad = ax * ax + ay * ay;
+		var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
+		var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
+		var pd = px * px + py * py;
+		value += Math.abs(ad / pd - 1);
+	}
+	return value <= e;
 };
 ProblemTools.dislike = function(problem,answer) {
 	var dislike = 0.0;
@@ -997,7 +1072,6 @@ ProblemTools.failCount = function(problem,answer,isGrobalist) {
 		}
 		h0 = h1;
 	}
-	console.log("src/ProblemTools.hx:59:",isGrobalist);
 	if(isGrobalist) {
 		var value = 0.0;
 		var e = problem.epsilon * problem.figure.edges.length / 1000000;
@@ -1015,7 +1089,7 @@ ProblemTools.failCount = function(problem,answer,isGrobalist) {
 			value += Math.abs(ad / pd - 1);
 		}
 		if(value > e) {
-			failCount += 10;
+			failCount += Math.ceil((value - e) / problem.epsilon / 1000000);
 		}
 	} else {
 		var _g = 0;
@@ -1029,7 +1103,7 @@ ProblemTools.failCount = function(problem,answer,isGrobalist) {
 			var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
 			var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
 			var pd = px * px + py * py;
-			if(!ProblemTools.checkEpsilonValue(problem,ad,pd)) {
+			if(!ProblemTools.checkEpsilon(problem,ad,pd)) {
 				++failCount;
 			}
 		}
