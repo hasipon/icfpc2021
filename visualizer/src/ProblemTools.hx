@@ -56,20 +56,22 @@ class ProblemTools
 			h0 = h1;
 		}
 		
+		trace(isGrobalist);
 		if (isGrobalist)
 		{
-			var ad = 0;
-			var pd = 0;
+			var value = 0.0;
+			var e = (problem.epsilon * problem.figure.edges.length) / 1000000;
 			for (edge in problem.figure.edges)
 			{
 				var ax = answer[edge[0]][0] - answer[edge[1]][0];
 				var ay = answer[edge[0]][1] - answer[edge[1]][1];
-				ad += ax * ax + ay * ay;
+				var ad = ax * ax + ay * ay;
 				var px = problem.figure.vertices[edge[0]][0] - problem.figure.vertices[edge[1]][0];
 				var py = problem.figure.vertices[edge[0]][1] - problem.figure.vertices[edge[1]][1];
-				pd += px * px + py * py;
+				var pd = px * px + py * py;
+				value += Math.abs(ad / pd - 1);
 			}
-			if (!checkEpsilonValue(problem, ad, pd)) {
+			if (value > e) {
 				failCount += 10;
 			}
 		}

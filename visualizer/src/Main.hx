@@ -454,6 +454,7 @@ class Main
 				{
 					case GLOBALIST:
 					case BREAK_A_LEG:
+					case WALLHACK:
 				}
 				bonuses.push(b);
 			}
@@ -679,6 +680,7 @@ class Main
 			{
 				case BonusKind.GLOBALIST  :0xFFFF00;
 				case BonusKind.BREAK_A_LEG:0x0000FF;
+				case BonusKind.WALLHACK   :0x0FF9900;
 			}
 			problemGraphics.beginFill(color);
 			var x = (bonus.position[0] - left) * scale;
@@ -738,8 +740,9 @@ class Main
 			{
 				switch (bonus.bonus)
 				{
-					case GLOBALIST: isGrobalist = true;
-					case BREAK_A_LEG:
+					case BonusKind.GLOBALIST: isGrobalist = true;
+					case BonusKind.BREAK_A_LEG:
+					case BonusKind.WALLHACK   :
 				}
 			}
 		}
