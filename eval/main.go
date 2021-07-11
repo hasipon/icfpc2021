@@ -203,6 +203,12 @@ func main() {
 				if os.IsNotExist(err) {
 					os.WriteFile(filePath, body, 0644)
 				}
+				if defaultDB.Ok() {
+					_, err = defaultDB.RegisterSolution(fmt.Sprintf("eval-dislike%v", result), id, body)
+					if err != nil {
+						log.Println("RegisterSolution err", err)
+					}
+				}
 			}
 
 			w.WriteHeader(200)

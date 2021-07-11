@@ -266,7 +266,7 @@ func (db SQLiteDB) FindBestSolution(problemID string) (*Solution, error) {
 		// No setting
 		err = db.QueryRowx(
 			"SELECT * FROM solution WHERE problem_id = ? AND valid = 1 AND use_bonus = '' ORDER BY dislike ASC LIMIT 1",
-			problemID, setting.UseBonus, setting.UnlockBonusKey).StructScan(solution)
+			problemID).StructScan(solution)
 		return solution, err
 	}
 	if err == nil {
@@ -286,4 +286,10 @@ func (db SQLiteDB) GetProblemSetting(problemID string) (*ProblemSetting, error) 
 		return nil, err
 	}
 	return s, nil
+}
+
+func (db SQLiteDB) GetAllProblemIDsInSubmission() ([]string, error) {
+	var problemIDs []string
+	err := db.Select(&problemIDs, "SELECT DISTINCT problem_id FROM solution")
+	return problemIDs, err
 }
