@@ -395,15 +395,15 @@ func batchEvalDB() {
 		poseBytes := []byte(solution.Json)
 		result, valid, msg := eval(prob, poseBytes)
 		log.Println("batchEvalDB", solution.ID, result, valid, msg)
+
+		var bonusKeys []BonusKey
 		if valid {
-			bonusKeys := obtainBonusKeys(prob, poseBytes)
-			err = defaultDB.UpdateSolutionEvalResult(solution, result, valid, msg, bonusKeys)
-			if err != nil {
-				fmt.Println("UpdateSolutionEvalResult err", err)
-			}
-			continue
+			bonusKeys = obtainBonusKeys(prob, poseBytes)
 		}
-		time.Sleep(30 * time.Second)
+		err = defaultDB.UpdateSolutionEvalResult(solution, result, valid, msg, bonusKeys)
+		if err != nil {
+			fmt.Println("UpdateSolutionEvalResult err", err)
+		}
 	}
 }
 
