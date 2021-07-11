@@ -116,7 +116,7 @@ type Bonus struct {
 
 type Pose struct {
 	Vertices [][]*Int `json:"vertices"`
-	Bonuses  []*Bonus
+	Bonuses  []*Bonus `json:"bonuses"`
 }
 
 func dislike(problem *Problem, pose *Pose) *Int {
