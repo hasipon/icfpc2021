@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -185,28 +184,41 @@ func (db SQLiteDB) Migrate() error {
 }
 
 func (db SQLiteDB) RegisterSolution(name string, problemID int, poseBytes []byte) (*Solution, error) {
-	useBonus := ""
 	var pose Pose
 	if err := json.Unmarshal(poseBytes, &pose); err != nil {
-		log.Fatal("pose:", err)
+		return nil, err
 	}
+	useBonus := ""
 	if 0 < len(pose.Bonuses) {
 		if 1 < len(pose.Bonuses) {
-			log.Fatal("TOO MANY BONUSES")
+			return nil, fmt.Errorf("TOO MANY BONUSES")
 		}
 		useBonus = pose.Bonuses[0].Bonus
 	}
 
+	probBytes, err := getProblem(fmt.Sprint(problemID))
+	if err != nil {
+		return nil, err
+	}
+
+	bns := ""
+	if useBonus != "" {
+		bns += "-" + useBonus
+	}
+	for _, b := range obtainBonusKeys(probBytes, poseBytes) {
+		bns += "-" + fmt.Sprint(b)
+	}
+
 	now := time.Now()
 	solution := &Solution{
-		ID:        fmt.Sprint(problemID) + "-" + name,
+		ID:        fmt.Sprint(problemID) + "-" + name + bns,
 		ProblemID: problemID,
 		Json:      string(poseBytes),
 		UseBonus:  useBonus,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	_, err := db.NamedExec(`
+	_, err = db.NamedExec(`
 INSERT INTO solution (
     id,
     json,
