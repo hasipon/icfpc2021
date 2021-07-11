@@ -26,8 +26,10 @@ fn main()  -> std::io::Result<()>  {
         end   = arg[3].parse().unwrap();
     }
 
-    for i in start..end {
-        //if cleared.contains(&i) { continue; }
+    for j in 0..1000000 {
+        let i = (j + start) % 132 + 1;
+
+        if cleared.contains(&i) { continue; }
         let target = format!("{}", i);
         let file = File::open(format!("../../problems/{}", target))?;
         let reader = BufReader::new(file);
@@ -42,11 +44,11 @@ fn main()  -> std::io::Result<()>  {
         println!("{}", meta);
         println!("{}", answer);
 
-        if result.best.is_valid() && result.best.dislike < result.best_bonus.dislike {
+        if result.best.is_valid() {
             println!("best!");
-            let mut file = File::create(format!("out/{}-sawa-auto36-{}.json", target, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto40-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto36-{}.meta", target, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto40-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
         
@@ -58,9 +60,9 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best_bonus.is_valid() && result.best_bonus.bonus_count > 0 {
             println!("best_bonus!");
-            let mut file = File::create(format!("out/{}-sawa-auto36-bonus-{}.json", target, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto40-bonus-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto36-bonus-{}.meta", target, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto40-bonus-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
     }

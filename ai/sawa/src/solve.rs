@@ -48,7 +48,7 @@ pub fn solve(source:&ProblemSource) -> SolveResult {
     let mut arr0 = Vec::new();
     let mut arr1 = Vec::new();
 
-    let size = 4000;
+    let size = 3000;
     let mut locked_points = HashSet::new();
 
     for i in 0..size {
@@ -64,7 +64,7 @@ pub fn solve(source:&ProblemSource) -> SolveResult {
 
     let mut prev_score = 1200003;
     let mut prev_dislike = 1200003;
-    let repeat = 200;
+    let repeat = 190;
 
     for i in 0..repeat {
         arr0.sort();
@@ -91,16 +91,16 @@ pub fn solve(source:&ProblemSource) -> SolveResult {
                         rate
                     );
                 }
-                if rng.gen_bool(0.2) {
-                    let rate = if rng.gen_bool(0.5) { 1.0 - scale * 0.2 } else { rng.gen_range(0.1, 1.0) };
-                    lock_points(
-                        &mut locked_points, 
-                        &problem.bonuses, 
-                        &vertecies, 
-                        &mut rng, 
-                        rate
-                    );
-                }
+                //if rng.gen_bool(0.1) {
+                //    let rate = if rng.gen_bool(0.5) { 1.0 - scale * 0.2 } else { rng.gen_range(0.1, 1.0) };
+                //    lock_points(
+                //        &mut locked_points, 
+                //        &problem.bonuses, 
+                //        &vertecies, 
+                //        &mut rng, 
+                //        rate
+                //    );
+                //}
 
                 if rng.gen_bool(0.3 * scale) || score == prev_score && dislike == prev_dislike && rng.gen_bool(1.0 * scale) { 
                     random(&problem, &mut vertecies, 1, &mut rng, &locked_points); 
@@ -113,9 +113,10 @@ pub fn solve(source:&ProblemSource) -> SolveResult {
                 if rng.gen_bool(0.2 * scale) { rotate(&problem, &mut vertecies, &mut rng, scale, &locked_points); }
                 
 
-                if rng.gen_bool(0.5) { random_include(&problem, &mut vertecies, &mut rng, &locked_points); }
-                if rng.gen_bool(0.7) { fit           (&problem.hole   , &mut vertecies, &mut rng, scale); }
-                if rng.gen_bool(0.1) { fit           (&problem.bonuses, &mut vertecies, &mut rng, 1.0); }
+                if rng.gen_bool(0.5 ) { random_include(&problem, &mut vertecies, &mut rng, &locked_points); }
+                if rng.gen_bool(0.7 ) { fit           (&problem.hole   , &mut vertecies, &mut rng, scale); }
+                if rng.gen_bool(0.01) { fit           (&problem.bonuses, &mut vertecies, &mut rng, 1.0); }
+                if rng.gen_bool(0.1 ) { random_small  (&mut vertecies, 1, &mut rng, &locked_points); }
 
                 pull(&problem, &mut vertecies, 40, &mut rng, &locked_points);
                 if rng.gen_bool(0.5) && get_unmatched(&problem, &mut vertecies) == 0 {

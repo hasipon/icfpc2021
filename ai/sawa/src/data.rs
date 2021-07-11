@@ -72,7 +72,7 @@ impl State {
     }
     pub fn get_score(&self) -> i64 {
         let penalty = self.not_included * 50 + self.unmatched * 2;
-        self.dislike + penalty * self.len - (self.bonus_count * self.len) / 4
+        self.dislike + penalty * self.len - (self.bonus_count * self.len) / 60
     }
 }
 
