@@ -453,16 +453,17 @@ class Main
 		var bonuses:Array<Dynamic> = [];
 		for (bonus in availableBonuses)
 		{
-			if (bonus.element.checked)
+			var b:Dynamic = { bonus:bonus.bonus , problem:bonus.from }
+			switch (bonus.bonus)
 			{
-				var b:Dynamic = { bonus:bonus.bonus , problem:bonus.from }
-				switch (bonus.bonus)
-				{
-					case GLOBALIST:
-					case BREAK_A_LEG:
-					case WALLHACK:
-				}
-				bonuses.push(b);
+				case BonusKind.GLOBALIST  : if (bonus.element.checked) bonuses.push(b);
+				case BonusKind.BREAK_A_LEG: 
+					var edge = problems[problemIndex].figure.edges[Std.parseInt(bonus.element.value)];
+					if (edge != null) {
+						b.edge = edge;
+						bonuses.push(b);
+					}
+				case BonusKind.WALLHACK   : if (bonus.element.checked) bonuses.push(b);
 			}
 		}
 		return Json.stringify({vertices:answer, bonuses: bonuses});
@@ -638,7 +639,12 @@ class Main
 				if (bonus.problem == problemIndex + 1)
 				{
 					var element:InputElement = cast Browser.document.createElement('input');
-					element.setAttribute("type", "checkbox");
+					switch (bonus.bonus)
+					{
+						case BonusKind.WALLHACK   :element.setAttribute("type", "checkbox");
+						case BonusKind.BREAK_A_LEG:element.setAttribute("type", "number");
+						case BonusKind.GLOBALIST  :element.setAttribute("type", "checkbox");
+					}
 					element.setAttribute("id", "bonus" + availableBonuses.length);
 					element.addEventListener("input", () -> {
 						updateBonuses();
@@ -741,7 +747,7 @@ class Main
 			hole: source.hole,
 			epsilon: source.epsilon,
 			figure: {
-				edges: [for (e in source.figure.edges) e],
+				edges: [],
 			},
 			bonuses:source.bonuses,
 			distances:[],
@@ -751,21 +757,40 @@ class Main
 		};
 		for (bonus in availableBonuses)
 		{
-			if (bonus.element.checked)
+			switch (bonus.bonus)
 			{
-				switch (bonus.bonus)
-				{
-					case BonusKind.GLOBALIST  : problem.isGlobalist = true;
-					case BonusKind.BREAK_A_LEG:
-					case BonusKind.WALLHACK   : problem.isWallhack = true;
-				}
+				case BonusKind.GLOBALIST  : if (bonus.element.checked    ) problem.isGlobalist = true;
+				case BonusKind.BREAK_A_LEG: if (bonus.element.value != "") problem.breakALeg = Option.Some(Std.parseInt(bonus.element.value));
+				case BonusKind.WALLHACK   : if (bonus.element.checked    ) problem.isWallhack = true;
 			}
 		}
-		for (edge in source.figure.edges) 
+		trace(problem.breakALeg);
+		for (ei => edge in source.figure.edges) 
 		{
-			var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
-			var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
-			problem.distances.push(px * px + py * py);
+			switch (problem.breakALeg)
+			{
+				case Option.Some(value) if (value == ei):
+					answer.push([
+						Math.round((source.figure.vertices[edge[0]][0] + source.figure.vertices[edge[1]][0]) / 2),
+						Math.round((source.figure.vertices[edge[0]][1] + source.figure.vertices[edge[1]][1]) / 2)
+					]);
+					var e = [edge[0], answer.length - 1];
+					
+					var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+					var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+					var pd = (px * px + py * py) / 4;
+					problem.distances.push(pd);
+					problem.figure.edges.push([edge[0], answer.length - 1]);
+					
+					problem.distances.push(pd);
+					problem.figure.edges.push([edge[1], answer.length - 1]);
+					
+				case _:
+					var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+					var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+					problem.distances.push(px * px + py * py);
+					problem.figure.edges.push(edge);
+			}
 		}
 	}
 	

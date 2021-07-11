@@ -524,17 +524,25 @@ Main.getAnswer = function() {
 	while(_g < _g1.length) {
 		var bonus = _g1[_g];
 		++_g;
-		if(bonus.element.checked) {
-			var b = { bonus : bonus.bonus, problem : bonus.from};
-			switch(bonus.bonus) {
-			case "BREAK_A_LEG":
-				break;
-			case "GLOBALIST":
-				break;
-			case "WALLHACK":
-				break;
+		var b = { bonus : bonus.bonus, problem : bonus.from};
+		switch(bonus.bonus) {
+		case "BREAK_A_LEG":
+			var edge = Main.problems[Main.problemIndex].figure.edges[Std.parseInt(bonus.element.value)];
+			if(edge != null) {
+				b.edge = edge;
+				bonuses.push(b);
 			}
-			bonuses.push(b);
+			break;
+		case "GLOBALIST":
+			if(bonus.element.checked) {
+				bonuses.push(b);
+			}
+			break;
+		case "WALLHACK":
+			if(bonus.element.checked) {
+				bonuses.push(b);
+			}
+			break;
 		}
 	}
 	return JSON.stringify({ vertices : Main.answer, bonuses : bonuses});
@@ -719,7 +727,17 @@ Main.readProblem = function(index) {
 			++_g;
 			if(bonus.problem == Main.problemIndex + 1) {
 				var element = window.document.createElement("input");
-				element.setAttribute("type","checkbox");
+				switch(bonus.bonus) {
+				case "BREAK_A_LEG":
+					element.setAttribute("type","number");
+					break;
+				case "GLOBALIST":
+					element.setAttribute("type","checkbox");
+					break;
+				case "WALLHACK":
+					element.setAttribute("type","checkbox");
+					break;
+				}
 				element.setAttribute("id","bonus" + Main.availableBonuses.length);
 				element.addEventListener("input",function() {
 					Main.updateBonuses();
@@ -840,43 +858,64 @@ Main.readProblem = function(index) {
 Main.updateBonuses = function() {
 	var source = Main.problems[Main.problemIndex];
 	Main.answer.length = source.figure.vertices.length;
-	var source1 = source.hole;
-	var source2 = source.epsilon;
-	var _g = [];
-	var _g1 = 0;
-	var _g2 = source.figure.edges;
-	while(_g1 < _g2.length) {
-		var e = _g2[_g1];
-		++_g1;
-		_g.push(e);
-	}
-	Main.problem = { hole : source1, epsilon : source2, figure : { edges : _g}, bonuses : source.bonuses, distances : [], breakALeg : haxe_ds_Option.None, isGlobalist : false, isWallhack : false};
+	Main.problem = { hole : source.hole, epsilon : source.epsilon, figure : { edges : []}, bonuses : source.bonuses, distances : [], breakALeg : haxe_ds_Option.None, isGlobalist : false, isWallhack : false};
 	var _g = 0;
 	var _g1 = Main.availableBonuses;
 	while(_g < _g1.length) {
 		var bonus = _g1[_g];
 		++_g;
-		if(bonus.element.checked) {
-			switch(bonus.bonus) {
-			case "BREAK_A_LEG":
-				break;
-			case "GLOBALIST":
-				Main.problem.isGlobalist = true;
-				break;
-			case "WALLHACK":
-				Main.problem.isWallhack = true;
-				break;
+		switch(bonus.bonus) {
+		case "BREAK_A_LEG":
+			if(bonus.element.value != "") {
+				Main.problem.breakALeg = haxe_ds_Option.Some(Std.parseInt(bonus.element.value));
 			}
+			break;
+		case "GLOBALIST":
+			if(bonus.element.checked) {
+				Main.problem.isGlobalist = true;
+			}
+			break;
+		case "WALLHACK":
+			if(bonus.element.checked) {
+				Main.problem.isWallhack = true;
+			}
+			break;
 		}
 	}
-	var _g = 0;
-	var _g1 = source.figure.edges;
-	while(_g < _g1.length) {
-		var edge = _g1[_g];
-		++_g;
-		var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
-		var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
-		Main.problem.distances.push(px * px + py * py);
+	console.log("src/Main.hx:767:",Main.problem.breakALeg);
+	var _g2_current = 0;
+	var _g2_array = source.figure.edges;
+	while(_g2_current < _g2_array.length) {
+		var _g3_value = _g2_array[_g2_current];
+		var _g3_key = _g2_current++;
+		var ei = _g3_key;
+		var edge = _g3_value;
+		var _g = Main.problem.breakALeg;
+		if(_g._hx_index == 0) {
+			var value = _g.v;
+			if(value == ei) {
+				Main.answer.push([Math.round((source.figure.vertices[edge[0]][0] + source.figure.vertices[edge[1]][0]) / 2),Math.round((source.figure.vertices[edge[0]][1] + source.figure.vertices[edge[1]][1]) / 2)]);
+				var e_0 = edge[0];
+				var e_1 = Main.answer.length - 1;
+				var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+				var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+				var pd = (px * px + py * py) / 4;
+				Main.problem.distances.push(pd);
+				Main.problem.figure.edges.push([edge[0],Main.answer.length - 1]);
+				Main.problem.distances.push(pd);
+				Main.problem.figure.edges.push([edge[1],Main.answer.length - 1]);
+			} else {
+				var px1 = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+				var py1 = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+				Main.problem.distances.push(px1 * px1 + py1 * py1);
+				Main.problem.figure.edges.push(edge);
+			}
+		} else {
+			var px2 = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+			var py2 = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+			Main.problem.distances.push(px2 * px2 + py2 * py2);
+			Main.problem.figure.edges.push(edge);
+		}
 	}
 };
 Main.drawAnswer = function() {
@@ -1186,6 +1225,26 @@ var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
+};
+Std.parseInt = function(x) {
+	if(x != null) {
+		var _g = 0;
+		var _g1 = x.length;
+		while(_g < _g1) {
+			var i = _g++;
+			var c = x.charCodeAt(i);
+			if(c <= 8 || c >= 14 && c != 32 && c != 45) {
+				var nc = x.charCodeAt(i + 1);
+				var v = parseInt(x,nc == 120 || nc == 88 ? 16 : 10);
+				if(isNaN(v)) {
+					return null;
+				} else {
+					return v;
+				}
+			}
+		}
+	}
+	return null;
 };
 Std.random = function(x) {
 	if(x <= 0) {

@@ -31,9 +31,9 @@ fn main()  -> std::io::Result<()>  {
         println!("{}", meta);
         println!("{}", answer);
         if result.is_valid() {
-            let mut file = File::create(format!("out/{}-sawa-auto9.json", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto11.json", target))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto9.meta", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto11.meta", target))?;
             write!(file, "{}", meta);
         }
     }
