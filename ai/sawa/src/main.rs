@@ -22,7 +22,7 @@ fn main()  -> std::io::Result<()>  {
         println!("{}", target);
         let file = File::open(format!("../../problems/{}", target))?;
         let reader = BufReader::new(file);
-        let problem:Problem = serde_json::from_reader(reader).unwrap();
+        let problem:ProblemSource = serde_json::from_reader(reader).unwrap();
         let result = solve(&problem);
         
 
@@ -31,9 +31,9 @@ fn main()  -> std::io::Result<()>  {
         println!("{}", meta);
         println!("{}", answer);
         if result.is_valid() {
-            let mut file = File::create(format!("out/{}-sawa-auto13.json", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto21.json", target))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto13.meta", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto21.meta", target))?;
             write!(file, "{}", meta);
         }
     }
