@@ -287,19 +287,22 @@ WHERE id = :id`,
 func (db SQLiteDB) FindBestSolution(problemID int) (*Solution, error) {
 	solution := new(Solution)
 	setting, err := db.GetProblemSetting(problemID)
-	setting.NormalizeUnlockBonusKey()
 	if err == sql.ErrNoRows {
 		// No setting
-		err = db.QueryRowx(
-			"SELECT * FROM solution WHERE problem_id = ? AND valid = 1 AND use_bonus = '' ORDER BY dislike ASC LIMIT 1",
+		err = db.QueryRowx(`
+SELECT * FROM solution WHERE
+	problem_id = ? AND valid = 1 AND use_bonus = ''
+ORDER BY dislike LIMIT 1`,
 			problemID).StructScan(solution)
 		return solution, err
 	}
 	if err == nil {
 		// Use setting
-		err = db.QueryRowx(`SELECT * FROM solution WHERE
-problem_id = ? AND valid = 1 AND (use_bonus = '' OR use_bonus = ?) AND unlock_bonus LIKE ?
-ORDER BY dislike ASC LIMIT 1`,
+		setting.NormalizeUnlockBonusKey()
+		err = db.QueryRowx(`
+SELECT *FROM solution WHERE
+	problem_id = ? AND valid = 1 AND (use_bonus = '' OR use_bonus = ?) AND unlock_bonus LIKE ?
+ORDER BY dislike LIMIT 1`,
 			problemID,
 			setting.UseBonus,
 			"%"+setting.UnlockBonusKey+"%").StructScan(solution)
