@@ -10,29 +10,29 @@ import (
 type Int = big.Int
 
 type Figure struct {
-	Edges [][]int `json:"edges"`
+	Edges    [][]int  `json:"edges"`
 	Vertices [][]*Int `json:"vertices"`
 }
 
 type ProblemBonus struct {
-	Bonus string `json:"bonus"`
-	Problem int `json:"problem"`
+	Bonus    string `json:"bonus"`
+	Problem  int    `json:"problem"`
 	Position []*Int `json:"position"`
 }
 
 type Problem struct {
-	Hole [][]*Int `json:"hole"`
-	Epsilon *Int `json:"epsilon"`
-	Figure Figure `json:"figure"`
-	Bonuses []ProblemBonus `json:"bonuses"`
-	WallHacked bool
-	Globalist bool
+	Hole            [][]*Int       `json:"hole"`
+	Epsilon         *Int           `json:"epsilon"`
+	Figure          Figure         `json:"figure"`
+	Bonuses         []ProblemBonus `json:"bonuses"`
+	WallHacked      bool
+	Globalist       bool
 	OriginalEdgeNum int
 }
 
 type Point = []*Int
 
-func dot(a, b Point) *Int{
+func dot(a, b Point) *Int {
 	x := new(Int).Mul(a[0], b[0])
 	y := new(Int).Mul(a[1], b[1])
 	return new(Int).Add(x, y)
@@ -49,12 +49,12 @@ var zero = new(Int).SetInt64(0)
 const (
 	FRONT = 1
 	RIGHT = 2
-	BACK = 4
-	LEFT = 8
-	ON = 16
+	BACK  = 4
+	LEFT  = 8
+	ON    = 16
 )
 
-func ccw(a, b, c Point) int{
+func ccw(a, b, c Point) int {
 	b_a := Point{new(Int).Sub(b[0], a[0]), new(Int).Sub(b[1], a[1])}
 	c_a := Point{new(Int).Sub(c[0], a[0]), new(Int).Sub(c[1], a[1])}
 	s := det(b_a, c_a)
@@ -77,11 +77,9 @@ func intersect(p []Point) bool {
 	tc1_B := new(Int).Mul(sub(1, 1, 2, 1), sub(1, 0, 3, 0))
 	tc1 := new(Int).Add(tc1_A, tc1_B)
 
-
 	tc2_A := new(Int).Mul(sub(1, 0, 2, 0), sub(4, 1, 1, 1))
 	tc2_B := new(Int).Mul(sub(1, 1, 2, 1), sub(1, 0, 4, 0))
 	tc2 := new(Int).Add(tc2_A, tc2_B)
-
 
 	td1_A := new(Int).Mul(sub(3, 0, 4, 0), sub(1, 1, 3, 1))
 	td1_B := new(Int).Mul(sub(3, 1, 4, 1), sub(3, 0, 1, 0))
@@ -99,7 +97,7 @@ func intersect(p []Point) bool {
 	return false
 }
 
-func distance(a []*Int, b[]*Int) *Int{
+func distance(a []*Int, b []*Int) *Int {
 	var diffX, diffY, XX, YY Int
 	diffX.Sub(a[0], b[0])
 	diffY.Sub(a[1], b[1])
@@ -111,14 +109,14 @@ func distance(a []*Int, b[]*Int) *Int{
 }
 
 type Bonus struct {
-	Bonus string `json:"bonus"`
-	Problem int `json:"problem"`
-	Edge []int `json:"edge"`
+	Bonus   string `json:"bonus"`
+	Problem int    `json:"problem"`
+	Edge    []int  `json:"edge"`
 }
 
 type Pose struct {
 	Vertices [][]*Int `json:"vertices"`
-	Bonuses []*Bonus
+	Bonuses  []*Bonus
 }
 
 func dislike(problem *Problem, pose *Pose) *Int {
@@ -142,14 +140,12 @@ func dislike(problem *Problem, pose *Pose) *Int {
 	return sum
 }
 
-
-
 func include(problem *Problem, p Point) bool {
 	x := p[0]
 	y := p[1]
 	cnt := 0
 	for i, _ := range problem.Hole {
-		j := (i+1) % len(problem.Hole)
+		j := (i + 1) % len(problem.Hole)
 		x0 := new(Int).Set(problem.Hole[i][0])
 		y0 := new(Int).Set(problem.Hole[i][1])
 		x1 := new(Int).Set(problem.Hole[j][0])
@@ -166,7 +162,7 @@ func include(problem *Problem, p Point) bool {
 			return true
 		}
 
-		if y0.Cmp(y1) < 0{
+		if y0.Cmp(y1) < 0 {
 		} else {
 			tmp := x0
 			x0 = x1
@@ -184,10 +180,10 @@ func include(problem *Problem, p Point) bool {
 			}
 		}
 	}
-	return cnt % 2 == 1
+	return cnt%2 == 1
 }
 
-func applyBonus(problem *Problem, pose *Pose) *Problem{
+func applyBonus(problem *Problem, pose *Pose) *Problem {
 	problem.OriginalEdgeNum = len(problem.Figure.Edges)
 	for _, b := range pose.Bonuses {
 		if b.Bonus == "BREAK_A_LEG" {
@@ -213,7 +209,7 @@ func applyBonus(problem *Problem, pose *Pose) *Problem{
 				newEdges = append(newEdges, e)
 			}
 			problem.Figure.Edges = newEdges
-		} else if b.Bonus == "GLOBALIST"{
+		} else if b.Bonus == "GLOBALIST" {
 			problem.Globalist = true
 		} else if b.Bonus == "WALLHACK" {
 			problem.WallHacked = true
@@ -339,7 +335,7 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 		if problem.Globalist {
 			nowDf, _ := new(big.Float).SetInt(nowD).Float64()
 			origDf, _ := new(big.Float).SetInt(origD).Float64()
-			globalEpsSum += math.Abs(origDf / nowDf - 1) * 1000000
+			globalEpsSum += math.Abs(origDf/nowDf-1) * 1000000
 		} else {
 			var diff *Int
 			if nowD.Cmp(origD) >= 0 {
@@ -363,7 +359,7 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 			}
 		}
 	}
-	if problem.Globalist{
+	if problem.Globalist {
 		epsLimit, _ := new(big.Float).SetInt(problem.Epsilon).Float64()
 		epsLimit = epsLimit * float64(problem.OriginalEdgeNum)
 		if globalEpsSum > epsLimit {
@@ -413,4 +409,3 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 		}
 	}
 }
-
