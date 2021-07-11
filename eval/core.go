@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 )
 
@@ -18,6 +19,8 @@ type Problem struct {
 	Epsilon *Int `json:"epsilon"`
 	Figure Figure `json:"figure"`
 	WallHacked bool
+	Globalist bool
+	OriginalEdgeNum int
 }
 
 type Point = []*Int
@@ -178,7 +181,7 @@ func include(problem *Problem, p Point) bool {
 }
 
 func applyBonus(problem *Problem, pose *Pose) *Problem{
-	originEdgeNum := len(problem.Figure.Edges)
+	problem.OriginalEdgeNum = len(problem.Figure.Edges)
 	for _, b := range pose.Bonuses {
 		if b.Bonus == "BREAK_A_LEG" {
 			target := make(map[int]bool)
@@ -204,8 +207,7 @@ func applyBonus(problem *Problem, pose *Pose) *Problem{
 			}
 			problem.Figure.Edges = newEdges
 		} else if b.Bonus == "GLOBALIST"{
-			problem.Epsilon = problem.Epsilon.Mul(problem.Epsilon,
-				new(Int).SetInt64(int64(originEdgeNum)))
+			problem.Globalist = true
 		} else if b.Bonus == "WALLHACK" {
 			problem.WallHacked = true
 		} else {
@@ -321,23 +323,30 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 		*/
 	}
 
+	var globalEpsSum float64
 	for _, e := range problem.Figure.Edges {
 		i := e[0]
 		j := e[1]
 		origD := distance(origV[i], origV[j])
 		nowD := distance(nowV[i], nowV[j])
-		var diff *Int
-		if nowD.Cmp(origD) >= 0 {
-			diff = new(Int).Sub(nowD, origD)
+		if problem.Globalist {
+			nowDf, _ := new(big.Float).SetInt(nowD).Float64()
+			origDf, _ := new(big.Float).SetInt(origD).Float64()
+			globalEpsSum += math.Abs(origDf / nowDf - 1) * 1000000
 		} else {
-			diff = new(Int).Sub(origD, nowD)
-		}
-		diff = diff.Mul(diff, new(Int).SetInt64(1000000))
-		eps := new(Int).Mul(problem.Epsilon, origD)
-		result := diff.Cmp(eps)
-		if result > 0 {
-			return false, fmt.Sprintf("Edge between (%d, "+
-				"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
+			var diff *Int
+			if nowD.Cmp(origD) >= 0 {
+				diff = new(Int).Sub(nowD, origD)
+			} else {
+				diff = new(Int).Sub(origD, nowD)
+			}
+			diff = diff.Mul(diff, new(Int).SetInt64(1000000))
+			eps := new(Int).Mul(problem.Epsilon, origD)
+			result := diff.Cmp(eps)
+			if result > 0 {
+				return false, fmt.Sprintf("Edge between (%d, "+
+					"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
+			}
 		}
 		for ii, _ := range problem.Hole {
 			h := problem.Hole
@@ -345,7 +354,14 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 			if intersect([]Point{h[ii], h[jj], nowV[i], nowV[j]}) {
 				outEdges = append(outEdges, e)
 			}
-
+		}
+	}
+	if problem.Globalist{
+		epsLimit, _ := new(big.Float).SetInt(problem.Epsilon).Float64()
+		epsLimit = epsLimit * float64(problem.OriginalEdgeNum)
+		if globalEpsSum > epsLimit {
+			return false, fmt.Sprintf("global epsilon budget exceeded. limit %f, now %f",
+				epsLimit, globalEpsSum)
 		}
 	}
 	if problem.WallHacked {
