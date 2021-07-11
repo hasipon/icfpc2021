@@ -15,6 +15,7 @@ import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
 import pixi.core.math.shapes.Rectangle;
+import pixi.filters.alpha.AlphaFilter;
 import pixi.interaction.InteractionEvent;
 import tweenxcore.color.RgbColor;
 using tweenxcore.Tools;
@@ -557,10 +558,11 @@ class Main
 			var sx = answer[selectedPoint][0];
 			var sy = answer[selectedPoint][1];
 			var points:Map<Int, Int> = [];
+			var pointLength = 0;
 			for (ei => edge in problem.figure.edges)
 			{
-				if (edge[0] == selectedPoint) points.set(ei, edge[1]);
-				if (edge[1] == selectedPoint) points.set(ei, edge[0]);
+				if (edge[0] == selectedPoint) { points.set(ei, edge[1]); pointLength += 1; }
+				if (edge[1] == selectedPoint) { points.set(ei, edge[0]); pointLength += 1; }
 			}
 			var l = if (sx - 300 < left  ) left   else sx - 300;
 			var r = if (right < sx + 300 ) right  else sx + 300;
@@ -570,7 +572,7 @@ class Main
 			{
 				for (y in t...b)
 				{
-					var fail = false;
+					var failCount = 0;
 					for (ei => point in points)
 					{
 						var ax = answer[point][0] - x;
@@ -580,15 +582,18 @@ class Main
 				
 						if (!problem.checkEpsilon(ad, pd))
 						{
-							fail = true;
+							failCount += 1;
 						}
 					}
-					if (!fail)
+					var alpha = if (failCount == 0) 1 else (failCount / pointLength).lerp(0.4, 0);
+					trace(failCount, pointLength);
+					if (alpha > 0)
 					{
 						var x = (x - left) * scale;
 						var y = (y - top ) * scale;
-						hintGraphics.beginFill(0x9999FF);
+						hintGraphics.beginFill(0x9999FF, alpha);
 						hintGraphics.drawCircle(x, y, 4);
+						hintGraphics.endFill();
 					}
 				}
 			}

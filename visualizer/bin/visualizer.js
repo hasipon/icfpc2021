@@ -222,7 +222,7 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:195:",e);
+		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 196, className : "Main", methodName : "onChangeAnswer"});
 	}
 };
 Main.fetchProblem = function() {
@@ -626,6 +626,7 @@ Main.onMouseDown = function(e) {
 		var sx = Main.answer[selectedPoint][0];
 		var sy = Main.answer[selectedPoint][1];
 		var points = new haxe_ds_IntMap();
+		var pointLength = 0;
 		var _g2_current = 0;
 		var _g2_array = Main.problem.figure.edges;
 		while(_g2_current < _g2_array.length) {
@@ -635,9 +636,11 @@ Main.onMouseDown = function(e) {
 			var edge = _g3_value;
 			if(edge[0] == selectedPoint) {
 				points.h[ei] = edge[1];
+				++pointLength;
 			}
 			if(edge[1] == selectedPoint) {
 				points.h[ei] = edge[0];
+				++pointLength;
 			}
 		}
 		var l = sx - 300 < Main.left ? Main.left : sx - 300;
@@ -652,7 +655,7 @@ Main.onMouseDown = function(e) {
 			var _g3 = b;
 			while(_g2 < _g3) {
 				var y = _g2++;
-				var fail = false;
+				var failCount = 0;
 				var _g4 = new haxe_iterators_MapKeyValueIterator(points);
 				while(_g4.hasNext()) {
 					var _g5 = _g4.next();
@@ -663,14 +666,23 @@ Main.onMouseDown = function(e) {
 					var ad = ax * ax + ay * ay;
 					var pd = Main.problem.distances[ei];
 					if(!ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
-						fail = true;
+						++failCount;
 					}
 				}
-				if(!fail) {
+				var alpha;
+				if(failCount == 0) {
+					alpha = 1;
+				} else {
+					var rate = failCount / pointLength;
+					alpha = 0.3 * (1 - rate) + 0 * rate;
+				}
+				haxe_Log.trace(failCount,{ fileName : "src/Main.hx", lineNumber : 589, className : "Main", methodName : "onMouseDown", customParams : [pointLength]});
+				if(alpha > 0) {
 					var x1 = (x - Main.left) * Main.scale;
 					var y1 = (y - Main.top) * Main.scale;
-					Main.hintGraphics.beginFill(10066431);
+					Main.hintGraphics.beginFill(10066431,alpha);
 					Main.hintGraphics.drawCircle(x1,y1,4);
+					Main.hintGraphics.endFill();
 				}
 			}
 		}
@@ -882,7 +894,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	console.log("src/Main.hx:767:",Main.problem.breakALeg);
+	haxe_Log.trace(Main.problem.breakALeg,{ fileName : "src/Main.hx", lineNumber : 772, className : "Main", methodName : "updateBonuses"});
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {
@@ -1312,6 +1324,31 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
+var haxe_Log = function() { };
+haxe_Log.__name__ = true;
+haxe_Log.formatOutput = function(v,infos) {
+	var str = Std.string(v);
+	if(infos == null) {
+		return str;
+	}
+	var pstr = infos.fileName + ":" + infos.lineNumber;
+	if(infos.customParams != null) {
+		var _g = 0;
+		var _g1 = infos.customParams;
+		while(_g < _g1.length) {
+			var v = _g1[_g];
+			++_g;
+			str += ", " + Std.string(v);
+		}
+	}
+	return pstr + ": " + str;
+};
+haxe_Log.trace = function(v,infos) {
+	var str = haxe_Log.formatOutput(v,infos);
+	if(typeof(console) != "undefined" && console.log != null) {
+		console.log(str);
+	}
+};
 var haxe_Resource = function() { };
 haxe_Resource.__name__ = true;
 haxe_Resource.getString = function(name) {
