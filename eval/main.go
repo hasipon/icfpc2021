@@ -18,17 +18,18 @@ import (
 var problems embed.FS
 
 func eval(problemBytes, poseBytes []byte) (string, bool, string) {
-	var problem Problem
-	if err := json.Unmarshal(problemBytes, &problem); err != nil {
+	var problem *Problem
+	if err := json.Unmarshal(problemBytes, problem); err != nil {
 		log.Fatal(err)
 	}
 
-	var pose Pose
-	if err := json.Unmarshal(poseBytes, &pose); err != nil {
+	var pose *Pose
+	if err := json.Unmarshal(poseBytes, pose); err != nil {
 		log.Fatal(err)
 	}
-	result := dislike(&problem, &pose)
-	valid, msg := validate(&problem, &pose)
+	problem = applyBonus(problem, pose)
+	result := dislike(problem, pose)
+	valid, msg := validate(problem, pose)
 	return result.String(), valid, msg
 
 }

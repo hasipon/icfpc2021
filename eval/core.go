@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 )
 
@@ -98,8 +99,15 @@ func distance(a []*Int, b[]*Int) *Int{
 	return &sum
 }
 
+type Bonus struct {
+	Bonus string `json:"bonus"`
+	Problem int `json:"problem"`
+	Edge []int `json:"edge"`
+}
+
 type Pose struct {
 	Vertices [][]*Int `json:"vertices"`
+	Bonuses []*Bonus
 }
 
 func dislike(problem *Problem, pose *Pose) *Int {
@@ -166,6 +174,38 @@ func include(problem *Problem, p Point) bool {
 		}
 	}
 	return cnt % 2 == 1
+}
+
+func applyBonus(problem *Problem, pose *Pose) *Problem{
+	for _, b := range pose.Bonuses {
+		if b.Bonus == "BREAK_A_LEG" {
+			target := make(map[int]bool)
+			v1 := problem.Figure.Vertices[b.Edge[0]]
+			v2 := problem.Figure.Vertices[b.Edge[1]]
+			target[b.Edge[0]] = true
+			target[b.Edge[1]] = true
+			mid := Point{
+				new(Int).Div(new(Int).Add(v1[0], v2[0]), new(Int).SetInt64(2)),
+				new(Int).Div(new(Int).Add(v1[1], v2[1]), new(Int).SetInt64(2)),
+			}
+			newVertexId := len(problem.Figure.Vertices)
+			problem.Figure.Vertices = append(problem.Figure.Vertices, mid)
+			newEdges := [][]int{
+				[]int{b.Edge[0], newVertexId},
+				[]int{newVertexId, b.Edge[1]},
+			}
+			for _, e := range problem.Figure.Edges {
+				if target[e[0]] && target[e[1]] {
+					continue
+				}
+				newEdges = append(newEdges, e)
+			}
+			problem.Figure.Edges = newEdges
+		} else {
+			log.Printf("Unknown bounus: %s", b.Bonus)
+		}
+	}
+	return problem
 }
 
 func validate(problem *Problem, pose *Pose) (bool, string) {
