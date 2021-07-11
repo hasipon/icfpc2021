@@ -281,6 +281,19 @@ func (db SQLiteDB) GetProblemSetting(problemID string) (*ProblemSetting, error) 
 	return s, err
 }
 
+func (db SQLiteDB) InsertProblemSetting(setting *ProblemSetting) error {
+	_, err := db.NamedExec(`INSERT INTO m_problem_setting (
+	problem_id,
+	use_bonus,
+	unlock_bonus_key
+) VALUES (
+	:problem_id,
+	:use_bonus,
+	:unlock_bonus_key
+)`, setting)
+	return err
+}
+
 func (db SQLiteDB) GetWhichProblemUnlocksTheBonus(key BonusKey) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE unlock_bonus_key = ? LIMIT 1", key).StructScan(s)
