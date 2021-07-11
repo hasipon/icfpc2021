@@ -260,18 +260,23 @@ WHERE id = :id`,
 }
 
 func (db SQLiteDB) FindBestSolution(problemID string) (*Solution, error) {
-	setting, err := db.GetProblemSetting(problemID)
-	if err != nil {
-		return nil, err
-	}
-
 	solution := new(Solution)
-	err = db.QueryRowx(
-		// TODO unlock bonus check
-		"SELECT * FROM solution WHERE valid = 1 AND (use_bonus = '' OR use_bonus = ?) ORDER BY dislike DESC LIMIT 1",
-		setting.UseBonus).StructScan(solution)
-
-	return solution, err
+	setting, err := db.GetProblemSetting(problemID)
+	if err == sql.ErrNoRows {
+		// No setting
+		err = db.QueryRowx(
+			"SELECT * FROM solution WHERE problem_id = ? AND valid = 1 AND use_bonus = '' ORDER BY dislike ASC LIMIT 1",
+			problemID, setting.UseBonus, setting.UnlockBonusKey).StructScan(solution)
+		return solution, err
+	}
+	if err == nil {
+		// Use setting
+		err = db.QueryRowx(
+			"SELECT * FROM solution WHERE problem_id = ? AND valid = 1 AND (use_bonus = '' OR use_bonus = ?) AND unlock_bonus = ? ORDER BY dislike ASC LIMIT 1",
+			problemID, setting.UseBonus, setting.UnlockBonusKey).StructScan(solution)
+		return solution, err
+	}
+	return nil, err
 }
 
 func (db SQLiteDB) GetProblemSetting(problemID string) (*ProblemSetting, error) {
