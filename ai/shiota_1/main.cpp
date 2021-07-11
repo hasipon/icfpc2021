@@ -6,7 +6,7 @@
 #include<cstdlib>
 #include<vector>
 #include<sstream>
-
+#include<algorithm>
 #include "lib.hpp"
 #include<cmath>
 
@@ -61,44 +61,57 @@ vp improveOne(const Problem &p, vp pose, int holeId, bool x){
   return vp();
 }
 
-const int magic = 250;
+const int magic = 1000;
 
 void drushUp(Problem &p, vp &pose, vector<bool> used, const vii &floyd, const vii &nextTo){
   vp origV = p.figure.V;
-  FOR(e, p.figure.E){
-    if(used[e.first] && used[e.second])continue;
-    if(!used[e.first] && !used[e.second])continue;
-    int from = e.first, to = e.second;
-    if(used[to])swap(from, to);
-    for(int i = -magic; i<magic; i++){
-      for(int j = -magic; j<magic; j++){
-        Point newTo;
-        newTo.x = pose[to].x + i;
-        newTo.y = pose[to].y + j;
-        FOR(next, nextTo[to]){
-          Int origD = distance(origV[from], origV[to]);
-          Int nowD = distance(pose[from], newTo);
-          Int diff = max(origD, nowD) - min(origD, nowD);
-          if (diff * 1000000 > p.epsilon * origD) {
-            continue;
+  rep(i, 1000){
+    bool allOk = true;
+    FOR( u, used){
+      if(!u)allOk = false;
+    }
+    if(allOk)break;
+    FOR(e, p.figure.E){
+      if(used[e.first] && used[e.second])continue;
+      if(!used[e.first] && !used[e.second])continue;
+      int from = e.first, to = e.second;
+      if(used[to])swap(from, to);
+      for(int i = -magic; i<magic; i++){
+        for(int j = -magic; j<magic; j++){
+          Point newTo;
+          newTo.x = pose[to].x + i;
+          newTo.y = pose[to].y + j;
+          bool ok = false;
+          FOR(next, nextTo[to]){
+            Int origD = distance(origV[from], origV[to]);
+            Int nowD = distance(pose[from], newTo);
+            Int diff = max(origD, nowD) - min(origD, nowD);
+            if (diff * 1000000 > p.epsilon * origD) {
+              goto NEXT;
+            }
+            ok = true;
           }
-          pose[to] = newTo;
-          goto OK;
+          if(ok){
+            pose[to] = newTo;
+            used[to] = true;
+          }
+          NEXT:;
         }
       }
     }
-    OK:;
-      used[to] = true;
   }
 
   output(pose);
 }
 
+int maxi;
+
 void dfs(Problem &p, int holeId, vp &pose, vector<bool> &used, const vii &floyd, const vii &nextTo, int last, int skipShareEdge){
   if(!pruneEps(p, pose, used, floyd)){
     return;
   }
-  if(holeId == p.holes.size()){
+  if(maxi == holeId && holeId >= p.holes.size()){
+    maxi = max(maxi, max);
     drushUp(p, pose, used, floyd, nextTo);
     return;
   }
@@ -158,8 +171,9 @@ int main() {
   }
   vp pose = p.figure.V;
   vector<bool> used(VN, false);
-  rep(i, VN){
+  rep(i, VN+1){
     cout << "skipShareEdge" << ' ' << i << endl;
+    maxi = 0;
     dfs(p, 0, pose, used, floyd, nextTo, -1, i);
   }
 

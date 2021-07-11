@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 )
 
 const contestUrl = "https://poses.live"
+
 var problemsUrl = "http://13.114.46.162:8800/problems.json"
 var problemsFetchUrl = "http://13.114.46.162:8800/fetch_problems"
 
@@ -28,9 +30,8 @@ func init() {
 var lastFetchTime = time.Time{}
 var latestDislike = map[string]*Int{}
 
-
 func fetchProblemsJson() {
-	if 30 * time.Second < time.Since(lastFetchTime) {
+	if 30*time.Second < time.Since(lastFetchTime) {
 		resp, err := http.Get(problemsFetchUrl)
 		if err != nil {
 			log.Println(err)
@@ -256,6 +257,9 @@ func batchSubmission(solutionsDir string) {
 }
 
 func batchMode(solutionsDir string, submit bool) {
+	if defaultDB.Ok() {
+		go batchEvalDB()
+	}
 	if submit {
 		go batchSubmission(solutionsDir)
 	}
@@ -303,6 +307,13 @@ func batchMode(solutionsDir string, submit bool) {
 
 				result, valid, msg := eval(prob, ans)
 				if valid {
+					if defaultDB.Ok() {
+						_, err = defaultDB.RegisterSolution(entry.Name(), sp[0], ans)
+						if err != nil {
+							log.Println("Register Solution failed", err)
+						}
+					}
+
 					log.Println("Valid", entry.Name(), "Dislike", result)
 					solutionFileName := fmt.Sprint(entry.Name(), "-dislike", result)
 					log.Println("Moving", entry.Name(), " -> ", solutionFileName)
@@ -317,4 +328,66 @@ func batchMode(solutionsDir string, submit bool) {
 		}
 		time.Sleep(5 * time.Second)
 	}
+}
+
+func batchEvalDB() {
+	if !defaultDB.Ok() {
+		return
+	}
+	for {
+		solution, err := defaultDB.FindNoEvalSolution()
+		if err == sql.ErrNoRows {
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		if err != nil {
+			log.Println("FindNoEvalSolution err", err)
+			time.Sleep(30 * time.Second)
+			continue
+		}
+
+		prob, err := getProblem(solution.ProblemID)
+		if err != nil {
+			log.Println("getProblem failed:", err)
+			time.Sleep(30 * time.Second)
+			continue
+		}
+
+		poseBytes := []byte(solution.Json)
+		result, valid, msg := eval(prob, poseBytes)
+		log.Println("batchEvalDB", solution.ID, result, valid, msg)
+		if valid {
+			bonusKeys := obtainBonusKeys(prob, poseBytes)
+			err = defaultDB.UpdateSolutionEvalResult(solution, result, valid, msg, bonusKeys)
+			if err != nil {
+				fmt.Println("UpdateSolutionEvalResult err", err)
+			}
+			continue
+		}
+		time.Sleep(30 * time.Second)
+	}
+}
+
+func obtainBonusKeys(problemBytes []byte, poseBytes []byte) []BonusKey {
+	var problem *Problem
+	if err := json.Unmarshal(problemBytes, &problem); err != nil {
+		log.Fatal("problem:", err)
+	}
+
+	var pose *Pose
+	if err := json.Unmarshal(poseBytes, &pose); err != nil {
+		log.Fatal("pose:", err)
+	}
+
+	var obtainBonuses []BonusKey
+	for _, b := range problem.Bonuses {
+		for _, v := range pose.Vertices {
+			if v[0].Cmp(b.Position[0]) == 0 && v[1].Cmp(b.Position[1]) == 0 {
+				obtainBonuses = append(obtainBonuses, GenBonusKey(fmt.Sprint(b.Problem), b.Bonus))
+				break
+			}
+		}
+	}
+
+	return obtainBonuses
 }
