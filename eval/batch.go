@@ -30,7 +30,7 @@ func init() {
 }
 
 var lastFetchTime = time.Time{}
-var latestDislike = map[string]*Int{}
+var latestDislike = map[int]*Int{}
 
 func batchMode(solutionsDir string, submit bool) {
 	if defaultDB.Ok() {
@@ -45,14 +45,9 @@ func batchMode(solutionsDir string, submit bool) {
 var errNoBonusUsed = fmt.Errorf("no bonus used")
 var errDifferentBonus = fmt.Errorf("different bonus used")
 
-func replaceBonusProblemID(poseJson []byte, bonusName, problemID string) ([]byte, error) {
-	probId, err := strconv.Atoi(problemID)
-	if err != nil {
-		return nil, err
-	}
-
+func replaceBonusProblemID(poseJson []byte, bonusName string, problemID int) ([]byte, error) {
 	var pose Pose
-	err = json.Unmarshal(poseJson, &pose)
+	err := json.Unmarshal(poseJson, &pose)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +60,7 @@ func replaceBonusProblemID(poseJson []byte, bonusName, problemID string) ([]byte
 		return nil, errDifferentBonus
 	}
 
-	pose.Bonuses[0].Problem = probId
+	pose.Bonuses[0].Problem = problemID
 	result, err := json.Marshal(pose)
 	return result, err
 }
@@ -100,13 +95,14 @@ func updateDislikes() {
 
 		for _, p := range problems {
 			if 3 <= len(p) {
+				probId, _ := strconv.Atoi(p[0])
 				dislike := new(Int)
 				_, ok := dislike.SetString(p[1], 10)
 				if ok {
-					if latestDislike[p[0]] == nil || dislike.Cmp(latestDislike[p[0]]) != 1 { // dislike <= latest
-						latestDislike[p[0]] = dislike
+					if latestDislike[probId] == nil || dislike.Cmp(latestDislike[probId]) != 1 { // dislike <= latest
+						latestDislike[probId] = dislike
 					} else {
-						log.Println("Skipping update dislike: (problem old new) = ", p[0], latestDislike[p[0]], p[1])
+						log.Println("Skipping update dislike: (problem old new) = ", p[0], latestDislike[probId], p[1])
 					}
 				}
 			}
@@ -181,17 +177,17 @@ func waitPoseValidation(problem, poseID string) bool {
 	return result.State == "VALID"
 }
 
-func submitSolutionFile(problem, filePath string) (*SubmitResponse, error) {
+func submitSolutionFile(problemID int, filePath string) (*SubmitResponse, error) {
 	fileBody, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Println("os.Open err:", err)
 		return nil, err
 	}
-	return submitSolution(problem, fileBody)
+	return submitSolution(problemID, fileBody)
 }
 
-func submitSolution(problem string, jsonBytes []byte) (*SubmitResponse, error) {
-	url := contestUrl + "/api/problems/" + problem + "/solutions"
+func submitSolution(problemID int, jsonBytes []byte) (*SubmitResponse, error) {
+	url := contestUrl + "/api/problems/" + fmt.Sprint(problemID) + "/solutions"
 	bearer := "Bearer " + os.Getenv("YOUR_API_TOKEN")
 
 	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonBytes))
@@ -233,7 +229,7 @@ func batchSubmission() {
 		log.Fatal("YOUR_API_TOKEN not set")
 	}
 
-	rateLimitTime := map[string]time.Time{}
+	rateLimitTime := map[int]time.Time{}
 
 	for {
 		fetchProblemsJson()
@@ -254,7 +250,7 @@ func batchSubmission() {
 			_, err := defaultDB.GetProblemSetting(problemID)
 			if err == sql.ErrNoRows {
 				// Insert Empty Setting
-				_ = defaultDB.InsertProblemSetting(&ProblemSetting{ProblemId: problemID})
+				_ = defaultDB.InsertProblemSetting(&ProblemSetting{ProblemID: problemID})
 			}
 
 			solution, err := defaultDB.FindBestSolution(problemID)
@@ -274,7 +270,7 @@ func batchSubmission() {
 					continue
 				}
 
-				poseBytes, err = replaceBonusProblemID(poseBytes, solution.UseBonus, setting.ProblemId)
+				poseBytes, err = replaceBonusProblemID(poseBytes, solution.UseBonus, setting.ProblemID)
 				if err != nil {
 					log.Println("replaceBonusProblemID err", err)
 					continue
@@ -337,7 +333,7 @@ func registerSolutionInDirectory(solutionsDir string) {
 			continue
 		}
 
-		problemID := sp[0]
+		problemID, _ := strconv.Atoi(sp[0])
 		solutionName := strings.Join(sp[1:len(sp)], "-")
 		ans, err := ioutil.ReadFile(path.Join(solutionsDir, entry.Name()))
 		if err != nil {
@@ -397,7 +393,8 @@ func batchEvalDir(solutionsDir string) {
 				result, valid, msg := eval(prob, ans)
 				if valid {
 					if defaultDB.Ok() {
-						_, err = defaultDB.RegisterSolution(entry.Name(), sp[0], ans)
+						probId, _ := strconv.Atoi(sp[0])
+						_, err = defaultDB.RegisterSolution(entry.Name(), probId, ans)
 						if err != nil {
 							log.Println("Register Solution failed", err)
 						}
@@ -435,7 +432,7 @@ func batchEvalDB() {
 			continue
 		}
 
-		prob, err := getProblem(solution.ProblemID)
+		prob, err := getProblem(fmt.Sprint(solution.ProblemID))
 		if err != nil {
 			log.Println("getProblem failed:", err)
 			time.Sleep(30 * time.Second)
@@ -472,7 +469,7 @@ func obtainBonusKeys(problemBytes []byte, poseBytes []byte) []BonusKey {
 	for _, b := range problem.Bonuses {
 		for _, v := range pose.Vertices {
 			if v[0].Cmp(b.Position[0]) == 0 && v[1].Cmp(b.Position[1]) == 0 {
-				obtainBonuses = append(obtainBonuses, GenBonusKey(fmt.Sprint(b.Problem), b.Bonus))
+				obtainBonuses = append(obtainBonuses, GenBonusKey(b.Problem, b.Bonus))
 				break
 			}
 		}

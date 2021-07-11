@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -146,6 +147,7 @@ func main() {
 	var dbpath = flag.String("db", "", "sqlitedb path")
 	var initdb = flag.Bool("initdb", false, "init db")
 	var solutionsToDB = flag.Bool("solutions-to-db", false, "insert solution from solution folder")
+	var migratedb = flag.Bool("migratedb", false, "migrate db")
 	flag.Parse()
 	if *dbpath != "" {
 		conn, err := sqlx.Open("sqlite3", *dbpath)
@@ -156,6 +158,10 @@ func main() {
 
 		if *initdb {
 			defaultDB.Init()
+		}
+
+		if *migratedb {
+			log.Println("migrate:", defaultDB.Migrate())
 		}
 
 		if *solutionsToDB {
@@ -204,7 +210,8 @@ func main() {
 					os.WriteFile(filePath, body, 0644)
 				}
 				if defaultDB.Ok() {
-					_, err = defaultDB.RegisterSolution(fmt.Sprintf("eval-dislike%v", result), id, body)
+					idInt, _ := strconv.Atoi(id)
+					_, err = defaultDB.RegisterSolution(fmt.Sprintf("eval-dislike%v", result), idInt, body)
 					if err != nil {
 						log.Println("RegisterSolution err", err)
 					}
