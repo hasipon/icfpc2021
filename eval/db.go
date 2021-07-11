@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
+	"hash/fnv"
 	"sort"
 	"strconv"
 	"strings"
@@ -188,18 +188,28 @@ func (db SQLiteDB) RegisterSolution(name string, problemID int, poseBytes []byte
 	useBonus := ""
 	var pose Pose
 	if err := json.Unmarshal(poseBytes, &pose); err != nil {
-		log.Fatal("pose:", err)
+		return nil, err
 	}
 	if 0 < len(pose.Bonuses) {
 		if 1 < len(pose.Bonuses) {
-			log.Fatal("TOO MANY BONUSES")
+			return nil, fmt.Errorf("TOO MANY BONUSES")
 		}
 		useBonus = pose.Bonuses[0].Bonus
 	}
 
+	// ボーナスの取得状況まで考えるとIDが重複してしまう可能性があるので分ける
+	hasher := fnv.New32()
+	hasher.Write(poseBytes)
+	sum := hasher.Sum32()
+
+	bns := ""
+	if useBonus != "" {
+		bns = "-" + useBonus
+	}
+
 	now := time.Now()
 	solution := &Solution{
-		ID:        fmt.Sprint(problemID) + "-" + name,
+		ID:        fmt.Sprint(problemID) + "-" + name + bns + "-sum" + fmt.Sprint(sum),
 		ProblemID: problemID,
 		Json:      string(poseBytes),
 		UseBonus:  useBonus,
