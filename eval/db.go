@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS solution
 );
 `
 const indexes = `
-CREATE INDEX IF NOT EXISTS ON SOLUTION_DISLIKE account(dislike);
+CREATE INDEX IF NOT EXISTS ON SOLUTION_DISLIKE solution(dislike);
 `
 
 type ProblemSetting struct {
@@ -80,10 +80,6 @@ func GenBonusKey(problemID string, bonusName string) BonusKey {
 		panic(err)
 	}
 	return BonusKey(fmt.Sprintf("%04d_%s", problemIDInt, bonusName))
-}
-
-func (ps *ProblemSetting) IsBonusUseOk(bonusName string) bool {
-	return ps.UseBonus == bonusName
 }
 
 func (db SQLiteDB) Ok() bool {
@@ -282,10 +278,13 @@ func (db SQLiteDB) FindBestSolution(problemID string) (*Solution, error) {
 func (db SQLiteDB) GetProblemSetting(problemID string) (*ProblemSetting, error) {
 	s := &ProblemSetting{}
 	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE problem_id = ?", problemID).StructScan(s)
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
+	return s, err
+}
+
+func (db SQLiteDB) GetWhichProblemUnlocksTheBonus(key BonusKey) (*ProblemSetting, error) {
+	s := &ProblemSetting{}
+	err := db.QueryRowx("SELECT * FROM m_problem_setting WHERE unlock_bonus_key = ? LIMIT 1", key).StructScan(s)
+	return s, err
 }
 
 func (db SQLiteDB) GetAllProblemIDsInSubmission() ([]string, error) {

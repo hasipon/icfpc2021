@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -39,6 +40,34 @@ func batchMode(solutionsDir string, submit bool) {
 		go batchSubmission()
 	}
 	batchEvalDir(solutionsDir)
+}
+
+var errNoBonusUsed = fmt.Errorf("no bonus used")
+var errDifferentBonus = fmt.Errorf("different bonus used")
+
+func replaceBonusProblemID(poseJson []byte, bonusName, problemID string) ([]byte, error) {
+	probId, err := strconv.Atoi(problemID)
+	if err != nil {
+		return nil, err
+	}
+
+	var pose Pose
+	err = json.Unmarshal(poseJson, &pose)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pose.Bonuses) == 0 {
+		return nil, errNoBonusUsed
+	}
+
+	if pose.Bonuses[0].Bonus != bonusName {
+		return nil, errDifferentBonus
+	}
+
+	pose.Bonuses[0].Problem = probId
+	result, err := json.Marshal(pose)
+	return result, err
 }
 
 func fetchProblemsJson() {
@@ -228,22 +257,36 @@ func batchSubmission() {
 				continue
 			}
 
+			poseBytes := []byte(solution.Json)
+
+			// どの問題でこのボーナスをアンロックするべきか調べて
+			// ボーナスをアンロックする問題番号の差し替え
 			if solution.UseBonus != "" {
-				// TODO ボーナスつきの自動提出
-				continue
+				setting, err := defaultDB.GetWhichProblemUnlocksTheBonus(GenBonusKey(solution.ProblemID, solution.UseBonus))
+				if err != nil {
+					log.Println("GetWhichProblemUnlocksTheBonus err", err)
+					continue
+				}
+
+				poseBytes, err = replaceBonusProblemID(poseBytes, solution.UseBonus, setting.ProblemId)
+				if err != nil {
+					log.Println("replaceBonusProblemID err", err)
+					continue
+				}
 			}
 
 			dislike := new(Int)
 			dislike.SetString(solution.DislikeS, 10)
 
+			// TODO: dislikeで比較するのは誤り
+			// 最終提出時にはRateLimitのときちゃんと待ってるしサブミットし続ければいいかも..
 			if latestDislike[problemID] == nil || dislike.Cmp(latestDislike[problemID]) == -1 { // dislike < latest
-				log.Println("Submitting", problemID, solution.ID)
-				log.Printf("%#v", solution)
+				log.Println("Submitting", problemID, solution.ID, solution.UseBonus, solution.UnlockBonus)
 
-				// TODO CONVERT BONUS PARAMETER
-				result, err := submitSolution(problemID, []byte(solution.Json))
+				result, err := submitSolution(problemID, poseBytes)
 				if err != nil {
-					log.Fatal("submission error")
+					log.Println("submission error")
+					continue
 				}
 
 				if result.Error == "" {
@@ -252,8 +295,10 @@ func batchSubmission() {
 					log.Println(result.Error)
 					sec := result.rateLimitSecond()
 					rateLimitTime[problemID] = time.Now().Add(time.Second * time.Duration(sec))
+					log.Println("RateLimit updated. problem ", problemID, " duration", time.Until(rateLimitTime[problemID]))
 				} else {
-					log.Fatal(result.Error)
+					log.Println("submission error", result.Error)
+					continue
 				}
 			}
 		}
