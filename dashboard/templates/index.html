@@ -39,12 +39,12 @@
             <td class="text-center"><img src="/{{p.name}}.svg"></td>
             <td class="text-center">
                 {% for bf in p.bonus_from %}
-                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
+                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})<br />
                 {% endfor %}
             </td>
             <td class="text-center">
                 {% for bf in p.bonus_to %}
-                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})
+                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})<br />
                 {% endfor %}
             </td>
             <td class="text-center">{{p.hole}}</td>
