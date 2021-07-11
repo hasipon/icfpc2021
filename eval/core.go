@@ -15,7 +15,7 @@ type Figure struct {
 
 type Problem struct {
 	Hole [][]*Int `json:"hole"`
-	Epsilon Int `json:"epsilon"`
+	Epsilon *Int `json:"epsilon"`
 	Figure Figure `json:"figure"`
 }
 
@@ -177,6 +177,7 @@ func include(problem *Problem, p Point) bool {
 }
 
 func applyBonus(problem *Problem, pose *Pose) *Problem{
+	originEdgeNum := len(problem.Figure.Edges)
 	for _, b := range pose.Bonuses {
 		if b.Bonus == "BREAK_A_LEG" {
 			target := make(map[int]bool)
@@ -201,7 +202,10 @@ func applyBonus(problem *Problem, pose *Pose) *Problem{
 				newEdges = append(newEdges, e)
 			}
 			problem.Figure.Edges = newEdges
-		} else {
+		} else if b.Bonus == "GLOBALIST"{
+			problem.Epsilon = problem.Epsilon.Mul(problem.Epsilon,
+				new(Int).SetInt64(int64(originEdgeNum)))
+		}else {
 			log.Printf("Unknown bounus: %s", b.Bonus)
 		}
 	}
@@ -226,7 +230,7 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 			diff = new(Int).Sub(origD, nowD)
 		}
 		diff = diff.Mul(diff, new(Int).SetInt64(1000000))
-		eps := new(Int).Mul(&problem.Epsilon, origD)
+		eps := new(Int).Mul(problem.Epsilon, origD)
 		result := diff.Cmp(eps)
 		if result > 0 {
 			return false, fmt.Sprintf("Edge between (%d, " +
