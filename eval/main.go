@@ -19,13 +19,13 @@ var problems embed.FS
 
 func eval(problemBytes, poseBytes []byte) (string, bool, string) {
 	var problem *Problem
-	if err := json.Unmarshal(problemBytes, problem); err != nil {
-		log.Fatal(err)
+	if err := json.Unmarshal(problemBytes, &problem); err != nil {
+		log.Fatal("problem:",  err)
 	}
 
 	var pose *Pose
-	if err := json.Unmarshal(poseBytes, pose); err != nil {
-		log.Fatal(err)
+	if err := json.Unmarshal(poseBytes, &pose); err != nil {
+		log.Fatal("pose:",  err)
 	}
 	problem = applyBonus(problem, pose)
 	result := dislike(problem, pose)
