@@ -15,6 +15,7 @@ import pixi.core.Application;
 import pixi.core.graphics.Graphics;
 import pixi.core.math.Point;
 import pixi.core.math.shapes.Rectangle;
+import pixi.filters.alpha.AlphaFilter;
 import pixi.interaction.InteractionEvent;
 import tweenxcore.color.RgbColor;
 using tweenxcore.Tools;
@@ -453,16 +454,17 @@ class Main
 		var bonuses:Array<Dynamic> = [];
 		for (bonus in availableBonuses)
 		{
-			if (bonus.element.checked)
+			var b:Dynamic = { bonus:bonus.bonus , problem:bonus.from }
+			switch (bonus.bonus)
 			{
-				var b:Dynamic = { bonus:bonus.bonus , problem:bonus.from }
-				switch (bonus.bonus)
-				{
-					case GLOBALIST:
-					case BREAK_A_LEG:
-					case WALLHACK:
-				}
-				bonuses.push(b);
+				case BonusKind.GLOBALIST  : if (bonus.element.checked) bonuses.push(b);
+				case BonusKind.BREAK_A_LEG: 
+					var edge = problems[problemIndex].figure.edges[Std.parseInt(bonus.element.value)];
+					if (edge != null) {
+						b.edge = edge;
+						bonuses.push(b);
+					}
+				case BonusKind.WALLHACK   : if (bonus.element.checked) bonuses.push(b);
 			}
 		}
 		return Json.stringify({vertices:answer, bonuses: bonuses});
@@ -556,10 +558,11 @@ class Main
 			var sx = answer[selectedPoint][0];
 			var sy = answer[selectedPoint][1];
 			var points:Map<Int, Int> = [];
+			var pointLength = 0;
 			for (ei => edge in problem.figure.edges)
 			{
-				if (edge[0] == selectedPoint) points.set(ei, edge[1]);
-				if (edge[1] == selectedPoint) points.set(ei, edge[0]);
+				if (edge[0] == selectedPoint) { points.set(ei, edge[1]); pointLength += 1; }
+				if (edge[1] == selectedPoint) { points.set(ei, edge[0]); pointLength += 1; }
 			}
 			var l = if (sx - 300 < left  ) left   else sx - 300;
 			var r = if (right < sx + 300 ) right  else sx + 300;
@@ -569,7 +572,7 @@ class Main
 			{
 				for (y in t...b)
 				{
-					var fail = false;
+					var failCount = 0;
 					for (ei => point in points)
 					{
 						var ax = answer[point][0] - x;
@@ -579,15 +582,18 @@ class Main
 				
 						if (!problem.checkEpsilon(ad, pd))
 						{
-							fail = true;
+							failCount += 1;
 						}
 					}
-					if (!fail)
+					var alpha = if (failCount == 0) 1 else (failCount / pointLength).lerp(0.4, 0);
+					trace(failCount, pointLength);
+					if (alpha > 0)
 					{
 						var x = (x - left) * scale;
 						var y = (y - top ) * scale;
-						hintGraphics.beginFill(0x9999FF);
+						hintGraphics.beginFill(0x9999FF, alpha);
 						hintGraphics.drawCircle(x, y, 4);
+						hintGraphics.endFill();
 					}
 				}
 			}
@@ -638,7 +644,12 @@ class Main
 				if (bonus.problem == problemIndex + 1)
 				{
 					var element:InputElement = cast Browser.document.createElement('input');
-					element.setAttribute("type", "checkbox");
+					switch (bonus.bonus)
+					{
+						case BonusKind.WALLHACK   :element.setAttribute("type", "checkbox");
+						case BonusKind.BREAK_A_LEG:element.setAttribute("type", "number");
+						case BonusKind.GLOBALIST  :element.setAttribute("type", "checkbox");
+					}
 					element.setAttribute("id", "bonus" + availableBonuses.length);
 					element.addEventListener("input", () -> {
 						updateBonuses();
@@ -741,7 +752,7 @@ class Main
 			hole: source.hole,
 			epsilon: source.epsilon,
 			figure: {
-				edges: [for (e in source.figure.edges) e],
+				edges: [],
 			},
 			bonuses:source.bonuses,
 			distances:[],
@@ -751,21 +762,40 @@ class Main
 		};
 		for (bonus in availableBonuses)
 		{
-			if (bonus.element.checked)
+			switch (bonus.bonus)
 			{
-				switch (bonus.bonus)
-				{
-					case BonusKind.GLOBALIST  : problem.isGlobalist = true;
-					case BonusKind.BREAK_A_LEG:
-					case BonusKind.WALLHACK   : problem.isWallhack = true;
-				}
+				case BonusKind.GLOBALIST  : if (bonus.element.checked    ) problem.isGlobalist = true;
+				case BonusKind.BREAK_A_LEG: if (bonus.element.value != "") problem.breakALeg = Option.Some(Std.parseInt(bonus.element.value));
+				case BonusKind.WALLHACK   : if (bonus.element.checked    ) problem.isWallhack = true;
 			}
 		}
-		for (edge in source.figure.edges) 
+		trace(problem.breakALeg);
+		for (ei => edge in source.figure.edges) 
 		{
-			var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
-			var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
-			problem.distances.push(px * px + py * py);
+			switch (problem.breakALeg)
+			{
+				case Option.Some(value) if (value == ei):
+					answer.push([
+						Math.round((source.figure.vertices[edge[0]][0] + source.figure.vertices[edge[1]][0]) / 2),
+						Math.round((source.figure.vertices[edge[0]][1] + source.figure.vertices[edge[1]][1]) / 2)
+					]);
+					var e = [edge[0], answer.length - 1];
+					
+					var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+					var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+					var pd = (px * px + py * py) / 4;
+					problem.distances.push(pd);
+					problem.figure.edges.push([edge[0], answer.length - 1]);
+					
+					problem.distances.push(pd);
+					problem.figure.edges.push([edge[1], answer.length - 1]);
+					
+				case _:
+					var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+					var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+					problem.distances.push(px * px + py * py);
+					problem.figure.edges.push(edge);
+			}
 		}
 	}
 	

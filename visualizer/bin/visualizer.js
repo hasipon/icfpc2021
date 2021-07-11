@@ -222,7 +222,7 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:195:",e);
+		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 196, className : "Main", methodName : "onChangeAnswer"});
 	}
 };
 Main.fetchProblem = function() {
@@ -524,17 +524,25 @@ Main.getAnswer = function() {
 	while(_g < _g1.length) {
 		var bonus = _g1[_g];
 		++_g;
-		if(bonus.element.checked) {
-			var b = { bonus : bonus.bonus, problem : bonus.from};
-			switch(bonus.bonus) {
-			case "BREAK_A_LEG":
-				break;
-			case "GLOBALIST":
-				break;
-			case "WALLHACK":
-				break;
+		var b = { bonus : bonus.bonus, problem : bonus.from};
+		switch(bonus.bonus) {
+		case "BREAK_A_LEG":
+			var edge = Main.problems[Main.problemIndex].figure.edges[Std.parseInt(bonus.element.value)];
+			if(edge != null) {
+				b.edge = edge;
+				bonuses.push(b);
 			}
-			bonuses.push(b);
+			break;
+		case "GLOBALIST":
+			if(bonus.element.checked) {
+				bonuses.push(b);
+			}
+			break;
+		case "WALLHACK":
+			if(bonus.element.checked) {
+				bonuses.push(b);
+			}
+			break;
 		}
 	}
 	return JSON.stringify({ vertices : Main.answer, bonuses : bonuses});
@@ -618,6 +626,7 @@ Main.onMouseDown = function(e) {
 		var sx = Main.answer[selectedPoint][0];
 		var sy = Main.answer[selectedPoint][1];
 		var points = new haxe_ds_IntMap();
+		var pointLength = 0;
 		var _g2_current = 0;
 		var _g2_array = Main.problem.figure.edges;
 		while(_g2_current < _g2_array.length) {
@@ -627,9 +636,11 @@ Main.onMouseDown = function(e) {
 			var edge = _g3_value;
 			if(edge[0] == selectedPoint) {
 				points.h[ei] = edge[1];
+				++pointLength;
 			}
 			if(edge[1] == selectedPoint) {
 				points.h[ei] = edge[0];
+				++pointLength;
 			}
 		}
 		var l = sx - 300 < Main.left ? Main.left : sx - 300;
@@ -644,7 +655,7 @@ Main.onMouseDown = function(e) {
 			var _g3 = b;
 			while(_g2 < _g3) {
 				var y = _g2++;
-				var fail = false;
+				var failCount = 0;
 				var _g4 = new haxe_iterators_MapKeyValueIterator(points);
 				while(_g4.hasNext()) {
 					var _g5 = _g4.next();
@@ -655,14 +666,23 @@ Main.onMouseDown = function(e) {
 					var ad = ax * ax + ay * ay;
 					var pd = Main.problem.distances[ei];
 					if(!ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
-						fail = true;
+						++failCount;
 					}
 				}
-				if(!fail) {
+				var alpha;
+				if(failCount == 0) {
+					alpha = 1;
+				} else {
+					var rate = failCount / pointLength;
+					alpha = 0.3 * (1 - rate) + 0 * rate;
+				}
+				haxe_Log.trace(failCount,{ fileName : "src/Main.hx", lineNumber : 589, className : "Main", methodName : "onMouseDown", customParams : [pointLength]});
+				if(alpha > 0) {
 					var x1 = (x - Main.left) * Main.scale;
 					var y1 = (y - Main.top) * Main.scale;
-					Main.hintGraphics.beginFill(10066431);
+					Main.hintGraphics.beginFill(10066431,alpha);
 					Main.hintGraphics.drawCircle(x1,y1,4);
+					Main.hintGraphics.endFill();
 				}
 			}
 		}
@@ -719,7 +739,17 @@ Main.readProblem = function(index) {
 			++_g;
 			if(bonus.problem == Main.problemIndex + 1) {
 				var element = window.document.createElement("input");
-				element.setAttribute("type","checkbox");
+				switch(bonus.bonus) {
+				case "BREAK_A_LEG":
+					element.setAttribute("type","number");
+					break;
+				case "GLOBALIST":
+					element.setAttribute("type","checkbox");
+					break;
+				case "WALLHACK":
+					element.setAttribute("type","checkbox");
+					break;
+				}
 				element.setAttribute("id","bonus" + Main.availableBonuses.length);
 				element.addEventListener("input",function() {
 					Main.updateBonuses();
@@ -840,43 +870,64 @@ Main.readProblem = function(index) {
 Main.updateBonuses = function() {
 	var source = Main.problems[Main.problemIndex];
 	Main.answer.length = source.figure.vertices.length;
-	var source1 = source.hole;
-	var source2 = source.epsilon;
-	var _g = [];
-	var _g1 = 0;
-	var _g2 = source.figure.edges;
-	while(_g1 < _g2.length) {
-		var e = _g2[_g1];
-		++_g1;
-		_g.push(e);
-	}
-	Main.problem = { hole : source1, epsilon : source2, figure : { edges : _g}, bonuses : source.bonuses, distances : [], breakALeg : haxe_ds_Option.None, isGlobalist : false, isWallhack : false};
+	Main.problem = { hole : source.hole, epsilon : source.epsilon, figure : { edges : []}, bonuses : source.bonuses, distances : [], breakALeg : haxe_ds_Option.None, isGlobalist : false, isWallhack : false};
 	var _g = 0;
 	var _g1 = Main.availableBonuses;
 	while(_g < _g1.length) {
 		var bonus = _g1[_g];
 		++_g;
-		if(bonus.element.checked) {
-			switch(bonus.bonus) {
-			case "BREAK_A_LEG":
-				break;
-			case "GLOBALIST":
-				Main.problem.isGlobalist = true;
-				break;
-			case "WALLHACK":
-				Main.problem.isWallhack = true;
-				break;
+		switch(bonus.bonus) {
+		case "BREAK_A_LEG":
+			if(bonus.element.value != "") {
+				Main.problem.breakALeg = haxe_ds_Option.Some(Std.parseInt(bonus.element.value));
 			}
+			break;
+		case "GLOBALIST":
+			if(bonus.element.checked) {
+				Main.problem.isGlobalist = true;
+			}
+			break;
+		case "WALLHACK":
+			if(bonus.element.checked) {
+				Main.problem.isWallhack = true;
+			}
+			break;
 		}
 	}
-	var _g = 0;
-	var _g1 = source.figure.edges;
-	while(_g < _g1.length) {
-		var edge = _g1[_g];
-		++_g;
-		var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
-		var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
-		Main.problem.distances.push(px * px + py * py);
+	haxe_Log.trace(Main.problem.breakALeg,{ fileName : "src/Main.hx", lineNumber : 772, className : "Main", methodName : "updateBonuses"});
+	var _g2_current = 0;
+	var _g2_array = source.figure.edges;
+	while(_g2_current < _g2_array.length) {
+		var _g3_value = _g2_array[_g2_current];
+		var _g3_key = _g2_current++;
+		var ei = _g3_key;
+		var edge = _g3_value;
+		var _g = Main.problem.breakALeg;
+		if(_g._hx_index == 0) {
+			var value = _g.v;
+			if(value == ei) {
+				Main.answer.push([Math.round((source.figure.vertices[edge[0]][0] + source.figure.vertices[edge[1]][0]) / 2),Math.round((source.figure.vertices[edge[0]][1] + source.figure.vertices[edge[1]][1]) / 2)]);
+				var e_0 = edge[0];
+				var e_1 = Main.answer.length - 1;
+				var px = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+				var py = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+				var pd = (px * px + py * py) / 4;
+				Main.problem.distances.push(pd);
+				Main.problem.figure.edges.push([edge[0],Main.answer.length - 1]);
+				Main.problem.distances.push(pd);
+				Main.problem.figure.edges.push([edge[1],Main.answer.length - 1]);
+			} else {
+				var px1 = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+				var py1 = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+				Main.problem.distances.push(px1 * px1 + py1 * py1);
+				Main.problem.figure.edges.push(edge);
+			}
+		} else {
+			var px2 = source.figure.vertices[edge[0]][0] - source.figure.vertices[edge[1]][0];
+			var py2 = source.figure.vertices[edge[0]][1] - source.figure.vertices[edge[1]][1];
+			Main.problem.distances.push(px2 * px2 + py2 * py2);
+			Main.problem.figure.edges.push(edge);
+		}
 	}
 };
 Main.drawAnswer = function() {
@@ -1187,6 +1238,26 @@ Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
 };
+Std.parseInt = function(x) {
+	if(x != null) {
+		var _g = 0;
+		var _g1 = x.length;
+		while(_g < _g1) {
+			var i = _g++;
+			var c = x.charCodeAt(i);
+			if(c <= 8 || c >= 14 && c != 32 && c != 45) {
+				var nc = x.charCodeAt(i + 1);
+				var v = parseInt(x,nc == 120 || nc == 88 ? 16 : 10);
+				if(isNaN(v)) {
+					return null;
+				} else {
+					return v;
+				}
+			}
+		}
+	}
+	return null;
+};
 Std.random = function(x) {
 	if(x <= 0) {
 		return 0;
@@ -1253,6 +1324,31 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
+var haxe_Log = function() { };
+haxe_Log.__name__ = true;
+haxe_Log.formatOutput = function(v,infos) {
+	var str = Std.string(v);
+	if(infos == null) {
+		return str;
+	}
+	var pstr = infos.fileName + ":" + infos.lineNumber;
+	if(infos.customParams != null) {
+		var _g = 0;
+		var _g1 = infos.customParams;
+		while(_g < _g1.length) {
+			var v = _g1[_g];
+			++_g;
+			str += ", " + Std.string(v);
+		}
+	}
+	return pstr + ": " + str;
+};
+haxe_Log.trace = function(v,infos) {
+	var str = haxe_Log.formatOutput(v,infos);
+	if(typeof(console) != "undefined" && console.log != null) {
+		console.log(str);
+	}
+};
 var haxe_Resource = function() { };
 haxe_Resource.__name__ = true;
 haxe_Resource.getString = function(name) {
