@@ -12,6 +12,7 @@ pub struct Problem {
     pub right:i64,
     pub top:i64,
     pub bottom:i64,
+    pub bonuses: Vec<Point>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -19,6 +20,11 @@ pub struct ProblemSource {
     pub hole: Vec<Point>,
     pub epsilon: i64,
     pub figure: Figure,
+    pub bonuses: Vec<Bonus>,
+}
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Bonus {
+    pub position:Point,   
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -40,7 +46,9 @@ pub struct State {
     pub answer:Vec<Point>,
     pub dislike:i64,
     pub not_included:i64,
+    pub bonus_count:i64,
     pub unmatched:i64,
+    pub len:i64,
 }
 
 impl State {
@@ -49,17 +57,18 @@ impl State {
             dislike     : get_dislike(problem, &answer),
             unmatched   : get_unmatched(problem, &answer),
             not_included: get_not_included(problem, &answer),
+            bonus_count : get_bonus_count(problem, &answer),
+            len : (problem.edges.len() + answer.len() + problem.hole.len()) as i64 + (problem.right - problem.left)  + (problem.bottom - problem.top),
             answer:  answer,
         }
     }
     pub fn is_valid(&self) -> bool {
         self.unmatched == 0 && 
         self.not_included == 0
-
     }
     pub fn get_score(&self) -> i64 {
-        let penalty = self.not_included * 30 + self.unmatched * 5;
-        self.dislike + penalty + (self.not_included * self.dislike) / 500
+        let penalty = self.not_included * 50 + self.unmatched * 2 - self.bonus_count * 10;
+        self.dislike + penalty * self.len
     }
 }
 
