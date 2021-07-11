@@ -538,6 +538,11 @@ Main.getAnswer = function() {
 				bonuses.push(b);
 			}
 			break;
+		case "SUPERFLEX":
+			if(bonus.element.checked) {
+				bonuses.push(b);
+			}
+			break;
 		case "WALLHACK":
 			if(bonus.element.checked) {
 				bonuses.push(b);
@@ -745,6 +750,9 @@ Main.readProblem = function(index) {
 				case "GLOBALIST":
 					element.setAttribute("type","checkbox");
 					break;
+				case "SUPERFLEX":
+					element.setAttribute("type","checkbox");
+					break;
 				case "WALLHACK":
 					element.setAttribute("type","checkbox");
 					break;
@@ -854,6 +862,9 @@ Main.readProblem = function(index) {
 		case "GLOBALIST":
 			color = 16776960;
 			break;
+		case "SUPERFLEX":
+			color = 65535;
+			break;
 		case "WALLHACK":
 			color = 16750848;
 			break;
@@ -869,7 +880,7 @@ Main.readProblem = function(index) {
 Main.updateBonuses = function() {
 	var source = Main.problems[Main.problemIndex];
 	Main.answer.length = source.figure.vertices.length;
-	Main.problem = { hole : source.hole, epsilon : source.epsilon, figure : { edges : []}, bonuses : source.bonuses, distances : [], breakALeg : haxe_ds_Option.None, isGlobalist : false, isWallhack : false};
+	Main.problem = { hole : source.hole, epsilon : source.epsilon, figure : { edges : []}, bonuses : source.bonuses, distances : [], breakALeg : haxe_ds_Option.None, isGlobalist : false, isWallhack : false, isSuperFlex : false};
 	var _g = 0;
 	var _g1 = Main.availableBonuses;
 	while(_g < _g1.length) {
@@ -886,6 +897,11 @@ Main.updateBonuses = function() {
 				Main.problem.isGlobalist = true;
 			}
 			break;
+		case "SUPERFLEX":
+			if(bonus.element.checked) {
+				Main.problem.isSuperFlex = true;
+			}
+			break;
 		case "WALLHACK":
 			if(bonus.element.checked) {
 				Main.problem.isWallhack = true;
@@ -893,7 +909,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	console.log("src/Main.hx:771:",Main.problem.breakALeg);
+	console.log("src/Main.hx:776:",Main.problem.breakALeg);
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {

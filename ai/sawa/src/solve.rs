@@ -68,6 +68,7 @@ pub fn solve(source:&ProblemSource) -> State {
             for _ in 0..2 {
                 let score = current.get_score();
                 let dislike = current.dislike;
+                let fixed_points = HashSet::new(); 
 
                 let mut vertecies = current.answer.clone();
                 if rng.gen_bool(0.3 * scale) || score == prev_score && dislike == prev_dislike && rng.gen_bool(1.0 * scale) { 

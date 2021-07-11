@@ -4,6 +4,7 @@ import haxe.ds.Option;
 typedef Problem = {
 	isGlobalist:Bool,
 	isWallhack:Bool,
+	isSuperFlex:Bool,
 	epsilon: Int,
 	hole: Array<Point>,
 	figure: {

@@ -226,6 +226,6 @@ class ProblemTools
 			}
 			h0 = h1;
 		}
-		return  count % 2 != 0;
+		return count % 2 != 0;
 	}
 }

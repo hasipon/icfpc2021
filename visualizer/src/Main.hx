@@ -465,6 +465,7 @@ class Main
 						bonuses.push(b);
 					}
 				case BonusKind.WALLHACK   : if (bonus.element.checked) bonuses.push(b);
+				case BonusKind.SUPERFLEX  : if (bonus.element.checked) bonuses.push(b);
 			}
 		}
 		return Json.stringify({vertices:answer, bonuses: bonuses});
@@ -648,6 +649,7 @@ class Main
 						case BonusKind.WALLHACK   :element.setAttribute("type", "checkbox");
 						case BonusKind.BREAK_A_LEG:element.setAttribute("type", "number");
 						case BonusKind.GLOBALIST  :element.setAttribute("type", "checkbox");
+						case BonusKind.SUPERFLEX  :element.setAttribute("type", "checkbox");
 					}
 					element.setAttribute("id", "bonus" + availableBonuses.length);
 					element.addEventListener("input", () -> {
@@ -732,6 +734,7 @@ class Main
 				case BonusKind.GLOBALIST  :0xFFFF00;
 				case BonusKind.BREAK_A_LEG:0x0000FF;
 				case BonusKind.WALLHACK   :0x0FF9900;
+				case BonusKind.SUPERFLEX  :0x00FFFF;
 			}
 			problemGraphics.beginFill(color);
 			var x = (bonus.position[0] - left) * scale;
@@ -758,6 +761,7 @@ class Main
 			breakALeg: Option.None,
 			isGlobalist: false,
 			isWallhack : false,
+			isSuperFlex: false,
 		};
 		for (bonus in availableBonuses)
 		{
@@ -765,7 +769,8 @@ class Main
 			{
 				case BonusKind.GLOBALIST  : if (bonus.element.checked    ) problem.isGlobalist = true;
 				case BonusKind.BREAK_A_LEG: if (bonus.element.value != "") problem.breakALeg = Option.Some(Std.parseInt(bonus.element.value));
-				case BonusKind.WALLHACK   : if (bonus.element.checked    ) problem.isWallhack = true;
+				case BonusKind.WALLHACK   : if (bonus.element.checked    ) problem.isWallhack  = true;
+				case BonusKind.SUPERFLEX  : if (bonus.element.checked    ) problem.isSuperFlex = true;
 			}
 		}
 		trace(problem.breakALeg);
