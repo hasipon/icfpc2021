@@ -1,4 +1,5 @@
 package ;
+import haxe.ds.Map;
 
 class ProblemTools 
 {
@@ -53,6 +54,22 @@ class ProblemTools
 	{
 		var failCount = 0;
 		var h0 = problem.hole[problem.hole.length - 1];
+		var failedPoint = -1;
+		var failedEdge0 = -1;
+		var failedEdge1 = -1;
+		
+		for (i => point in answer)
+		{
+			if (!includesPoint(problem, point))
+			{
+				if (problem.isWallhack && failedPoint == -1)
+				{
+					failedPoint = i;
+					continue;
+				}
+				failCount += 2;
+			}
+		}
 		for (h1 in problem.hole)
 		{
 			for (edge in problem.figure.edges)
@@ -65,7 +82,42 @@ class ProblemTools
 						answer[edge[1]] 
 					)
 				) {
-					failCount += 4;
+					if (problem.isWallhack)
+					{
+						if (failedPoint != -1)
+						{
+							if (
+								failedPoint == edge[0] || 
+								failedPoint == edge[1]
+							)
+							{
+								continue;
+							}
+						}
+						else
+						{
+							if (failedEdge0 == -1)
+							{
+								failedEdge0 = edge[0];
+								failedEdge1 = edge[1];
+								continue;
+							}
+							else
+							{
+								if (failedEdge0 == edge[0] || failedEdge0 == edge[1])
+								{
+									failedPoint = failedEdge0;
+									continue;
+								}
+								if (failedEdge1 == edge[0] || failedEdge1 == edge[1])
+								{
+									failedPoint = failedEdge1;
+									continue;
+								}
+							}
+						}
+					}
+					failCount += 2;
 				}
 			}
 			h0 = h1;
@@ -132,7 +184,7 @@ class ProblemTools
 		return fail * 200 + dislike + (fail / 5) * dislike;
 	}
 	
-	public static function checkPoint(
+	public static function includesPoint(
 		problem:Problem, point:Array<Int>):Bool
 	{
 		var x = point[0];

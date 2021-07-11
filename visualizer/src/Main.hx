@@ -875,7 +875,7 @@ class Main
 		{
 			var x = (point[0] - left) * scale;
 			var y = (point[1] - top ) * scale;
-			var color = if (problem.checkPoint(point)) 0x00CC00 else 0x008822;
+			var color = if (problem.includesPoint(point)) 0x00CC00 else 0x008822;
 			answerGraphics.beginFill(color);
 			answerGraphics.drawCircle(x, y, 4);
 			answerGraphics.endFill();
