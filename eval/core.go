@@ -267,18 +267,6 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 	for _, e := range problem.Figure.Edges {
 		v1 := pose.Vertices[e[0]]
 		v2 := pose.Vertices[e[1]]
-		ind1, ok := holePointsInd[v1[0].String()+","+v1[1].String()]
-		if !ok {
-			continue
-		}
-		ind2, ok := holePointsInd[v2[0].String()+","+v2[1].String()]
-		if !ok {
-			continue
-		}
-		if ind1 == ind2 {
-			continue
-		}
-
 		two := new(Int).SetInt64(2)
 		sumX := new(Int).Mul(two, new(Int).Add(v1[0], v2[0]))
 		sumY := new(Int).Mul(two, new(Int).Add(v1[1], v2[1]))
@@ -295,35 +283,6 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 		if !midInc {
 			outEdges = append(outEdges, e)
 		}
-
-		/*
-			first := 0
-			for now := ind1+1;  now != ind2; now++{
-				if now == len(problem.Hole) {
-					now = 0
-				}
-				first |= ccw(v1, v2, problem.Hole[now])
-			}
-			second := 0
-			for now := ind2+1;  now != ind1; now++{
-				if now == len(problem.Hole) {
-					now = 0
-				}
-				second |= ccw(v1, v2, problem.Hole[now])
-			}
-			log.Println("first == ", first)
-			log.Println("second == ", second)
-			if (first & LEFT) != 0 && (first &RIGHT) != 0 {
-				return false, "bug1"
-			}
-			if (second & LEFT) != 0 && (second &RIGHT) != 0 {
-				return false, "bug2"
-			}
-			all := (first & second)
-			if (all & LEFT) != 0 || (all &RIGHT) != 0 {
-				return false, "edge is out of hole"
-			}
-		*/
 	}
 
 	var globalEpsSum float64
