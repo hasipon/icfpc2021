@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use std::mem;
 use serde_json::json;
 
-pub fn solve(source:&ProblemSource) -> State {
+pub fn solve(source:&ProblemSource) -> SolveResult {
     let mut distances = Vec::new();
     for edge in &source.figure.edges {
         distances.push(get_d(&source.figure.vertices[edge.0], &source.figure.vertices[edge.1]));
@@ -42,12 +42,13 @@ pub fn solve(source:&ProblemSource) -> State {
         bonuses
     };
     let current = State::new(&problem, source.figure.vertices.clone());
-    let mut best = current.clone();
+    let mut best       = current.clone();
+    let mut best_bonus = current.clone();
     let mut rng = SmallRng::from_entropy();
     let mut arr0 = Vec::new();
     let mut arr1 = Vec::new();
 
-    let size = 1600;
+    let size = 4000;
     let mut locked_points = HashSet::new();
 
     for i in 0..size {
@@ -63,7 +64,7 @@ pub fn solve(source:&ProblemSource) -> State {
 
     let mut prev_score = 1200003;
     let mut prev_dislike = 1200003;
-    let repeat = 180;
+    let repeat = 200;
 
     for i in 0..repeat {
         arr0.sort();
@@ -90,7 +91,7 @@ pub fn solve(source:&ProblemSource) -> State {
                         rate
                     );
                 }
-                if rng.gen_bool(0.5) {
+                if rng.gen_bool(0.2) {
                     let rate = if rng.gen_bool(0.5) { 1.0 - scale * 0.2 } else { rng.gen_range(0.1, 1.0) };
                     lock_points(
                         &mut locked_points, 
@@ -114,7 +115,7 @@ pub fn solve(source:&ProblemSource) -> State {
 
                 if rng.gen_bool(0.5) { random_include(&problem, &mut vertecies, &mut rng, &locked_points); }
                 if rng.gen_bool(0.7) { fit           (&problem.hole   , &mut vertecies, &mut rng, scale); }
-                if rng.gen_bool(0.2) { fit           (&problem.bonuses, &mut vertecies, &mut rng, scale); }
+                if rng.gen_bool(0.1) { fit           (&problem.bonuses, &mut vertecies, &mut rng, 1.0); }
 
                 pull(&problem, &mut vertecies, 40, &mut rng, &locked_points);
                 if rng.gen_bool(0.5) && get_unmatched(&problem, &mut vertecies) == 0 {
@@ -122,11 +123,20 @@ pub fn solve(source:&ProblemSource) -> State {
                 }
                 
                 let next = State::new(&problem, vertecies);
-                if 
-                    (!best.is_valid() && next.is_valid()) || 
-                    (best.is_valid() == next.is_valid() && best.get_score() >= next.get_score())
-                {
-                    best = next.clone()
+                if next.bonus_count > 0 {
+                    if 
+                        (!best_bonus.is_valid() && next.is_valid()) || 
+                        (best_bonus.is_valid() == next.is_valid() && best_bonus.get_score() >= next.get_score())
+                    {
+                        best_bonus = next.clone()
+                    }
+                } else {
+                    if 
+                        (!best.is_valid() && next.is_valid()) || 
+                        (best.is_valid() == next.is_valid() && best.get_score() >= next.get_score())
+                    {
+                        best = next.clone()
+                    }
                 }
                 arr1.push(next);
                 prev_score = score;
@@ -136,5 +146,5 @@ pub fn solve(source:&ProblemSource) -> State {
         mem::swap(&mut arr0, &mut arr1);
     }
 
-    best
+    SolveResult{ best, best_bonus }
 }

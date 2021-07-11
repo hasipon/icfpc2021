@@ -27,23 +27,40 @@ fn main()  -> std::io::Result<()>  {
     }
 
     for i in start..end {
-        if cleared.contains(&i) { continue; }
+        //if cleared.contains(&i) { continue; }
         let target = format!("{}", i);
         let file = File::open(format!("../../problems/{}", target))?;
         let reader = BufReader::new(file);
         let problem:ProblemSource = serde_json::from_reader(reader).unwrap();
         let result = solve(&problem);
         
-        let meta = json!({ "valid": result.is_valid(), "score": result.get_score(), "dislike": result.dislike, "bonus": result.bonus_count });
-        let answer = json!({ "vertices":result.answer.clone() });
-        
         println!("{}", target);
+
+        let meta = json!({ "valid": result.best.is_valid(), "score": result.best.get_score(), "dislike": result.best.dislike, "bonus": result.best.bonus_count });
+        let answer = json!({ "vertices":result.best.answer.clone() });
+        
         println!("{}", meta);
         println!("{}", answer);
-        if result.is_valid() {
-            let mut file = File::create(format!("out/{}-sawa-auto34-{}.json", target, name))?;
+
+        if result.best.is_valid() && result.best.dislike < result.best_bonus.dislike {
+            println!("best!");
+            let mut file = File::create(format!("out/{}-sawa-auto36-{}.json", target, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto34-{}.meta", target, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto36-{}.meta", target, name))?;
+            write!(file, "{}", meta);
+        }
+        
+        let meta = json!({ "valid": result.best_bonus.is_valid(), "score": result.best_bonus.get_score(), "dislike": result.best_bonus.dislike, "bonus": result.best_bonus.bonus_count });
+        let answer = json!({ "vertices":result.best_bonus.answer.clone() });
+        
+        println!("{}", meta);
+        println!("{}", answer);
+
+        if result.best_bonus.is_valid() && result.best_bonus.bonus_count > 0 {
+            println!("best_bonus!");
+            let mut file = File::create(format!("out/{}-sawa-auto36-bonus-{}.json", target, name))?;
+            write!(file, "{}", answer);
+            let mut file = File::create(format!("out/{}-sawa-auto36-bonus-{}.meta", target, name))?;
             write!(file, "{}", meta);
         }
     }

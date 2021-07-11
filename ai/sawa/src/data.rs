@@ -15,6 +15,10 @@ pub struct Problem {
     pub bonuses: Vec<Point>,
 }
 
+pub struct SolveResult {
+    pub best_bonus: State,
+    pub best      : State,
+}
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProblemSource {
     pub hole: Vec<Point>,
@@ -67,8 +71,8 @@ impl State {
         self.not_included == 0
     }
     pub fn get_score(&self) -> i64 {
-        let penalty = self.not_included * 50 + self.unmatched * 2 - self.bonus_count * 10;
-        self.dislike + penalty * self.len
+        let penalty = self.not_included * 50 + self.unmatched * 2;
+        self.dislike + penalty * self.len - (self.bonus_count * self.len) / 4
     }
 }
 

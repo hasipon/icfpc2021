@@ -88,6 +88,7 @@ pub fn get_bonus_count(problem:&Problem, answer:&Vec<Point>) -> i64 {
         for a in answer {
             if *a == *bonus {
                 result += 1;
+                break;
             }
         }
     }
