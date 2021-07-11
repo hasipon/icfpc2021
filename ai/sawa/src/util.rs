@@ -53,7 +53,7 @@ pub fn get_unmatched(problem:&Problem, answer:&Vec<Point>)->i64 {
 
 pub fn get_not_included(problem:&Problem, answer:&Vec<Point>) -> i64 {
     let mut result = 0;
-    let mut h0 = problem.hole[problem.hole.len() - 1];
+    let mut h0 = problem.hole[problem.hole.len() - 1].clone();
 
     // point 
     for a in answer {
@@ -83,7 +83,7 @@ pub fn includes(problem:&Problem, point:&Point) -> bool {
     let x = point.0;
     let y = point.1;
     let mut count = 0;
-    let mut h0 = problem.hole[problem.hole.len() - 1];
+    let mut h0 = problem.hole[problem.hole.len() - 1].clone();
     for h1 in &problem.hole {
         let mut x0 = h0.0 - x;
         let mut y0 = h0.1 - y;

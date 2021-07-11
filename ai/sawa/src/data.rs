@@ -8,6 +8,10 @@ pub struct Problem {
     pub edges: Vec<(usize, usize)>,
     pub distances: Vec<i64>,
     pub center:Point,
+    pub left:i64,
+    pub right:i64,
+    pub top:i64,
+    pub bottom:i64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -23,7 +27,7 @@ pub struct Figure {
     pub vertices:Vec<Point>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Point(pub i64, pub i64);
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -54,9 +58,8 @@ impl State {
 
     }
     pub fn get_score(&self) -> i64 {
-        self.dislike 
-            + self.not_included * 1000
-            + self.unmatched * 50
+        let penalty = self.not_included * 30 + self.unmatched * 5;
+        self.dislike + penalty + (self.not_included * self.dislike) / 500
     }
 }
 
