@@ -7,6 +7,7 @@ use serde_json::json;
 mod data;
 mod solve;
 mod util;
+mod operation;
 use data::*;
 use solve::solve;
 
@@ -25,15 +26,14 @@ fn main()  -> std::io::Result<()>  {
         let problem:ProblemSource = serde_json::from_reader(reader).unwrap();
         let result = solve(&problem);
         
-
         let meta = json!({ "valid": result.is_valid(), "score": result.get_score(), "dislike": result.dislike });
         let answer = json!({ "vertices":result.answer.clone() });
         println!("{}", meta);
         println!("{}", answer);
         if result.is_valid() {
-            let mut file = File::create(format!("out/{}-sawa-auto21.json", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto27.json", target))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto21.meta", target))?;
+            let mut file = File::create(format!("out/{}-sawa-auto27.meta", target))?;
             write!(file, "{}", meta);
         }
     }

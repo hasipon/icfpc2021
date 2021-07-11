@@ -8,6 +8,10 @@ pub struct Problem {
     pub edges: Vec<(usize, usize)>,
     pub distances: Vec<i64>,
     pub center:Point,
+    pub left:i64,
+    pub right:i64,
+    pub top:i64,
+    pub bottom:i64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -23,7 +27,7 @@ pub struct Figure {
     pub vertices:Vec<Point>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Point(pub i64, pub i64);
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -35,24 +39,27 @@ pub struct Answer {
 pub struct State {
     pub answer:Vec<Point>,
     pub dislike:i64,
-    pub intersected:i64,
+    pub not_included:i64,
     pub unmatched:i64,
 }
 
 impl State {
     pub fn new(problem:&Problem, answer:Vec<Point>) -> State {
         State {
-            dislike    : get_dislike(problem, &answer),
-            intersected: get_intersected(problem, &answer),
-            unmatched  : get_unmatched(problem, &answer),
+            dislike     : get_dislike(problem, &answer),
+            unmatched   : get_unmatched(problem, &answer),
+            not_included: get_not_included(problem, &answer),
             answer:  answer,
         }
     }
     pub fn is_valid(&self) -> bool {
-        self.intersected == 0 && self.unmatched == 0
+        self.unmatched == 0 && 
+        self.not_included == 0
+
     }
     pub fn get_score(&self) -> i64 {
-        self.dislike + self.intersected * 1000 + self.unmatched * 300
+        let penalty = self.not_included * 30 + self.unmatched * 5;
+        self.dislike + penalty + (self.not_included * self.dislike) / 500
     }
 }
 
