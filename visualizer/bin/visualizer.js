@@ -222,7 +222,7 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		haxe_Log.trace(e,{ fileName : "src/Main.hx", lineNumber : 196, className : "Main", methodName : "onChangeAnswer"});
+		console.log("src/Main.hx:196:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -354,7 +354,7 @@ Main.onEnterFrame = function(f) {
 			}
 			if(Main.autoDown) {
 				var _g6 = 0;
-				while(_g6 < 50000) {
+				while(_g6 < 20000) {
 					var i2 = _g6++;
 					if(i2 % 10 == 0) {
 						Main.updateBest();
@@ -396,7 +396,7 @@ Main.onEnterFrame = function(f) {
 						if(Main.problem.isGlobalist ? ad != pd : !ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
 							count[edge[0]] += 1;
 							count[edge[1]] += 1;
-							var v1 = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
+							var v1 = (Math.sqrt(ad) - Math.sqrt(pd)) / 4;
 							var d2 = Math.atan2(ay,ax);
 							velocities[edge[0]][0] -= v1 * Math.cos(d2);
 							velocities[edge[0]][1] -= v1 * Math.sin(d2);
@@ -674,9 +674,8 @@ Main.onMouseDown = function(e) {
 					alpha = 1;
 				} else {
 					var rate = failCount / pointLength;
-					alpha = 0.3 * (1 - rate) + 0 * rate;
+					alpha = 0.4 * (1 - rate) + 0 * rate;
 				}
-				haxe_Log.trace(failCount,{ fileName : "src/Main.hx", lineNumber : 589, className : "Main", methodName : "onMouseDown", customParams : [pointLength]});
 				if(alpha > 0) {
 					var x1 = (x - Main.left) * Main.scale;
 					var y1 = (y - Main.top) * Main.scale;
@@ -894,7 +893,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	haxe_Log.trace(Main.problem.breakALeg,{ fileName : "src/Main.hx", lineNumber : 772, className : "Main", methodName : "updateBonuses"});
+	console.log("src/Main.hx:771:",Main.problem.breakALeg);
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {
@@ -1324,31 +1323,6 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
-var haxe_Log = function() { };
-haxe_Log.__name__ = true;
-haxe_Log.formatOutput = function(v,infos) {
-	var str = Std.string(v);
-	if(infos == null) {
-		return str;
-	}
-	var pstr = infos.fileName + ":" + infos.lineNumber;
-	if(infos.customParams != null) {
-		var _g = 0;
-		var _g1 = infos.customParams;
-		while(_g < _g1.length) {
-			var v = _g1[_g];
-			++_g;
-			str += ", " + Std.string(v);
-		}
-	}
-	return pstr + ": " + str;
-};
-haxe_Log.trace = function(v,infos) {
-	var str = haxe_Log.formatOutput(v,infos);
-	if(typeof(console) != "undefined" && console.log != null) {
-		console.log(str);
-	}
-};
 var haxe_Resource = function() { };
 haxe_Resource.__name__ = true;
 haxe_Resource.getString = function(name) {

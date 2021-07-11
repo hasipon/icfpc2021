@@ -320,7 +320,7 @@ class Main
 				}	
 				if (autoDown)
 				{
-					for (i in 0...50000)
+					for (i in 0...20000)
 					{
 						if (i % 10 == 0) { updateBest(); } 
 						if (problem.isGlobalist && problem.checkGlobalEpsilon(answer)) { break; }
@@ -342,7 +342,7 @@ class Main
 								count[edge[0]] += 1; 
 								count[edge[1]] += 1; 
 								
-								var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 5;
+								var v = (Math.sqrt(ad) - Math.sqrt(pd)) / 4;
 								var d = Math.atan2(ay, ax);
 								velocities[edge[0]][0] -= v * Math.cos(d);
 								velocities[edge[0]][1] -= v * Math.sin(d);
@@ -586,7 +586,6 @@ class Main
 						}
 					}
 					var alpha = if (failCount == 0) 1 else (failCount / pointLength).lerp(0.4, 0);
-					trace(failCount, pointLength);
 					if (alpha > 0)
 					{
 						var x = (x - left) * scale;
