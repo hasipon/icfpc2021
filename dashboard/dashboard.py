@@ -27,11 +27,17 @@ def add_header(response):
 
 
 def gen_problem_svg(name: str, problem_detail: Dict):
+    maxx = max(max(h[0] for h in problem_detail["hole"]), max(f[0] for f in problem_detail["figure"]["vertices"]))
+    maxy = max(max(h[1] for h in problem_detail["hole"]), max(f[1] for f in problem_detail["figure"]["vertices"]))
+    bonus_r = max(maxx, maxy) / 20
     return render_template(
         'thumbnail.jinja2',
+        bonus_colors={"GLOBALIST": "olive", "BREAK_A_LEG": "blue", "WALLHACK": "orange"},
+        bonus_r=bonus_r,
         name=name,
-        maxx=max(max(h[0] for h in problem_detail["hole"]), max(f[0] for f in problem_detail["figure"]["vertices"])),
-        maxy=max(max(h[1] for h in problem_detail["hole"]), max(f[1] for f in problem_detail["figure"]["vertices"])),
+        bonuses=problem_detail["bonuses"],
+        maxx=maxx,
+        maxy=maxy,
         hole=problem_detail["hole"],
         figure=problem_detail["figure"])
 
@@ -41,6 +47,7 @@ def load_problem_details(problem_files):
     for prob in problem_files:
         with open(problems_path / prob) as fp:
             details.update({prob: json.load(fp)})
+        details[prob]["name"] = prob
         details[prob]["bonus_from"] = []
         details[prob]["bonus_to"] = []
         details[prob]["base_score"] = 1000 * math.log2(
@@ -132,6 +139,31 @@ def bonus_filter(problems):
         if p[key] and p[key][0][0]:
             p = problems_dict[p[key][0][0]]
     return next_problems
+
+
+# local use only
+def bonus_tree_gen():
+    key = "bonus_to"
+    checked = set()
+
+    def bonus_tree_gen_(p, bonus, tree, depth: int):
+        tree.append((depth, p["name"], bonus[1]["bonus"] if bonus else None))
+        if p["name"] in checked:
+            return
+        checked.add(p["name"])
+        for _bonus in p[key]:
+            bonus_tree_gen_(problem_details[_bonus[0]], _bonus, tree, depth + 1)
+
+    trees = []
+    for p in problem_details.values():
+        if p["name"] not in checked:
+            tree = []
+            bonus_tree_gen_(p, None, tree, 0)
+            trees.append(tree)
+
+    for tree in trees:
+        for path in tree:
+            print(" " * path[0], path[1], path[2])
 
 
 @app.route('/')
