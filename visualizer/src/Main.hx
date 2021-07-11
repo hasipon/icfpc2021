@@ -870,13 +870,15 @@ class Main
 		}
 		
 		var first = true;
-		answerGraphics.beginFill(0x00CC00);
+		answerGraphics.lineStyle(0);
 		for (point in answer)
 		{
 			var x = (point[0] - left) * scale;
 			var y = (point[1] - top ) * scale;
-			answerGraphics.drawCircle(x, y, 3);
-			
+			var color = if (problem.checkPoint(point)) 0x00CC00 else 0x008822;
+			answerGraphics.beginFill(color);
+			answerGraphics.drawCircle(x, y, 4);
+			answerGraphics.endFill();
 			first = false;
 		}
 		answerGraphics.endFill();

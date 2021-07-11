@@ -1061,7 +1061,7 @@ Main.drawAnswer = function() {
 		Main.answerGraphics.lineTo(x1,y1);
 	}
 	var first = true;
-	Main.answerGraphics.beginFill(52224);
+	Main.answerGraphics.lineStyle(0);
 	var _g = 0;
 	var _g1 = Main.answer;
 	while(_g < _g1.length) {
@@ -1069,7 +1069,10 @@ Main.drawAnswer = function() {
 		++_g;
 		var x = (point[0] - Main.left) * Main.scale;
 		var y = (point[1] - Main.top) * Main.scale;
-		Main.answerGraphics.drawCircle(x,y,3);
+		var color = ProblemTools.checkPoint(Main.problem,point) ? 52224 : 34850;
+		Main.answerGraphics.beginFill(color);
+		Main.answerGraphics.drawCircle(x,y,4);
+		Main.answerGraphics.endFill();
 		first = false;
 	}
 	Main.answerGraphics.endFill();
@@ -1209,6 +1212,44 @@ ProblemTools.intersect = function(a,b,c,d) {
 };
 ProblemTools.eval = function(dislike,fail) {
 	return fail * 200 + dislike + fail / 5 * dislike;
+};
+ProblemTools.checkPoint = function(problem,point) {
+	var x = point[0];
+	var y = point[1];
+	var count = 0;
+	var h0 = problem.hole[problem.hole.length - 1];
+	var _g = 0;
+	var _g1 = problem.hole;
+	while(_g < _g1.length) {
+		var h1 = _g1[_g];
+		++_g;
+		var x0 = h0[0] - x;
+		var y0 = h0[1] - y;
+		var x1 = h1[0] - x;
+		var y1 = h1[1] - y;
+		var cv = x0 * x1 + y0 * y1;
+		var sv = x0 * y1 - x1 * y0;
+		if(sv == 0 && cv <= 0) {
+			return true;
+		}
+		if(y0 < y1) {
+			var tmp = x0;
+			x0 = x1;
+			x1 = tmp;
+			tmp = y0;
+			y0 = y1;
+			y1 = tmp;
+		}
+		if(y1 <= 0 && 0 < y0) {
+			var a = x0 * (y1 - y0);
+			var b = y0 * (x1 - x0);
+			if(b < a) {
+				++count;
+			}
+		}
+		h0 = h1;
+	}
+	return count % 2 != 0;
 };
 var Reflect = function() { };
 Reflect.__name__ = true;
