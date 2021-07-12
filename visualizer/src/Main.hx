@@ -31,6 +31,9 @@ class Main
 	static var problems:Array<ProblemSource>;
 	static var availableBonuses:Array<AvailableBonus>;
 	
+	static var history:Array<Array<Array<Int>>>;
+	static var historyIndex:Int;
+	
 	static var left  :Int;
 	static var right :Int;
 	static var top   :Int;
@@ -81,6 +84,8 @@ class Main
 			answer = [for (a in bestAnswer)[for (i in a) i]];
 			drawAnswer();
 		});
+		Browser.document.getElementById("undo_button").addEventListener("mousedown", () -> { readHistory(-1); });
+		Browser.document.getElementById("redo_button").addEventListener("mousedown", () -> { readHistory(1); });
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
@@ -104,6 +109,16 @@ class Main
 	{
 			switch (e.keyCode)
 			{
+				case KeyboardEvent.DOM_VK_Z:
+					if (e.ctrlKey)
+					{
+						readHistory(-1);
+					}
+				case KeyboardEvent.DOM_VK_Y:
+					if (e.ctrlKey)
+					{
+						readHistory(1);
+					}
 				case KeyboardEvent.DOM_VK_A:
 					if (e.ctrlKey)
 					{
@@ -156,6 +171,15 @@ class Main
 					
 				case _:
 			}
+	}
+	public static function readHistory(offset:Int):Void
+	{
+		var i = historyIndex + offset;
+		if (i < 0 || history.length <= i) { return; }
+		historyIndex = i;
+		answer = history[historyIndex].copyAnswer();
+		drawAnswer();
+		outputAnswer(false);
 	}
 	static function rotate(degree:Float):Void
 	{
@@ -369,7 +393,7 @@ class Main
 				}
 			}
 			drawAnswer();
-			outputAnswer();
+			outputAnswer(true);
 		}
 		Browser.window.requestAnimationFrame(onEnterFrame);
 	}
@@ -392,7 +416,7 @@ class Main
 	{
 		if (selectedPoints.length >= 0)
 		{
-			outputAnswer();
+			outputAnswer(true);
 		}
 		untyped selectedPoints.length = 0;
 		startPoint = null;
@@ -445,9 +469,16 @@ class Main
 		}
 	}
 	
-	static function outputAnswer():Void 
+	static function outputAnswer(updatesHistory:Bool):Void 
 	{
 		answerText.value = getAnswer();
+		if (updatesHistory) {
+			untyped history.length = historyIndex + 1;
+			history.push(answer.copyAnswer());
+			if (history.length > 1000) { history.shift(); }
+			historyIndex = history.length - 1;
+		}
+		requestValidate();
 	}
 	static function getAnswer():String
 	{
@@ -480,8 +511,6 @@ class Main
 		Browser.document.getElementById("fail").textContent = "" + fail; 
 		Browser.document.getElementById("eval").textContent = "" + eval; 
 		Browser.document.getElementById("best").textContent = "" + bestEval; 
-		
-		requestValidate();
 	}
 	static function requestValidate():Void
 	{
@@ -625,6 +654,8 @@ class Main
 	
 	static function readProblem(index:Int):Void
 	{
+		historyIndex = -1;
+		history = [];
 		bestEval = Math.POSITIVE_INFINITY;
 		untyped selectedPoints.length = 0;
 		problemIndex = index;
@@ -655,7 +686,7 @@ class Main
 					element.addEventListener("input", () -> {
 						updateBonuses();
 						drawAnswer();
-						outputAnswer();
+						outputAnswer(true);
 					});
 					var label = Browser.document.createElement('label');
 					label.setAttribute("for", "bonus" + availableBonuses.length);
@@ -742,9 +773,8 @@ class Main
 			problemGraphics.drawCircle(x, y, 6);
 		}
 		
-		
 		drawAnswer();
-		outputAnswer();
+		outputAnswer(true);
 	}
 	static function updateBonuses():Void
 	{
@@ -808,17 +838,17 @@ class Main
 		answerGraphics.clear();
 		var e = problem.epsilon;
 		for (ei => edge in problem.figure.edges)
-		{
+		{	
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
 			var ad = ax * ax + ay * ay;
 			var pd = problem.distances[ei];
 			
 			answerGraphics.lineStyle(
-				2,
+				3,
 				if (problem.isGlobalist)
 				{
-					if (ad == pd) { 0x00CC00; }
+					if (ad == pd) { 0x00FF00; }
 					else if (ad > pd) 
 					{
 						var rate = (ad / pd).inverseLerp(1, 4).clamp();
@@ -842,7 +872,7 @@ class Main
 				}
 				else
 				{
-					if (problem.checkEpsilon(ad, pd)) { 0x00CC00; }
+					if (problem.checkEpsilon(ad, pd)) { 0x00FF00; }
 					else if (ad > pd) 
 					{
 						var rate = (ad / pd).inverseLerp(1, 4).clamp();
@@ -865,6 +895,7 @@ class Main
 					}
 				}
 			);
+			
 			var x = (answer[edge[0]][0] - left) * scale;
 			var y = (answer[edge[0]][1] - top ) * scale;
 			answerGraphics.moveTo(x, y);
@@ -872,6 +903,19 @@ class Main
 			var x = (answer[edge[1]][0] - left) * scale;
 			var y = (answer[edge[1]][1] - top ) * scale;
 			answerGraphics.lineTo(x, y);
+			
+			if (problem.intersectsHole(edge, answer))
+			{
+				answerGraphics.lineStyle(1, 0xDD00FF);
+				
+				var x = (answer[edge[0]][0] - left) * scale;
+				var y = (answer[edge[0]][1] - top ) * scale;
+				answerGraphics.moveTo(x, y);
+				
+				var x = (answer[edge[1]][0] - left) * scale;
+				var y = (answer[edge[1]][1] - top ) * scale;
+				answerGraphics.lineTo(x, y);
+			}
 		}
 		
 		var first = true;

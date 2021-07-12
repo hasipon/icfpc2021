@@ -153,6 +153,16 @@ pub fn random<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, repeat:
     }
 }
 
+pub fn random_small<R: Rng + ?Sized>(answer:&mut Vec<Point>, repeat:i64, rng: &mut R, locked_points:&HashSet<usize>) {
+    for _ in 0..repeat {
+        let i = rng.gen_range(0, answer.len());
+        if locked_points.contains(&i) { continue; }
+        let mut a = &mut answer[i];
+        a.0 += rng.gen_range(-2, 3);
+        a.1 += rng.gen_range(-2, 3);
+    }
+}
+
 pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, locked_points:&HashSet<usize>) {
     for (ai, a) in answer.iter_mut().enumerate() {
         if locked_points.contains(&ai) { continue; }
