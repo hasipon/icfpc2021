@@ -57,7 +57,7 @@ pub fn solve(source:&ProblemSource, initial_vertices:&Vec<Vec<Point>>) -> SolveR
     let mut arr0 = Vec::new();
     let mut arr1:Vec<State> = Vec::new();
 
-    let size = 2000;
+    let size = 3000;
     let mut locked_points = HashSet::new();
 
     for i in 0..size {
@@ -69,7 +69,7 @@ pub fn solve(source:&ProblemSource, initial_vertices:&Vec<Vec<Point>>) -> SolveR
         arr0.push(State::new(&problem, vertecies));
     }
 
-    let repeat = 150;
+    let repeat = 180;
 
     for i in 0..repeat {
         arr1.sort_by(|a, b| a.get_score(i).partial_cmp(&b.get_score(i)).unwrap());

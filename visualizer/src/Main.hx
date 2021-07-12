@@ -268,10 +268,11 @@ class Main
 	{
 		if (fitDown || autoDown || randomDown)
 		{
-			var shouldFix = (cast Browser.document.getElementById("fix_checkbox")).checked;
+			var shouldFix = false;
 			var fixedMap = new Map();
-			if (shouldFix)
+			if ((cast Browser.document.getElementById("fix_checkbox")).checked)
 			{
+				shouldFix = true;
 				for (hole in problem.hole)
 				{
 					for (i => a in answer)
@@ -283,9 +284,9 @@ class Main
 					}
 				}
 			}
-			var shouldFix = (cast Browser.document.getElementById("bonus_checkbox")).checked;
-			if (shouldFix)
+			if ((cast Browser.document.getElementById("bonus_checkbox")).checked)
 			{
+				shouldFix = true;
 				for (bonus in problem.bonuses)
 				{
 					for (i => a in answer)

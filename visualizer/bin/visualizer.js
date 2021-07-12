@@ -289,9 +289,10 @@ Main.start = function() {
 };
 Main.onEnterFrame = function(f) {
 	if(Main.fitDown || Main.autoDown || Main.randomDown) {
-		var shouldFix = window.document.getElementById("fix_checkbox").checked;
+		var shouldFix = false;
 		var fixedMap_h = { };
-		if(shouldFix) {
+		if(window.document.getElementById("fix_checkbox").checked) {
+			shouldFix = true;
 			var _g = 0;
 			var _g1 = Main.problem.hole;
 			while(_g < _g1.length) {
@@ -310,8 +311,8 @@ Main.onEnterFrame = function(f) {
 				}
 			}
 		}
-		var shouldFix = window.document.getElementById("bonus_checkbox").checked;
-		if(shouldFix) {
+		if(window.document.getElementById("bonus_checkbox").checked) {
+			shouldFix = true;
 			var _g = 0;
 			var _g1 = Main.problem.bonuses;
 			while(_g < _g1.length) {
@@ -967,7 +968,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	console.log("src/Main.hx:824:",Main.problem.breakALeg);
+	console.log("src/Main.hx:825:",Main.problem.breakALeg);
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {
