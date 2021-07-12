@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS submission
 `
 const indexes = `
 CREATE INDEX IF NOT EXISTS SOLUTION_DISLIKE ON solution(dislike);
+CREATE INDEX IF NOT EXISTS SOLUTION_DISLIKE ON solution(valid);
+CREATE INDEX IF NOT EXISTS SOLUTION_DISLIKE ON solution(use_bonus);
 `
 
 type ProblemSetting struct {
@@ -123,6 +125,7 @@ func (db SQLiteDB) Migrate() error {
 	ctx := context.Background()
 	tables := []string{
 		"solution",
+		"submission",
 		"m_problem_setting",
 	}
 
