@@ -985,7 +985,7 @@ Main.drawAnswer = function() {
 		var tmp1;
 		if(Main.problem.isGlobalist) {
 			if(ad == pd) {
-				tmp1 = 52224;
+				tmp1 = 65280;
 			} else if(ad > pd) {
 				var value = (ad / pd - 1) / 3;
 				var rate = value <= 0.0 ? 0.0 : 1.0 <= value ? 1.0 : value;
@@ -1038,7 +1038,7 @@ Main.drawAnswer = function() {
 				tmp1 = (r1 * 255 | 0) << 16 | (g1 * 255 | 0) << 8 | (b1 * 255 | 0);
 			}
 		} else if(ProblemTools.checkEpsilon(Main.problem,ad,pd)) {
-			tmp1 = 52224;
+			tmp1 = 65280;
 		} else if(ad > pd) {
 			var value2 = (ad / pd - 1) / 3;
 			var rate2 = value2 <= 0.0 ? 0.0 : 1.0 <= value2 ? 1.0 : value2;
@@ -1090,7 +1090,7 @@ Main.drawAnswer = function() {
 			}
 			tmp1 = (r3 * 255 | 0) << 16 | (g3 * 255 | 0) << 8 | (b3 * 255 | 0);
 		}
-		tmp.lineStyle(4,tmp1);
+		tmp.lineStyle(3,tmp1);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
 		var y = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.moveTo(x,y);

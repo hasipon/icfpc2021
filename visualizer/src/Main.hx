@@ -478,6 +478,7 @@ class Main
 			if (history.length > 1000) { history.shift(); }
 			historyIndex = history.length - 1;
 		}
+		requestValidate();
 	}
 	static function getAnswer():String
 	{
@@ -510,8 +511,6 @@ class Main
 		Browser.document.getElementById("fail").textContent = "" + fail; 
 		Browser.document.getElementById("eval").textContent = "" + eval; 
 		Browser.document.getElementById("best").textContent = "" + bestEval; 
-		
-		requestValidate();
 	}
 	static function requestValidate():Void
 	{
@@ -846,10 +845,10 @@ class Main
 			var pd = problem.distances[ei];
 			
 			answerGraphics.lineStyle(
-				4,
+				3,
 				if (problem.isGlobalist)
 				{
-					if (ad == pd) { 0x00CC00; }
+					if (ad == pd) { 0x00FF00; }
 					else if (ad > pd) 
 					{
 						var rate = (ad / pd).inverseLerp(1, 4).clamp();
@@ -873,7 +872,7 @@ class Main
 				}
 				else
 				{
-					if (problem.checkEpsilon(ad, pd)) { 0x00CC00; }
+					if (problem.checkEpsilon(ad, pd)) { 0x00FF00; }
 					else if (ad > pd) 
 					{
 						var rate = (ad / pd).inverseLerp(1, 4).clamp();
