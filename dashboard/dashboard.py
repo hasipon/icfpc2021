@@ -151,9 +151,9 @@ def filter_problems(problems):
             return False
         if top_dislike_min and int(top_dislike_min) > fix_dislike(p["dislike_min"]):
             return False
-        if dislike_ratio_max and int(dislike_ratio_max) < p["dislike_ratio"] * 100:
+        if dislike_ratio_max and float(dislike_ratio_max) < p["dislike_ratio"] * 100:
             return False
-        if dislike_ratio_min and int(dislike_ratio_min) > p["dislike_ratio"] * 100:
+        if dislike_ratio_min and float(dislike_ratio_min) > p["dislike_ratio"] * 100:
             return False
         if score_diff_max and int(score_diff_max) < p["score_diff"]:
             return False
