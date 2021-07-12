@@ -41,7 +41,7 @@
                     <td class="text-center"><img src="/{{ p.name }}.svg"></td>
                     <td class="text-center">
                         {% for bf in p.bonus_from %}
-                        <a href="https://poses.live/problems/{{ bf[0] }}">{{ bf[0] }}</a> {{ bf[1]["bonus"] }}
+                        <a href="https://poses.live/problems/{{ bf[0] }}">{{ bf[0] }}</a> {{ "{:04}_{}".format(p.name|int, bf[1]["bonus"])  }}
                         {% if p.setting.use_bonus == bf[1]["bonus"] %}
                             <span class="badge alert-success">有効</span>
                         {% elif "{:04}_{}".format(p.name|int, bf[1]["bonus"]) in unlocked_bonuses %}
@@ -57,7 +57,7 @@
                             <span class="badge alert-success">有効</span> {% endif %}
                         <a href="https://poses.live/problems/{{ bf[0] }}">{{ bf[0] }}</a>
                         {% set dislike_with_unlock = get_dislike_with_unlock_bonus(p["name"], p["setting"]["use_bonus"], "{:04}_{}".format(bf[0]|int, bf[1]["bonus"])) %}
-                        ({{ "{:04}_{}".format(bf[0]|int, bf[1]["bonus"]) }} {% if dislike_with_unlock %} |dislike:{{dislike_with_unlock }} {% endif %})<br/>
+                        {{ "{:04}_{}".format(bf[0]|int, bf[1]["bonus"]) }} {% if dislike_with_unlock %} |dislike:{{dislike_with_unlock }} {% endif %}<br/>
                         {% endfor %}
                     </td>
                     <td class="text-center">{{ p.hole }}</td>
