@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
 use serde_json::json;
+use std::collections::HashMap;
 
 mod data;
 mod solve;
@@ -10,6 +11,7 @@ mod util;
 mod operation;
 use data::*;
 use solve::solve;
+use std::fs::DirEntry;
 
 fn main()  -> std::io::Result<()>  {
     let arg:Vec<String> = args().collect();
@@ -26,15 +28,28 @@ fn main()  -> std::io::Result<()>  {
         end   = arg[3].parse().unwrap();
     }
 
+    let mut inputs = HashMap::new();
+
     for j in 0..1000000 {
         let i = (j + start) % 132 + 1;
 
         if cleared.contains(&i) { continue; }
         let target = format!("{}", i);
-        let file = File::open(format!("../../problems/{}", target))?;
-        let reader = BufReader::new(file);
-        let problem:ProblemSource = serde_json::from_reader(reader).unwrap();
-        let result = solve(&problem);
+        
+        if !inputs.contains_key(&i) {
+            let file = File::open(format!("../../problems/{}", target))?;
+            let reader = BufReader::new(file);
+            let problem:ProblemSource = serde_json::from_reader(reader).unwrap();
+            let mut vertices = Vec::new();
+            vertices.push(problem.figure.vertices.clone());
+            
+            for file in std::fs::read_dir("../../solutions")? {
+                read_vertices(&mut vertices, &file?, i, problem.figure.vertices.len());
+            }
+            inputs.insert(i, (problem, vertices));
+        }
+        let input = inputs.get(&i).unwrap();
+        let result = solve(&input.0, &input.1);
         
         println!("{}", target);
 
@@ -46,9 +61,9 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best.is_valid() {
             println!("best!");
-            let mut file = File::create(format!("out/{}-sawa-auto40-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto41-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto40-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto41-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
         
@@ -60,10 +75,25 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best_bonus.is_valid() && result.best_bonus.bonus_count > 0 {
             println!("best_bonus!");
-            let mut file = File::create(format!("out/{}-sawa-auto40-bonus-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto41-bonus-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto40-bonus-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto41-bonus-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
+        }
+    }
+    Ok(())
+}
+
+fn read_vertices(vertices:&mut Vec<Vec<Point>>, path:&DirEntry, index:usize, len:usize) -> std::io::Result<()> {
+    let file_name = path.file_name().into_string().unwrap();
+    let prefix:String = format!("{}-", index);
+    
+    if path.file_type()?.is_file() && file_name.starts_with(&prefix) {
+        let file = File::open(path.path())?;
+        let reader = BufReader::new(file);
+        let answer:Answer = serde_json::from_reader(reader)?;
+        if answer.vertices.len() == len {
+            vertices.push(answer.vertices);
         }
     }
     Ok(())
