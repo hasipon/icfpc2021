@@ -40,12 +40,16 @@
             <td class="text-center"><img src="/{{p.name}}.svg"></td>
             <td class="text-center">
                 {% for bf in p.bonus_from %}
-                <a href="https://poses.live/problems/{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})<br />
+                {% if problems_dict[bf[0]].score_diff == 0 %} <s> {% endif %}
+                <a href="https://poses.live/problems/{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}} / {{problems_dict[bf[0]].score}})<br />
+                {% if problems_dict[bf[0]].score_diff == 0 %} </s> {% endif %}
                 {% endfor %}
             </td>
             <td class="text-center">
                 {% for bf in p.bonus_to %}
-                <a href="#{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}})<br />
+                {% if problems_dict[bf[0]].score_diff == 0 %} <s> {% endif %}
+                <a href="https://poses.live/problems/{{bf[0]}}">{{ bf[0] }}</a> ({{bf[1]["bonus"]}}) / {{problems_dict[bf[0]].score}})<br />
+                {% if problems_dict[bf[0]].score_diff == 0 %} </s> {% endif %}
                 {% endfor %}
             </td>
             <td class="text-center">{{p.hole}}</td>
