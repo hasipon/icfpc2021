@@ -1,0 +1,99 @@
+{% extends "base.jinja2 " %}
+{% block content %}
+
+    <div class="container">
+        <h2>リンク集</h2>
+        <li><a href="https://github.com/hasipon/icfpc2021">GitHub</a></li>
+        <li><a href="https://icfpcontest2021.github.io/">コンテストサイト</a></li>
+        <li><a href="https://poses.live/problems">コンテストポータル</a></li>
+        <li><a href="/visualizer">Visualizer</a></li>
+        <li>http://13.114.46.162:8800/eval</li>
+
+        <h2>問題一覧 ({{ problems|length }} 件)</h2>
+        <a href="/">すべて</a>
+        <a href="/?search=1&dislike-min=99999999999">未回答</a>
+        <a href="/?search=1&dislike-min=1&top-dislike-max=0">トップは厳密解</a>
+        <a href="/?search=1&dislike-ratio-max=40&sort-by=dislike_ratio">Dislike比が小</a>
+        <a href="/?search=1&score-diff-min=5000&sort-by=score_diff&desc=1">スコア差が大</a>
+        <a href="/?search=1&bonus-from=0">BonusFrom[0]で辿る</a>
+        <a href="/?search=1&bonus-to=0">BonusTo[0]で辿る</a>
+        {% if is_search %}
+            <pre>{% for p in problems %}{{ p.name }} {% endfor %}</pre>
+        {% endif %}
+        <table class="table table-condensed table-striped">
+            <tr>
+                <th class="text-center">Name</th>
+                <th class="text-center">Thumb</th>
+                <th class="text-center">BonusFrom</th>
+                <th class="text-center">BonusTo</th>
+                <th class="text-center">H</th>
+                <th class="text-center">ε</th>
+                <th class="text-center">E</th>
+                <th class="text-center">V</th>
+                <th class="text-center">Dislike(トップ, 比)</th>
+                <th class="text-center">Score(トップとの差)</th>
+            </tr>
+
+            {% for p in problems %}
+                <tr>
+                    <td class="text-center" id="{{ p.name }}"><a
+                            href="https://poses.live/problems/{{ p.name }}">{{ p.name }}</a></td>
+                    <td class="text-center"><img src="/{{ p.name }}.svg"></td>
+                    <td class="text-center">
+                        {% for bf in p.bonus_from %}
+                        <a href="https://poses.live/problems/{{ bf[0] }}">{{ bf[0] }}</a> {{ bf[1]["bonus"] }}
+                        {% if p.setting.use_bonus == bf[1]["bonus"] %}
+                            <span class="badge alert-success">有効</span>
+                        {% elif "{:04}_{}".format(p.name|int, bf[1]["bonus"]) in unlocked_bonuses %}
+                            <span class="badge">可</span>
+                        {% endif %}
+                         <br/>
+                        {% endfor %}
+                    </td>
+                    <td class="text-center">
+                        None | dislike:{{ get_dislike_with_unlock_bonus(p.name, p.setting.use_bonus, "") }} <br/>
+                        {% for bf in p.bonus_to %}
+                        {% if "{:04}_{}".format(bf[0]|int, bf[1]["bonus"]) in p.setting.unlock_bonus_key %}
+                            <span class="badge alert-success">有効</span> {% endif %}
+                        <a href="https://poses.live/problems/{{ bf[0] }}">{{ bf[0] }}</a>
+                        {% set dislike_with_unlock = get_dislike_with_unlock_bonus(p["name"], p["setting"]["use_bonus"], "{:04}_{}".format(bf[0]|int, bf[1]["bonus"])) %}
+                        ({{ "{:04}_{}".format(bf[0]|int, bf[1]["bonus"]) }} {% if dislike_with_unlock %} |dislike:{{dislike_with_unlock }} {% endif %})<br/>
+                        {% endfor %}
+                    </td>
+                    <td class="text-center">{{ p.hole }}</td>
+                    <td class="text-center">{{ p.eps }}</td>
+                    <td class="text-center">{{ p.edges }}</td>
+                    <td class="text-center">{{ p.vertices }}</td>
+                    {% if p.dislike_ratio >= 0.99 %}
+                        <td class="text-center bg-success">
+                            {% elif p.dislike_ratio < 0.2 %}
+                        <td class="text-center bg-danger">
+                            {% elif p.dislike_ratio < 0.4 %}
+                        <td class="text-center bg-warning">
+                            {% else %}
+                        <td class="text-center">
+                    {% endif %}
+                    {{ p.dislike }} ({{ p.dislike_min }}
+                    {% if p.dislike_min == 0 %} <span class="badge">厳密解</span> {% endif %}
+                    , {{ '%.1f' % (p.dislike_ratio * 100) }} %
+                    )
+                    </td>
+
+                    {% set sd = p.topscore - p.score %}
+                    {% if sd < 1 %}
+                        <td class="text-center bg-success">
+                            {% elif 4000 < sd %}
+                        <td class="text-center bg-danger">
+                            {% elif 2000 < sd %}
+                        <td class="text-center bg-warning">
+                            {% else %}
+                        <td class="text-center">
+                    {% endif %}
+                    {{ p.score }} ({{ sd }})
+                    </td>
+                </tr>
+            {% endfor %}
+    </div>
+
+{% endblock %}
+
