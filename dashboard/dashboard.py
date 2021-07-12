@@ -19,6 +19,58 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 problem_details = {}
 
 
+def get_conn():
+    conn = sqlite3.connect(os.getenv("DB_PATH", "/home/db/icfpc2021.db"))
+    conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+    return conn
+
+
+def get_cur():
+    return get_conn().cursor()
+
+
+def get_problem_settings():
+    cur = get_cur()
+    return cur.execute("SELECT * FROM m_problem_setting").fetchall()
+
+
+def get_dislike_with_bonus(problem_id: str, use_bonus: str):
+    cur = get_cur()
+    r = cur.execute(
+        "SELECT dislike_s FROM solution WHERE problem_id = ? AND valid = 1 AND use_bonus = ? ORDER BY dislike LIMIT 1",
+        (problem_id, use_bonus)).fetchone()
+    return r["dislike_s"] if r else ""
+
+
+def get_dislike_with_unlock_bonus(problem_id: str, use_bonus: str, unlock_bonus: str):
+    cur = get_cur()
+    if unlock_bonus:
+        r = cur.execute(
+            "SELECT dislike_s FROM solution WHERE problem_id = ? AND valid = 1 AND (use_bonus = '' or use_bonus = ?) AND unlock_bonus LIKE ? ORDER BY dislike LIMIT 1",
+            (problem_id, use_bonus, "%" + unlock_bonus + "%")).fetchone()
+        return r["dislike_s"] if r else ""
+    r = cur.execute(
+        "SELECT dislike_s FROM solution WHERE problem_id = ? AND valid = 1 AND (use_bonus = '' or use_bonus = ?) ORDER BY dislike LIMIT 1",
+        (problem_id, use_bonus)).fetchone()
+    return r["dislike_s"] if r else ""
+
+
+def get_unlocked_bonuses() -> Set[str]:
+    cur = get_cur()
+    ret = set()
+    for row in cur.execute("SELECT unlock_bonus FROM submission").fetchall():
+        ret.add(*row["unlock_bonus"].split(","))
+    return ret
+
+
+@app.context_processor
+def utility_processor():
+    return dict(
+        get_dislike_with_bonus=get_dislike_with_bonus,
+        get_dislike_with_unlock_bonus=get_dislike_with_unlock_bonus,
+    )
+
+
 @app.after_request
 def add_header(response):
     if 'Expires' in response.headers:
@@ -141,6 +193,10 @@ def index():
             (int(x[2]) + 1) / (int(x[1]) + 1) if x[1].isdigit() and x[2].isdigit() else 0,
         ) for x in problems_json})
 
+    settings = {
+        str(setting["problem_id"]): setting for setting in get_problem_settings()
+    }
+
     problems = [
         {
             "name": x,
@@ -157,19 +213,34 @@ def index():
                 problem_details[x]["base_score"] * math.sqrt(dislikes[x][2])),
             "bonus_from": problem_details[x]["bonus_from"],
             "bonus_to": problem_details[x]["bonus_to"],
-        }
-        for x in problem_files
+
+            # "solution_without_bonus": get_best_solution_with_bonus(x, ""),
+            # "solution_with_GLOBALIST": get_best_solution_with_bonus(x, "GLOBALIST"),
+            # "solution_with_BREAK_A_LEG": get_best_solution_with_bonus(x, "BREAK_A_LEG"),
+            # "solution_with_SUPERFLEX": get_best_solution_with_bonus(x, "SUPERFLEX"),
+            # "solution_with_WALLHACK": get_best_solution_with_bonus(x, "WALLHACK"),
+            # = > {{p["solution_with_" + bf[1]["bonus"]]["dislike"]}}
+        } for x in problem_files
     ]
+
+    for x in problems:
+        if x["name"] not in settings:
+            continue
+        x["setting"] = settings[x["name"]]
 
     problems_dict = {x["name"]: x for x in problems}
     problems = filter_problems(problems)
     problems = sort_problems(problems)
 
+    unlocked_bonuses = get_unlocked_bonuses()
+
     return render_template(
-        'index.html',
+        'index.jinja2',
         is_search=request.args.get("search"),
         problems=problems,
-        problems_dict=problems_dict)
+        problems_dict=problems_dict,
+        unlocked_bonuses=unlocked_bonuses,
+    )
 
 
 @app.route('/filter')
@@ -184,7 +255,7 @@ def git_status():
         output += subprocess.check_output(["git", "status"], stderr=subprocess.STDOUT).decode('utf-8').strip()
     except subprocess.CalledProcessError as e:
         output += "Error:" + str(e)
-    return render_template('output.html', output=output)
+    return render_template('output.jinja2', output=output)
 
 
 @app.route('/fetch_problems')
@@ -195,7 +266,7 @@ def fetch_problems():
         shutil.copyfile(repo_path / "portal/problems.json", static_path / "problems.json")
     except subprocess.CalledProcessError as e:
         output += "Error:" + str(e)
-    return render_template('output.html', output=output)
+    return render_template('output.jinja2', output=output)
 
 
 @app.route('/git_pull')
@@ -206,7 +277,7 @@ def git_pull():
             'utf-8').strip()
     except subprocess.CalledProcessError as e:
         output += "Error:" + str(e)
-    return render_template('output.html', output=output)
+    return render_template('output.jinja2', output=output)
 
 
 def bonus_filter(problems):
