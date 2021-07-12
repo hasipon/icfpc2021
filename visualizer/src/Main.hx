@@ -82,7 +82,7 @@ class Main
 		Browser.document.getElementById("reload_button").addEventListener("mousedown", () -> { readProblem(problemIndex); });
 		Browser.document.getElementById("best_button").addEventListener("mousedown", () -> {
 			answer = [for (a in bestAnswer)[for (i in a) i]];
-			drawAnswer();
+			drawAnswer(true);
 		});
 		Browser.document.getElementById("undo_button").addEventListener("mousedown", () -> { readHistory(-1); });
 		Browser.document.getElementById("redo_button").addEventListener("mousedown", () -> { readHistory(1); });
@@ -154,7 +154,7 @@ class Main
 						var a = answer[i];
 						a[0] = cx + cx - a[0];
 					}
-					drawAnswer();
+					drawAnswer(true);
 					drawSelectedPoints();
 					e.preventDefault();
 					
@@ -165,7 +165,7 @@ class Main
 						var a = answer[i];
 						a[1] = cy + cy - a[1];
 					}
-					drawAnswer();
+					drawAnswer(true);
 					drawSelectedPoints();
 					e.preventDefault();
 					
@@ -178,7 +178,7 @@ class Main
 		if (i < 0 || history.length <= i) { return; }
 		historyIndex = i;
 		answer = history[historyIndex].copyAnswer();
-		drawAnswer();
+		drawAnswer(false);
 		outputAnswer(false);
 	}
 	static function rotate(degree:Float):Void
@@ -195,7 +195,7 @@ class Main
 			a[0] = Math.round(cx + d * Math.cos(r));
 			a[1] = Math.round(cy + d * Math.sin(r));
 		}
-		drawAnswer();
+		drawAnswer(true);
 		drawSelectedPoints();
 	}
 	static function onChangeAnswer():Void 
@@ -213,7 +213,7 @@ class Main
 				answer[i][0] = Math.round(a[i][0]);
 				answer[i][1] = Math.round(a[i][1]);
 			}
-			drawAnswer();
+			drawAnswer(true);
 		}
 		catch(e)
 		{
@@ -392,7 +392,7 @@ class Main
 					}
 				}
 			}
-			drawAnswer();
+			drawAnswer(true);
 			outputAnswer(true);
 		}
 		Browser.window.requestAnimationFrame(onEnterFrame);
@@ -416,6 +416,7 @@ class Main
 	{
 		if (selectedPoints.length >= 0)
 		{
+			drawAnswer(true);
 			outputAnswer(true);
 		}
 		untyped selectedPoints.length = 0;
@@ -478,7 +479,6 @@ class Main
 			if (history.length > 1000) { history.shift(); }
 			historyIndex = history.length - 1;
 		}
-		requestValidate();
 	}
 	static function getAnswer():String
 	{
@@ -501,7 +501,7 @@ class Main
 		}
 		return Json.stringify({vertices:answer, bonuses: bonuses});
 	}
-	static function updateScore():Void
+	static function updateScore(requestValidates:Bool):Void
 	{
 		updateBest();
 		var dislike = ProblemTools.dislike(problem, answer);
@@ -511,6 +511,8 @@ class Main
 		Browser.document.getElementById("fail").textContent = "" + fail; 
 		Browser.document.getElementById("eval").textContent = "" + eval; 
 		Browser.document.getElementById("best").textContent = "" + bestEval; 
+		
+		if (requestValidates) requestValidate();
 	}
 	static function requestValidate():Void
 	{
@@ -638,7 +640,7 @@ class Main
 				var dy = e.data.global.y - startPoint.y;
 				answer[selectedPoints[i]][0] = Math.round(startAnswers[i].x + dx / scale);
 				answer[selectedPoints[i]][1] = Math.round(startAnswers[i].y + dy / scale);
-				drawAnswer();
+				drawAnswer(false);
 			}
 		}
 		if (selectRect != null)
@@ -685,7 +687,7 @@ class Main
 					element.setAttribute("id", "bonus" + availableBonuses.length);
 					element.addEventListener("input", () -> {
 						updateBonuses();
-						drawAnswer();
+						drawAnswer(true);
 						outputAnswer(true);
 					});
 					var label = Browser.document.createElement('label');
@@ -773,7 +775,7 @@ class Main
 			problemGraphics.drawCircle(x, y, 6);
 		}
 		
-		drawAnswer();
+		drawAnswer(false);
 		outputAnswer(true);
 	}
 	static function updateBonuses():Void
@@ -833,7 +835,7 @@ class Main
 		}
 	}
 	
-	static function drawAnswer():Void
+	static function drawAnswer(requestValidates:Bool):Void
 	{
 		answerGraphics.clear();
 		var e = problem.epsilon;
@@ -931,6 +933,6 @@ class Main
 			first = false;
 		}
 		answerGraphics.endFill();
-		updateScore();
+		updateScore(requestValidates);
 	}
 }

@@ -104,7 +104,7 @@ Main.main = function() {
 			_g.push(_g3);
 		}
 		Main.answer = _g;
-		Main.drawAnswer();
+		Main.drawAnswer(true);
 	});
 	window.document.getElementById("undo_button").addEventListener("mousedown",function() {
 		Main.readHistory(-1);
@@ -164,7 +164,7 @@ Main.onKeyDown = function(e) {
 			var a = Main.answer[i];
 			a[1] = cy + cy - a[1];
 		}
-		Main.drawAnswer();
+		Main.drawAnswer(true);
 		Main.drawSelectedPoints();
 		e.preventDefault();
 		break;
@@ -188,7 +188,7 @@ Main.readHistory = function(offset) {
 	}
 	Main.historyIndex = i;
 	Main.answer = ProblemTools.copyAnswer(Main.history[Main.historyIndex]);
-	Main.drawAnswer();
+	Main.drawAnswer(false);
 	Main.outputAnswer(false);
 };
 Main.rotate = function(degree) {
@@ -207,7 +207,7 @@ Main.rotate = function(degree) {
 		a[0] = Math.round(cx + d * Math.cos(r));
 		a[1] = Math.round(cy + d * Math.sin(r));
 	}
-	Main.drawAnswer();
+	Main.drawAnswer(true);
 	Main.drawSelectedPoints();
 };
 Main.onChangeAnswer = function() {
@@ -231,7 +231,7 @@ Main.onChangeAnswer = function() {
 			Main.answer[i][0] = Math.round(a[i][0]);
 			Main.answer[i][1] = Math.round(a[i][1]);
 		}
-		Main.drawAnswer();
+		Main.drawAnswer(true);
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
 		console.log("src/Main.hx:220:",e);
@@ -440,7 +440,7 @@ Main.onEnterFrame = function(f) {
 				}
 			}
 		}
-		Main.drawAnswer();
+		Main.drawAnswer(true);
 		Main.outputAnswer(true);
 	}
 	window.requestAnimationFrame(Main.onEnterFrame);
@@ -474,6 +474,7 @@ Main.updateBest = function() {
 };
 Main.onMouseUp = function() {
 	if(Main.selectedPoints.length >= 0) {
+		Main.drawAnswer(true);
 		Main.outputAnswer(true);
 	}
 	Main.selectedPoints.length = 0;
@@ -572,7 +573,7 @@ Main.getAnswer = function() {
 	}
 	return JSON.stringify({ vertices : Main.answer, bonuses : bonuses});
 };
-Main.updateScore = function() {
+Main.updateScore = function(requestValidates) {
 	Main.updateBest();
 	var dislike = ProblemTools.dislike(Main.problem,Main.answer);
 	var fail = ProblemTools.failCount(Main.problem,Main.answer);
@@ -581,7 +582,9 @@ Main.updateScore = function() {
 	window.document.getElementById("fail").textContent = "" + fail;
 	window.document.getElementById("eval").textContent = "" + $eval;
 	window.document.getElementById("best").textContent = "" + Main.bestEval;
-	Main.requestValidate();
+	if(requestValidates) {
+		Main.requestValidate();
+	}
 };
 Main.requestValidate = function() {
 	var r = Main.requestCount += 1;
@@ -722,7 +725,7 @@ Main.onMouseMove = function(e) {
 			var dy = e.data.global.y - Main.startPoint.y;
 			Main.answer[Main.selectedPoints[i]][0] = Math.round(Main.startAnswers[i].x + dx / Main.scale);
 			Main.answer[Main.selectedPoints[i]][1] = Math.round(Main.startAnswers[i].y + dy / Main.scale);
-			Main.drawAnswer();
+			Main.drawAnswer(false);
 		}
 	}
 	if(Main.selectRect != null) {
@@ -782,7 +785,7 @@ Main.readProblem = function(index) {
 				element.setAttribute("id","bonus" + Main.availableBonuses.length);
 				element.addEventListener("input",function() {
 					Main.updateBonuses();
-					Main.drawAnswer();
+					Main.drawAnswer(true);
 					Main.outputAnswer(true);
 				});
 				var label = window.document.createElement("label");
@@ -896,7 +899,7 @@ Main.readProblem = function(index) {
 		var y = (bonus.position[1] - Main.top) * Main.scale;
 		Main.problemGraphics.drawCircle(x,y,6);
 	}
-	Main.drawAnswer();
+	Main.drawAnswer(false);
 	Main.outputAnswer(true);
 };
 Main.updateBonuses = function() {
@@ -931,7 +934,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	console.log("src/Main.hx:807:",Main.problem.breakALeg);
+	console.log("src/Main.hx:808:",Main.problem.breakALeg);
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {
@@ -967,7 +970,7 @@ Main.updateBonuses = function() {
 		}
 	}
 };
-Main.drawAnswer = function() {
+Main.drawAnswer = function(requestValidates) {
 	Main.answerGraphics.clear();
 	var e = Main.problem.epsilon;
 	var _g_current = 0;
@@ -1123,7 +1126,7 @@ Main.drawAnswer = function() {
 		first = false;
 	}
 	Main.answerGraphics.endFill();
-	Main.updateScore();
+	Main.updateScore(requestValidates);
 };
 Math.__name__ = true;
 var ProblemTools = function() { };

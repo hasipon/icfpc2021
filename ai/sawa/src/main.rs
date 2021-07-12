@@ -48,7 +48,6 @@ fn main()  -> std::io::Result<()>  {
             let mut rng = SmallRng::from_entropy();
 
             for file in std::fs::read_dir("../../solutions")? {
-                if rng.gen_bool(0.85) { continue; }
                 read_vertices(&mut vertices, &file?, i, problem.figure.vertices.len());
             }
             inputs.insert(i, (problem, vertices));
