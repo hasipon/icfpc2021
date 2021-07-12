@@ -120,7 +120,7 @@ pub fn fit<R: Rng + ?Sized>(targets:&Vec<Point>, answer:&mut Vec<Point>, rng: &m
         }
         if min > 0 {
             let v = (min as f64).sqrt() * rng.gen_range(scale, 1.0);
-            let mut a = &answer[target];
+            let a = &answer[target];
             let dx = (a.0 - hole.0) as f64;
             let dy = (a.1 - hole.1) as f64;
             let d = dy.atan2(dx);
@@ -163,9 +163,10 @@ pub fn random_small<R: Rng + ?Sized>(answer:&mut Vec<Point>, repeat:i64, rng: &m
     }
 }
 
-pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, locked_points:&HashSet<usize>) {
+pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale:f64, locked_points:&HashSet<usize>) {
     for (ai, a) in answer.iter_mut().enumerate() {
         if locked_points.contains(&ai) { continue; }
+        if rng.gen_bool(scale) { continue; } 
 
         a.0 = problem.left  .max(a.0);
         a.0 = problem.right .min(a.0);
@@ -196,17 +197,51 @@ pub fn random_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>,
    }
 }
 
+pub fn random_fix_intersection<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, scale:f64, locked_points:&HashSet<usize>) {
+    for edge in &problem.edges {
+        if locked_points.contains(&edge.0) && locked_points.contains(&edge.1) { continue; }
+        if intersects_poly(&problem.hole, &answer[edge.0], &answer[edge.1]) {
+            let mut ai = if locked_points.contains(&edge.0) && includes(problem, &answer[edge.1]) && rng.gen_bool(scale) {
+                edge.1
+            } else {
+                edge.0
+            };
+            
+            let mut a = &mut answer[ai];
+
+            a.0 = problem.left  .max(a.0); a.0 = problem.right .min(a.0); a.1 = problem.top   .max(a.1); a.1 = problem.bottom.min(a.1);
+            let x = rng.gen_range(problem.left.max(a.0 - 10), problem.right .min(a.0 + 10));
+            let y = rng.gen_range(problem.top .max(a.1 - 10), problem.bottom.min(a.1 + 10));
+            a.0 = x;
+            a.1 = y;
+            if includes(problem, a) && !intersects_point(problem, answer, ai) { continue; }
+
+            let mut a = &mut answer[ai];
+            a.0 = problem.left  .max(a.0); a.0 = problem.right .min(a.0); a.1 = problem.top   .max(a.1); a.1 = problem.bottom.min(a.1);
+            a.0 = rng.gen_range(problem.left.max(a.0 - 40), problem.right .min(a.0 + 40));
+            a.1 = rng.gen_range(problem.top .max(a.1 - 40), problem.bottom.min(a.1 + 40));
+            if includes(problem, a) && !intersects_point(problem, answer, ai) { continue; }
+
+            let mut a = &mut answer[ai];
+            a.0 = problem.left  .max(a.0); a.0 = problem.right .min(a.0); a.1 = problem.top   .max(a.1); a.1 = problem.bottom.min(a.1);
+            a.0 = rng.gen_range(problem.left.max(a.0 - 80), problem.right .min(a.0 + 80));
+            a.1 = rng.gen_range(problem.top .max(a.1 - 80), problem.bottom.min(a.1 + 80));
+            if includes(problem, a) && !intersects_point(problem, answer, ai) { continue; }
+
+            let mut a = &mut answer[ai];
+            a.0 = x;
+            a.1 = y;
+        }
+    }
+}
 pub fn search_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>, rng: &mut R, locked_points:&HashSet<usize>) {
     for ai in 0..answer.len() {
-        let a = answer[ai].clone();
-        if rng.gen_bool(0.5) && includes(problem, &a) { continue; }
-        let mut p = a.clone();
-        let mut related_edges = Vec::new();
+        if locked_points.contains(&ai) { continue; }
+        
+        if rng.gen_bool(0.5) && includes(problem, &answer[ai]) { continue; }
+        let mut p = answer[ai].clone();
+        let related_edges = &problem.point_to_edge[ai];
 
-        for (ei, edge) in problem.edges.iter().enumerate() {
-            if edge.0 == ai { related_edges.push((ei, answer[edge.1].clone())); } 
-            if edge.1 == ai { related_edges.push((ei, answer[edge.0].clone())); } 
-        }
         for _ in 0..5 {
             p.0 = rng.gen_range(problem.left, problem.right );
             p.1 = rng.gen_range(problem.top , problem.bottom);
@@ -214,9 +249,10 @@ pub fn search_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>,
             let mut success = false;
             for _ in 0..6 {
                 let mut failed = false;
-                for (ei, point) in &related_edges {
+                for point_to_edge in related_edges {
+                    let point = &answer[point_to_edge.another_point];
                     let ad = get_d(&p, point);
-                    let pd = problem.distances[*ei as usize];
+                    let pd = problem.distances[point_to_edge.edge_index as usize];
                     let v = ((ad as f64).sqrt() - (pd as f64).sqrt()) * 0.85;
                     if check_epsilon(problem, ad, pd) { continue; }
                     failed = true;
@@ -238,6 +274,6 @@ pub fn search_include<R: Rng + ?Sized>(problem:&Problem, answer:&mut Vec<Point>,
                 answer[ai].1 = p.1;
                 break;
             }
-        }        
-   }
+        }
+    }
 }

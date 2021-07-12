@@ -23,7 +23,22 @@ pub fn get_d(a:&Point, b:&Point) -> i64 {
     let y = a.1 - b.1;
     x * x + y * y
 }
-
+pub fn intersects_point(problem:&Problem, answer:&Vec<Point>, ai:usize) -> bool {
+    for point_to_edge in &problem.point_to_edge[ai] {
+        if intersects_poly(&problem.hole, &answer[ai], &answer[point_to_edge.another_point]) {
+            return true;
+        }
+    }
+    false
+}
+pub fn intersects_poly(poly:&Vec<Point>, a:&Point, b:&Point)-> bool {
+    let mut p0 = &poly[poly.len() - 1];
+    for p1 in poly {
+        if intersects(p0, p1, a, b) { return true; }
+        p0 = p1;
+    }
+    false
+}
 
 pub fn intersects(a:&Point, b:&Point, c:&Point, d:&Point) -> bool {
     let ax = a.0; let ay = a.1;

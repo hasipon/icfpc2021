@@ -283,6 +283,20 @@ class Main
 					}
 				}
 			}
+			var shouldFix = (cast Browser.document.getElementById("bonus_checkbox")).checked;
+			if (shouldFix)
+			{
+				for (bonus in problem.bonuses)
+				{
+					for (i => a in answer)
+					{
+						if (bonus.position[0] == a[0] && bonus.position[1] == a[1])
+						{
+							fixedMap[i] = true;
+						}
+					}
+				}
+			}
 			if (randomDown)
 			{
 				for (i in 0...1)
