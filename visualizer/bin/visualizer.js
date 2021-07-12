@@ -176,6 +176,19 @@ Main.onKeyDown = function(e) {
 	case 90:
 		if(e.ctrlKey) {
 			Main.readHistory(-1);
+		} else {
+			var cx = Math.round(Main.canvas.width / 2 / Main.scale + Main.left);
+			var _g = 0;
+			var _g1 = Main.selectedPoints;
+			while(_g < _g1.length) {
+				var i = _g1[_g];
+				++_g;
+				var a = Main.answer[i];
+				a[0] = cx + cx - a[0];
+			}
+			Main.drawAnswer(true);
+			Main.drawSelectedPoints();
+			e.preventDefault();
 		}
 		break;
 	default:
@@ -234,7 +247,7 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer(true);
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:220:",e);
+		console.log("src/Main.hx:222:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -934,7 +947,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	console.log("src/Main.hx:808:",Main.problem.breakALeg);
+	console.log("src/Main.hx:810:",Main.problem.breakALeg);
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {
