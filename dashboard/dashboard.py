@@ -76,6 +76,8 @@ def load_problem_details(problem_files):
 def filter_problems(problems):
     dislike_min = request.args.get("dislike-min")
     dislike_max = request.args.get("dislike-max")
+    score_diff_min = request.args.get("score-diff-min")
+    score_diff_max = request.args.get("score-diff-max")
     top_dislike_min = request.args.get("top-dislike-min")
     top_dislike_max = request.args.get("top-dislike-max")
     dislike_ratio_min = request.args.get("dislike-ratio-min")
@@ -101,9 +103,108 @@ def filter_problems(problems):
             return False
         if dislike_ratio_min and int(dislike_ratio_min) > p["dislike_ratio"] * 100:
             return False
+        if score_diff_max and int(score_diff_max) < p["score_diff"]:
+            return False
+        if score_diff_min and int(score_diff_min) > p["score_diff"]:
+            return False
         return True
 
     return bonus_filter(list(filter(f, problems)))
+
+
+def sort_problems(problems):
+    reverse = False
+    if request.args.get("desc"):
+        reverse = True
+
+    if request.args.get("sort-by"):
+        key = request.args.get("sort-by")
+        problems.sort(key=lambda x: x[key] if key in x else int(x["name"]), reverse=reverse)
+    return problems
+
+
+@app.route('/')
+def index():
+    problem_files = [os.path.relpath(x, problems_path) for x in glob.glob(str(problems_path / "*"))]
+    problem_files.sort(key=lambda x: int(x))
+
+    global problem_details
+    if len(problem_details) != len(problem_files):
+        problem_details = load_problem_details(problem_files)
+
+    problems_json = json.loads((static_path / "problems.json").read_text(encoding='utf-8'))
+    dislikes = {x: (None, None, 0) for x in problem_files}
+    dislikes.update({
+        x[0]: (
+            int(x[1]) if x[1].isdigit() else None,  # 自分のdislike
+            int(x[2]) if x[2].isdigit() else None,  # TOPのdislike
+            (int(x[2]) + 1) / (int(x[1]) + 1) if x[1].isdigit() and x[2].isdigit() else 0,
+        ) for x in problems_json})
+
+    problems = [
+        {
+            "name": x,
+            "hole": len(problem_details[x]["hole"]),
+            "eps": problem_details[x]["epsilon"],
+            "edges": len(problem_details[x]["figure"]["edges"]),
+            "vertices": len(problem_details[x]["figure"]["vertices"]),
+            "dislike": dislikes[x][0],
+            "dislike_min": dislikes[x][1],
+            "dislike_ratio": dislikes[x][2],
+            "topscore": math.ceil(problem_details[x]["base_score"]),
+            "score": math.ceil(problem_details[x]["base_score"] * math.sqrt(dislikes[x][2])),
+            "score_diff": math.ceil(problem_details[x]["base_score"]) - math.ceil(
+                problem_details[x]["base_score"] * math.sqrt(dislikes[x][2])),
+            "bonus_from": problem_details[x]["bonus_from"],
+            "bonus_to": problem_details[x]["bonus_to"],
+        }
+        for x in problem_files
+    ]
+
+    problems = filter_problems(problems)
+    problems = sort_problems(problems)
+
+    return render_template(
+        'index.html',
+        is_search=request.args.get("search"),
+        problems=problems)
+
+
+@app.route('/filter')
+def get_filter():
+    return render_template('filter.jinja2')
+
+
+@app.route('/git_status')
+def git_status():
+    output = ""
+    try:
+        output += subprocess.check_output(["git", "status"], stderr=subprocess.STDOUT).decode('utf-8').strip()
+    except subprocess.CalledProcessError as e:
+        output += "Error:" + str(e)
+    return render_template('output.html', output=output)
+
+
+@app.route('/fetch_problems')
+def fetch_problems():
+    output = ""
+    try:
+        output += subprocess.check_output(["node", "main.js"], cwd=(repo_path / 'portal')).decode("utf-8").strip()
+        shutil.copyfile(repo_path / "portal/problems.json", static_path / "problems.json")
+    except subprocess.CalledProcessError as e:
+        output += "Error:" + str(e)
+    return render_template('output.html', output=output)
+
+
+@app.route('/git_pull')
+def git_pull():
+    output = ""
+    try:
+        output += subprocess.check_output(["git", "pull"], stderr=subprocess.STDOUT).decode(
+            'utf-8').strip()
+    except subprocess.CalledProcessError as e:
+        output += "Error:" + str(e)
+    return render_template('output.html', output=output)
 
 
 def bonus_filter(problems):
@@ -165,87 +266,6 @@ def bonus_tree_gen():
     for tree in trees:
         for path in tree:
             print(" " * path[0], path[1], path[2])
-
-
-@app.route('/')
-def index():
-    problem_files = [os.path.relpath(x, problems_path) for x in glob.glob(str(problems_path / "*"))]
-    problem_files.sort(key=lambda x: int(x))
-
-    global problem_details
-    if len(problem_details) != len(problem_files):
-        problem_details = load_problem_details(problem_files)
-
-    problems_json = json.loads((static_path / "problems.json").read_text(encoding='utf-8'))
-    dislikes = {x: (None, None, 0) for x in problem_files}
-    dislikes.update({
-        x[0]: (
-            int(x[1]) if x[1].isdigit() else None,  # 自分のdislike
-            int(x[2]) if x[2].isdigit() else None,  # TOPのdislike
-            (int(x[2]) + 1) / (int(x[1]) + 1) if x[1].isdigit() and x[2].isdigit() else 0,
-        ) for x in problems_json})
-
-    problems = [
-        {
-            "name": x,
-            "hole": len(problem_details[x]["hole"]),
-            "eps": problem_details[x]["epsilon"],
-            "edges": len(problem_details[x]["figure"]["edges"]),
-            "vertices": len(problem_details[x]["figure"]["vertices"]),
-            "dislike": dislikes[x][0],
-            "dislike_min": dislikes[x][1],
-            "dislike_ratio": dislikes[x][2],
-            "topscore": math.ceil(problem_details[x]["base_score"]),
-            "score": math.ceil(problem_details[x]["base_score"] * math.sqrt(dislikes[x][2])),
-            "bonus_from": problem_details[x]["bonus_from"],
-            "bonus_to": problem_details[x]["bonus_to"],
-        }
-        for x in problem_files
-    ]
-
-    problems = filter_problems(problems)
-
-    return render_template(
-        'index.html',
-        is_search=request.args.get("search"),
-        problems=problems)
-
-
-@app.route('/filter')
-def get_filter():
-    return render_template('filter.jinja2')
-
-
-@app.route('/git_status')
-def git_status():
-    output = ""
-    try:
-        output += subprocess.check_output(["git", "status"], stderr=subprocess.STDOUT).decode('utf-8').strip()
-    except subprocess.CalledProcessError as e:
-        output += "Error:" + str(e)
-    return render_template('output.html', output=output)
-
-
-@app.route('/fetch_problems')
-def fetch_problems():
-    output = ""
-    try:
-        output += subprocess.check_output(["node", "main.js"], cwd=(repo_path / 'portal')).decode("utf-8").strip()
-        shutil.copyfile(repo_path / "portal/problems.json", static_path / "problems.json")
-    except subprocess.CalledProcessError as e:
-        output += "Error:" + str(e)
-    return render_template('output.html', output=output)
-
-
-@app.route('/git_pull')
-def git_pull():
-    output = ""
-    try:
-        output += subprocess.check_output(["git", "pull"], stderr=subprocess.STDOUT).decode(
-            'utf-8').strip()
-    except subprocess.CalledProcessError as e:
-        output += "Error:" + str(e)
-    return render_template('output.html', output=output)
 
 
 if __name__ == "__main__":
