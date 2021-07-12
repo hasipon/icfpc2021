@@ -1,0 +1,5 @@
+__pycache__
+/target/**/*
+!/target/release
+!/target/release/drawlog_cli.exe
+LICENSE-DEPENDENCES.tsv

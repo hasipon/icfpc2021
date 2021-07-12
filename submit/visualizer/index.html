@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>visualizer</title>
+	<meta name="description" content="" />
+	<script src="./bin/js/pixi.min.js"></script>
+</head>
+<body>
+	<canvas id="pixi" tabindex="0"></canvas><br/>
+	問:<select id="problem_combo" /></select>
+	<button id="fit_button" />Fit</button>
+	<button id="auto_button" />Auto</button>
+	<button id="fit_auto_button" />Fit+Auto</button>
+	
+	<button id="random_button" />Random</button>
+	<button id="random_auto_button" />Random+Auto</button>
+	<button id="random_fit_auto_button" />Random+Fit+Auto</button>
+	<button id="undo_button" />Undo</button>
+	<button id="redo_button" />Redo</button>
+	<br/>
+	<div>
+		<input type="checkbox" id="fix_checkbox" name="fix">
+		<label for="fix_checkbox">Hole固定</label>
+		<input type="checkbox" id="bonus_checkbox" name="fix">
+		<label for="bonus_checkbox">Bonus固定</label>
+	</div>
+	
+	Ctrl+Aで全選択。矢印で選択範囲を回転。Zで左右判定、Xで上下反転。
+	<button id="reload_button" />Reload</button>
+	dislike: <span id="dislike"></span> fail: <span id="fail"></span> 評価値:<span id="eval"></span></br>
+	Best: <span id="best"></span> <button id="best_button" />Best</button> <br />
+	Bonus: <span id="bonus"></span> <br />
+	<span id="response"></span><br/>
+	答:<br/>
+	<textarea 
+		id="answer_text"
+		style="
+		margin:5px; 
+		width:800px;
+		height:500px;
+		padding: 10px;
+	"></textarea></br>
+	<script src="./bin/visualizer.js"></script>
+</body>
+</html>
