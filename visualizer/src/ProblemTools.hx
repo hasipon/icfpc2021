@@ -164,6 +164,22 @@ class ProblemTools
 	}
 	
 	
+	public static function intersectsHole(
+		problem:Problem,
+		edge:Array<Int>,
+		answer:Array<Array<Int>>
+	):Bool
+	{
+		var h0 = problem.hole[problem.hole.length - 1];
+		for (h1 in problem.hole) {
+			if (intersect(answer[edge[0]], answer[edge[1]], h0, h1)) {
+				return true;
+			}
+			h0 = h1;
+		}
+		return false;
+	}
+		
 	public static function intersect(
 		a:Array<Int>,
 		b:Array<Int>,

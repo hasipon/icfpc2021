@@ -839,14 +839,14 @@ class Main
 		answerGraphics.clear();
 		var e = problem.epsilon;
 		for (ei => edge in problem.figure.edges)
-		{
+		{	
 			var ax = answer[edge[0]][0] - answer[edge[1]][0];
 			var ay = answer[edge[0]][1] - answer[edge[1]][1];
 			var ad = ax * ax + ay * ay;
 			var pd = problem.distances[ei];
 			
 			answerGraphics.lineStyle(
-				2,
+				4,
 				if (problem.isGlobalist)
 				{
 					if (ad == pd) { 0x00CC00; }
@@ -896,6 +896,7 @@ class Main
 					}
 				}
 			);
+			
 			var x = (answer[edge[0]][0] - left) * scale;
 			var y = (answer[edge[0]][1] - top ) * scale;
 			answerGraphics.moveTo(x, y);
@@ -903,6 +904,19 @@ class Main
 			var x = (answer[edge[1]][0] - left) * scale;
 			var y = (answer[edge[1]][1] - top ) * scale;
 			answerGraphics.lineTo(x, y);
+			
+			if (problem.intersectsHole(edge, answer))
+			{
+				answerGraphics.lineStyle(1, 0xDD00FF);
+				
+				var x = (answer[edge[0]][0] - left) * scale;
+				var y = (answer[edge[0]][1] - top ) * scale;
+				answerGraphics.moveTo(x, y);
+				
+				var x = (answer[edge[1]][0] - left) * scale;
+				var y = (answer[edge[1]][1] - top ) * scale;
+				answerGraphics.lineTo(x, y);
+			}
 		}
 		
 		var first = true;

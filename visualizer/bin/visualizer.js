@@ -1090,13 +1090,22 @@ Main.drawAnswer = function() {
 			}
 			tmp1 = (r3 * 255 | 0) << 16 | (g3 * 255 | 0) << 8 | (b3 * 255 | 0);
 		}
-		tmp.lineStyle(2,tmp1);
+		tmp.lineStyle(4,tmp1);
 		var x = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
 		var y = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.moveTo(x,y);
 		var x1 = (Main.answer[edge[1]][0] - Main.left) * Main.scale;
 		var y1 = (Main.answer[edge[1]][1] - Main.top) * Main.scale;
 		Main.answerGraphics.lineTo(x1,y1);
+		if(ProblemTools.intersectsHole(Main.problem,edge,Main.answer)) {
+			Main.answerGraphics.lineStyle(1,14483711);
+			var x2 = (Main.answer[edge[0]][0] - Main.left) * Main.scale;
+			var y2 = (Main.answer[edge[0]][1] - Main.top) * Main.scale;
+			Main.answerGraphics.moveTo(x2,y2);
+			var x3 = (Main.answer[edge[1]][0] - Main.left) * Main.scale;
+			var y3 = (Main.answer[edge[1]][1] - Main.top) * Main.scale;
+			Main.answerGraphics.lineTo(x3,y3);
+		}
 	}
 	var first = true;
 	Main.answerGraphics.lineStyle(0);
@@ -1269,6 +1278,20 @@ ProblemTools.failCount = function(problem,answer) {
 		}
 	}
 	return failCount;
+};
+ProblemTools.intersectsHole = function(problem,edge,answer) {
+	var h0 = problem.hole[problem.hole.length - 1];
+	var _g = 0;
+	var _g1 = problem.hole;
+	while(_g < _g1.length) {
+		var h1 = _g1[_g];
+		++_g;
+		if(ProblemTools.intersect(answer[edge[0]],answer[edge[1]],h0,h1)) {
+			return true;
+		}
+		h0 = h1;
+	}
+	return false;
 };
 ProblemTools.intersect = function(a,b,c,d) {
 	var ax = a[0];
