@@ -20,7 +20,7 @@ problem_details = {}
 
 
 def get_conn():
-    conn = sqlite3.connect(os.getenv("DB_PATH", "/home/db/icfpc2021.db"))
+    conn = sqlite3.connect(os.getenv("DB_PATH", "/home/ubuntu/db/icfpc2021.db"))
     conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
     return conn
 
