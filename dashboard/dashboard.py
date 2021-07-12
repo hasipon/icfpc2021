@@ -161,13 +161,15 @@ def index():
         for x in problem_files
     ]
 
+    problems_dict = {x["name"]: x for x in problems}
     problems = filter_problems(problems)
     problems = sort_problems(problems)
 
     return render_template(
         'index.html',
         is_search=request.args.get("search"),
-        problems=problems)
+        problems=problems,
+        problems_dict=problems_dict)
 
 
 @app.route('/filter')
