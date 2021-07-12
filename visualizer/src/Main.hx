@@ -114,6 +114,16 @@ class Main
 					{
 						readHistory(-1);
 					}
+					var cx = Math.round(canvas.width  / 2 / scale + left);
+					for (i in selectedPoints)
+					{
+						var a = answer[i];
+						a[0] = cx + cx - a[0];
+					}
+					drawAnswer(true);
+					drawSelectedPoints();
+					e.preventDefault();
+					
 				case KeyboardEvent.DOM_VK_Y:
 					if (e.ctrlKey)
 					{
@@ -145,17 +155,6 @@ class Main
 					
 				case KeyboardEvent.DOM_VK_DOWN:
 					rotate(-90);
-					e.preventDefault();
-					
-				case KeyboardEvent.DOM_VK_Z:
-					var cx = Math.round(canvas.width  / 2 / scale + left);
-					for (i in selectedPoints)
-					{
-						var a = answer[i];
-						a[0] = cx + cx - a[0];
-					}
-					drawAnswer(true);
-					drawSelectedPoints();
 					e.preventDefault();
 					
 				case KeyboardEvent.DOM_VK_X:

@@ -47,9 +47,10 @@ fn main()  -> std::io::Result<()>  {
             vertices.push(problem.figure.vertices.clone());
             let mut rng = SmallRng::from_entropy();
 
-            for file in std::fs::read_dir("../../solutions")? {
-                read_vertices(&mut vertices, &file?, i, problem.figure.vertices.len());
-            }
+           //for file in std::fs::read_dir("../../solutions")? {
+           //    if rng.gen_bool(0.15) { continue; }
+           //    read_vertices(&mut vertices, &file?, i, problem.figure.vertices.len());
+           //}
             inputs.insert(i, (problem, vertices));
         }
         let input = inputs.get(&i).unwrap();
@@ -65,9 +66,9 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best.is_valid() {
             println!("best!");
-            let mut file = File::create(format!("out/{}-sawa-auto43-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto46-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto43-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto46-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
         
@@ -79,9 +80,9 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best_bonus.is_valid() && result.best_bonus.bonus_count > 0 {
             println!("best_bonus!");
-            let mut file = File::create(format!("out/{}-sawa-auto43-bonus-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto46-bonus-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto43-bonus-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto46-bonus-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
     }

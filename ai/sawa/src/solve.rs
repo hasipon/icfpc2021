@@ -46,7 +46,7 @@ pub fn solve(source:&ProblemSource, initial_vertices:&Vec<Vec<Point>>) -> SolveR
     let mut best_bonus = current.clone();
     let mut rng = SmallRng::from_entropy();
     let mut arr0 = Vec::new();
-    let mut arr1 = Vec::new();
+    let mut arr1:Vec<State> = Vec::new();
 
     let size = 3000;
     let mut locked_points = HashSet::new();
@@ -60,17 +60,40 @@ pub fn solve(source:&ProblemSource, initial_vertices:&Vec<Vec<Point>>) -> SolveR
         arr0.push(State::new(&problem, vertecies));
     }
 
-    let mut prev_score = 1200003;
-    let mut prev_dislike = 1200003;
     let repeat = 190;
 
     for i in 0..repeat {
         arr0.sort();
         arr0.split_off(size);
-        if arr1.len() > size / 18 { arr1.split_off(size / 18); }
-        let scale = (repeat - i) as f64 / repeat as f64;
-        //println!("{}: {} {} {}", i, arr0[0].is_valid(), arr0[0].dislike, arr0[0].get_score());
 
+        let pool_size = size / 15;
+        let mut prev_hash = 0xF432543;
+        arr1.sort();
+        if arr1.len() > pool_size * 2 { 
+            arr1.split_off(pool_size * 2); 
+        }
+        if arr1.len() > pool_size { 
+            let mut j = 0;
+            for _ in 0..pool_size {
+                let current = &arr1[j];
+                println!("{} {}", prev_hash, current.hash);
+                if prev_hash == current.hash {
+                    arr1.remove(j);
+                } else {
+                    prev_hash = current.hash;
+                    j += 1;
+                }
+            }
+        }
+        if arr1.len() > pool_size { 
+            arr1.split_off(pool_size); 
+        }
+
+        let scale = (repeat - i) as f64 / repeat as f64;
+        println!("{}: {} {} {}", i, arr0[0].is_valid(), arr0[0].dislike, arr0[0].get_score());
+
+        let mut prev_score = 1200003;
+        let mut prev_dislike = 1200003;
         for current in &arr0 {
             for _ in 0..2 {
                 let score = current.get_score();

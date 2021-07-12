@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use crate::util::*;
 use std::cmp::Ordering;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
 
 pub struct Problem {
     pub hole: Vec<Point>,
@@ -37,7 +40,7 @@ pub struct Figure {
     pub vertices:Vec<Point>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Hash)]
 pub struct Point(pub i64, pub i64);
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -53,17 +56,21 @@ pub struct State {
     pub bonus_count:i64,
     pub unmatched:i64,
     pub len:i64,
+    pub hash:u64,
 }
 
 impl State {
     pub fn new(problem:&Problem, answer:Vec<Point>) -> State {
+        let mut hasher = DefaultHasher::new();
+        answer.hash(&mut hasher);
         State {
             dislike     : get_dislike(problem, &answer),
             unmatched   : get_unmatched(problem, &answer),
             not_included: get_not_included(problem, &answer),
             bonus_count : get_bonus_count(problem, &answer),
             len : (problem.edges.len() + answer.len() + problem.hole.len()) as i64 + (problem.right - problem.left)  + (problem.bottom - problem.top),
-            answer:  answer,
+            answer,
+            hash:hasher.finish(),
         }
     }
     pub fn is_valid(&self) -> bool {
