@@ -20,7 +20,7 @@ fn main()  -> std::io::Result<()>  {
     let arg:Vec<String> = args().collect();
     let cleared = vec![
         4, 11, 12,13,15,16,17,18,20,21,22,23,24,25,26,34,35,38,39,41,43,
-        46,47,49,51,52,53,54,55,59,63,65,67,70,72,73,75,76,77,80,84,90,97,106
+        46,47,49,51,52,53,54,55,59,63,65,67,70,72,73,75,76,77,80,84,85,90,93,97,106,114,125
     ];
     let mut name  = "x".to_owned();
     let mut start = 1;
@@ -47,10 +47,10 @@ fn main()  -> std::io::Result<()>  {
             vertices.push(problem.figure.vertices.clone());
             let mut rng = SmallRng::from_entropy();
 
-           //for file in std::fs::read_dir("../../solutions")? {
-           //    if rng.gen_bool(0.15) { continue; }
-           //    read_vertices(&mut vertices, &file?, i, problem.figure.vertices.len());
-           //}
+            for file in std::fs::read_dir("../../solutions")? {
+            if rng.gen_bool(0.15) { continue; }
+                read_vertices(&mut vertices, &file?, i, problem.figure.vertices.len());
+            }
             inputs.insert(i, (problem, vertices));
         }
         let input = inputs.get(&i).unwrap();
@@ -58,7 +58,7 @@ fn main()  -> std::io::Result<()>  {
         
         println!("{}", target);
 
-        let meta = json!({ "valid": result.best.is_valid(), "score": result.best.get_score(), "dislike": result.best.dislike, "bonus": result.best.bonus_count });
+        let meta = json!({ "valid": result.best.is_valid(), "score": result.best.get_score(100), "dislike": result.best.dislike, "bonus": result.best.bonus_count });
         let answer = json!({ "vertices":result.best.answer.clone() });
         
         println!("{}", meta);
@@ -66,13 +66,13 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best.is_valid() {
             println!("best!");
-            let mut file = File::create(format!("out/{}-sawa-auto46-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto52-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto46-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto52-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
         
-        let meta = json!({ "valid": result.best_bonus.is_valid(), "score": result.best_bonus.get_score(), "dislike": result.best_bonus.dislike, "bonus": result.best_bonus.bonus_count });
+        let meta = json!({ "valid": result.best_bonus.is_valid(), "score": result.best_bonus.get_score(100), "dislike": result.best_bonus.dislike, "bonus": result.best_bonus.bonus_count });
         let answer = json!({ "vertices":result.best_bonus.answer.clone() });
         
         println!("{}", meta);
@@ -80,9 +80,9 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best_bonus.is_valid() && result.best_bonus.bonus_count > 0 {
             println!("best_bonus!");
-            let mut file = File::create(format!("out/{}-sawa-auto46-bonus-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto52-bonus-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto46-bonus-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto52-bonus-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
     }

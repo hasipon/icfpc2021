@@ -310,6 +310,26 @@ Main.onEnterFrame = function(f) {
 				}
 			}
 		}
+		var shouldFix = window.document.getElementById("bonus_checkbox").checked;
+		if(shouldFix) {
+			var _g = 0;
+			var _g1 = Main.problem.bonuses;
+			while(_g < _g1.length) {
+				var bonus = _g1[_g];
+				++_g;
+				var _g_current = 0;
+				var _g_array = Main.answer;
+				while(_g_current < _g_array.length) {
+					var _g1_value = _g_array[_g_current];
+					var _g1_key = _g_current++;
+					var i = _g1_key;
+					var a = _g1_value;
+					if(bonus.position[0] == a[0] && bonus.position[1] == a[1]) {
+						fixedMap_h[i] = true;
+					}
+				}
+			}
+		}
 		if(Main.randomDown) {
 			var _g = 0;
 			while(_g < 1) {
@@ -947,7 +967,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	console.log("src/Main.hx:810:",Main.problem.breakALeg);
+	console.log("src/Main.hx:824:",Main.problem.breakALeg);
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {

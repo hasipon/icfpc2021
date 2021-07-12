@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use crate::util::*;
-use std::cmp::Ordering;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
@@ -10,12 +9,18 @@ pub struct Problem {
     pub epsilon: i64,
     pub edges: Vec<(usize, usize)>,
     pub distances: Vec<i64>,
+    pub point_to_edge:Vec<Vec<PointToEdge>>,
     pub center:Point,
     pub left:i64,
     pub right:i64,
     pub top:i64,
     pub bottom:i64,
     pub bonuses: Vec<Point>,
+}
+
+pub struct PointToEdge {
+    pub another_point: usize,
+    pub edge_index: usize
 }
 
 pub struct SolveResult {
@@ -48,7 +53,7 @@ pub struct Answer {
     pub vertices:Vec<Point>,
 }
 
-#[derive(Clone, Eq)]
+#[derive(Clone)]
 pub struct State {
     pub answer:Vec<Point>,
     pub dislike:i64,
@@ -77,26 +82,8 @@ impl State {
         self.unmatched == 0 && 
         self.not_included == 0
     }
-    pub fn get_score(&self) -> i64 {
-        let penalty = self.not_included * 50 + self.unmatched * 2;
-        self.dislike + penalty * self.len - (self.bonus_count * self.len) / 60
-    }
-}
-
-impl Ord for State {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.get_score().cmp(&other.get_score())
-    }
-}
-
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for State {
-    fn eq(&self, other: &Self) -> bool {
-        self.get_score() == other.get_score()
+    pub fn get_score(&self, phase:i64) -> i64 {
+        let penalty = ((self.not_included * 50 + self.unmatched) * 2 * self.len * (phase + 20)) / 150;
+        self.dislike + penalty - (self.bonus_count * self.len) / 60
     }
 }
