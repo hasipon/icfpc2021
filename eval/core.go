@@ -289,6 +289,7 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 	}
 
 	var globalEpsSum float64
+	cntFlex := 0
 	for _, e := range problem.Figure.Edges {
 		i := e[0]
 		j := e[1]
@@ -309,8 +310,16 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 			eps := new(Int).Mul(problem.Epsilon, origD)
 			result := diff.Cmp(eps)
 			if result > 0 {
-				return false, fmt.Sprintf("Edge between (%d, "+
-					"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
+				if problem.SuperFlex {
+					cntFlex++
+					if cntFlex >1 {
+						return false, fmt.Sprintf("Edge between (%d, "+
+							"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
+					}
+				}else {
+					return false, fmt.Sprintf("Edge between (%d, "+
+						"%d) has an invalid length: original: %d pose: %d", i, j, origD, nowD)
+				}
 			}
 		}
 		for ii, _ := range problem.Hole {
@@ -369,12 +378,12 @@ func validate(problem *Problem, pose *Pose) (bool, string) {
 	} else {
 		if len(outEdges) == 0 {
 			return true, "OK"
-		} else if len(outEdges) == 1 && problem.SuperFlex {
-			return true, fmt.Sprintf("OK, flex edge(%d, %d)(0-based)", outEdges[0][0],
-				outEdges[0][1])
 		} else {
 			return false, fmt.Sprintf("invalid edge(%d, %d)(0-based)", outEdges[0][0],
 				outEdges[0][1])
 		}
+		// else if len(outEdges) == 1 && problem.SuperFlex {
+		//	return true, fmt.Sprintf("OK, flex edge(%d, %d)(0-based)", outEdges[0][0],
+		//		outEdges[0][1])
 	}
 }
