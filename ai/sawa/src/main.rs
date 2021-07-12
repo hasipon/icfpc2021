@@ -12,12 +12,15 @@ mod operation;
 use data::*;
 use solve::solve;
 use std::fs::DirEntry;
+use rand::Rng;
+use rand::rngs::SmallRng;
+use rand::SeedableRng;
 
 fn main()  -> std::io::Result<()>  {
     let arg:Vec<String> = args().collect();
     let cleared = vec![
         4, 11, 12,13,15,16,17,18,20,21,22,23,24,25,26,34,35,38,39,41,43,
-        46,47,49,51,52,53,54,55,59,63,65,70,72,73,75,76,77,80,84,90,97,106
+        46,47,49,51,52,53,54,55,59,63,65,67,70,72,73,75,76,77,80,84,90,97,106
     ];
     let mut name  = "x".to_owned();
     let mut start = 1;
@@ -42,8 +45,10 @@ fn main()  -> std::io::Result<()>  {
             let problem:ProblemSource = serde_json::from_reader(reader).unwrap();
             let mut vertices = Vec::new();
             vertices.push(problem.figure.vertices.clone());
-            
+            let mut rng = SmallRng::from_entropy();
+
             for file in std::fs::read_dir("../../solutions")? {
+                if rng.gen_bool(0.85) { continue; }
                 read_vertices(&mut vertices, &file?, i, problem.figure.vertices.len());
             }
             inputs.insert(i, (problem, vertices));
@@ -61,9 +66,9 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best.is_valid() {
             println!("best!");
-            let mut file = File::create(format!("out/{}-sawa-auto41-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto43-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto41-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto43-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
         
@@ -75,9 +80,9 @@ fn main()  -> std::io::Result<()>  {
 
         if result.best_bonus.is_valid() && result.best_bonus.bonus_count > 0 {
             println!("best_bonus!");
-            let mut file = File::create(format!("out/{}-sawa-auto41-bonus-{}-{}.json", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto43-bonus-{}-{}.json", target, j, name))?;
             write!(file, "{}", answer);
-            let mut file = File::create(format!("out/{}-sawa-auto41-bonus-{}-{}.meta", target, j, name))?;
+            let mut file = File::create(format!("out/{}-sawa-auto43-bonus-{}-{}.meta", target, j, name))?;
             write!(file, "{}", meta);
         }
     }

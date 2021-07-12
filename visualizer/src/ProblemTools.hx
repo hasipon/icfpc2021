@@ -234,4 +234,8 @@ class ProblemTools
 		}
 		return count % 2 != 0;
 	}
+	
+	public static function copyAnswer(answer:Array<Array<Int>>):Array<Array<Int>> {
+		return [for (p in answer) p.copy()];
+	}
 }

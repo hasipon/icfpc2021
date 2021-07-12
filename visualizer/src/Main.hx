@@ -31,6 +31,9 @@ class Main
 	static var problems:Array<ProblemSource>;
 	static var availableBonuses:Array<AvailableBonus>;
 	
+	static var history:Array<Array<Array<Int>>>;
+	static var historyIndex:Int;
+	
 	static var left  :Int;
 	static var right :Int;
 	static var top   :Int;
@@ -81,6 +84,8 @@ class Main
 			answer = [for (a in bestAnswer)[for (i in a) i]];
 			drawAnswer();
 		});
+		Browser.document.getElementById("undo_button").addEventListener("mousedown", () -> { readHistory(-1); });
+		Browser.document.getElementById("redo_button").addEventListener("mousedown", () -> { readHistory(1); });
 		
 		problemCombo.addEventListener("change", selectProblem);
 		answerText  .addEventListener("input", onChangeAnswer);
@@ -104,6 +109,16 @@ class Main
 	{
 			switch (e.keyCode)
 			{
+				case KeyboardEvent.DOM_VK_Z:
+					if (e.ctrlKey)
+					{
+						readHistory(-1);
+					}
+				case KeyboardEvent.DOM_VK_Y:
+					if (e.ctrlKey)
+					{
+						readHistory(1);
+					}
 				case KeyboardEvent.DOM_VK_A:
 					if (e.ctrlKey)
 					{
@@ -156,6 +171,15 @@ class Main
 					
 				case _:
 			}
+	}
+	public static function readHistory(offset:Int):Void
+	{
+		var i = historyIndex + offset;
+		if (i < 0 || history.length <= i) { return; }
+		historyIndex = i;
+		answer = history[historyIndex].copyAnswer();
+		drawAnswer();
+		outputAnswer(false);
 	}
 	static function rotate(degree:Float):Void
 	{
@@ -369,7 +393,7 @@ class Main
 				}
 			}
 			drawAnswer();
-			outputAnswer();
+			outputAnswer(true);
 		}
 		Browser.window.requestAnimationFrame(onEnterFrame);
 	}
@@ -392,7 +416,7 @@ class Main
 	{
 		if (selectedPoints.length >= 0)
 		{
-			outputAnswer();
+			outputAnswer(true);
 		}
 		untyped selectedPoints.length = 0;
 		startPoint = null;
@@ -445,9 +469,15 @@ class Main
 		}
 	}
 	
-	static function outputAnswer():Void 
+	static function outputAnswer(updatesHistory:Bool):Void 
 	{
 		answerText.value = getAnswer();
+		if (updatesHistory) {
+			untyped history.length = historyIndex + 1;
+			history.push(answer.copyAnswer());
+			if (history.length > 1000) { history.shift(); }
+			historyIndex = history.length - 1;
+		}
 	}
 	static function getAnswer():String
 	{
@@ -625,6 +655,8 @@ class Main
 	
 	static function readProblem(index:Int):Void
 	{
+		historyIndex = -1;
+		history = [];
 		bestEval = Math.POSITIVE_INFINITY;
 		untyped selectedPoints.length = 0;
 		problemIndex = index;
@@ -655,7 +687,7 @@ class Main
 					element.addEventListener("input", () -> {
 						updateBonuses();
 						drawAnswer();
-						outputAnswer();
+						outputAnswer(true);
 					});
 					var label = Browser.document.createElement('label');
 					label.setAttribute("for", "bonus" + availableBonuses.length);
@@ -742,9 +774,8 @@ class Main
 			problemGraphics.drawCircle(x, y, 6);
 		}
 		
-		
 		drawAnswer();
-		outputAnswer();
+		outputAnswer(true);
 	}
 	static function updateBonuses():Void
 	{

@@ -106,6 +106,12 @@ Main.main = function() {
 		Main.answer = _g;
 		Main.drawAnswer();
 	});
+	window.document.getElementById("undo_button").addEventListener("mousedown",function() {
+		Main.readHistory(-1);
+	});
+	window.document.getElementById("redo_button").addEventListener("mousedown",function() {
+		Main.readHistory(1);
+	});
 	Main.problemCombo.addEventListener("change",Main.selectProblem);
 	Main.answerText.addEventListener("input",Main.onChangeAnswer);
 	Main.canvas.addEventListener("keydown",Main.onKeyDown);
@@ -162,22 +168,28 @@ Main.onKeyDown = function(e) {
 		Main.drawSelectedPoints();
 		e.preventDefault();
 		break;
-	case 90:
-		var cx = Math.round(Main.canvas.width / 2 / Main.scale + Main.left);
-		var _g = 0;
-		var _g1 = Main.selectedPoints;
-		while(_g < _g1.length) {
-			var i = _g1[_g];
-			++_g;
-			var a = Main.answer[i];
-			a[0] = cx + cx - a[0];
+	case 89:
+		if(e.ctrlKey) {
+			Main.readHistory(1);
 		}
-		Main.drawAnswer();
-		Main.drawSelectedPoints();
-		e.preventDefault();
+		break;
+	case 90:
+		if(e.ctrlKey) {
+			Main.readHistory(-1);
+		}
 		break;
 	default:
 	}
+};
+Main.readHistory = function(offset) {
+	var i = Main.historyIndex + offset;
+	if(i < 0 || Main.history.length <= i) {
+		return;
+	}
+	Main.historyIndex = i;
+	Main.answer = ProblemTools.copyAnswer(Main.history[Main.historyIndex]);
+	Main.drawAnswer();
+	Main.outputAnswer(false);
 };
 Main.rotate = function(degree) {
 	var cx = Main.canvas.width / 2 / Main.scale + Main.left;
@@ -222,7 +234,7 @@ Main.onChangeAnswer = function() {
 		Main.drawAnswer();
 	} catch( _g ) {
 		var e = haxe_Exception.caught(_g);
-		console.log("src/Main.hx:196:",e);
+		console.log("src/Main.hx:220:",e);
 	}
 };
 Main.fetchProblem = function() {
@@ -429,7 +441,7 @@ Main.onEnterFrame = function(f) {
 			}
 		}
 		Main.drawAnswer();
-		Main.outputAnswer();
+		Main.outputAnswer(true);
 	}
 	window.requestAnimationFrame(Main.onEnterFrame);
 };
@@ -462,7 +474,7 @@ Main.updateBest = function() {
 };
 Main.onMouseUp = function() {
 	if(Main.selectedPoints.length >= 0) {
-		Main.outputAnswer();
+		Main.outputAnswer(true);
 	}
 	Main.selectedPoints.length = 0;
 	Main.startPoint = null;
@@ -514,8 +526,16 @@ Main.drawSelectedPoints = function() {
 		Main.selectGraphics.drawCircle(x,y,3);
 	}
 };
-Main.outputAnswer = function() {
+Main.outputAnswer = function(updatesHistory) {
 	Main.answerText.value = Main.getAnswer();
+	if(updatesHistory) {
+		Main.history.length = Main.historyIndex + 1;
+		Main.history.push(ProblemTools.copyAnswer(Main.answer));
+		if(Main.history.length > 1000) {
+			Main.history.shift();
+		}
+		Main.historyIndex = Main.history.length - 1;
+	}
 };
 Main.getAnswer = function() {
 	var bonuses = [];
@@ -714,6 +734,8 @@ Main.onMouseMove = function(e) {
 	}
 };
 Main.readProblem = function(index) {
+	Main.historyIndex = -1;
+	Main.history = [];
 	Main.bestEval = Infinity;
 	Main.selectedPoints.length = 0;
 	Main.problemIndex = index;
@@ -761,7 +783,7 @@ Main.readProblem = function(index) {
 				element.addEventListener("input",function() {
 					Main.updateBonuses();
 					Main.drawAnswer();
-					Main.outputAnswer();
+					Main.outputAnswer(true);
 				});
 				var label = window.document.createElement("label");
 				label.setAttribute("for","bonus" + Main.availableBonuses.length);
@@ -875,7 +897,7 @@ Main.readProblem = function(index) {
 		Main.problemGraphics.drawCircle(x,y,6);
 	}
 	Main.drawAnswer();
-	Main.outputAnswer();
+	Main.outputAnswer(true);
 };
 Main.updateBonuses = function() {
 	var source = Main.problems[Main.problemIndex];
@@ -909,7 +931,7 @@ Main.updateBonuses = function() {
 			break;
 		}
 	}
-	console.log("src/Main.hx:776:",Main.problem.breakALeg);
+	console.log("src/Main.hx:807:",Main.problem.breakALeg);
 	var _g2_current = 0;
 	var _g2_array = source.figure.edges;
 	while(_g2_current < _g2_array.length) {
@@ -1309,6 +1331,16 @@ ProblemTools.includesPoint = function(problem,point) {
 		h0 = h1;
 	}
 	return count % 2 != 0;
+};
+ProblemTools.copyAnswer = function(answer) {
+	var _g = [];
+	var _g1 = 0;
+	while(_g1 < answer.length) {
+		var p = answer[_g1];
+		++_g1;
+		_g.push(p.slice());
+	}
+	return _g;
 };
 var Reflect = function() { };
 Reflect.__name__ = true;
