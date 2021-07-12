@@ -113,9 +113,13 @@ def filter_problems(problems):
 
 
 def sort_problems(problems):
+    reverse = False
+    if request.args.get("desc"):
+        reverse = True
+
     if request.args.get("sort-by"):
         key = request.args.get("sort-by")
-        problems.sort(key=lambda x: x[key] if key in x else int(x["name"]), reverse=True)
+        problems.sort(key=lambda x: x[key] if key in x else int(x["name"]), reverse=reverse)
     return problems
 
 
